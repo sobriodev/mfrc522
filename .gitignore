@@ -30,3 +30,8 @@
 *.exe
 *.out
 *.app
+
+# CLion specific exclusions
+cmake-build-debug/
+cmake-build-debug-coverage/
+.idea/

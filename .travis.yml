@@ -1,0 +1,20 @@
+language: c
+os: linux
+dist: xenial
+before_install:
+  - pip install --user cpp-coveralls
+script:
+  - mkdir -p build
+  - cd build
+  - cmake -D BUILD_WITH_COVERAGE=ON ..
+  - make
+  - make test
+after_success:
+  - cd ..
+  - coveralls -r . -b build --verbose --gcov=gcov --gcov-options '\-lpbc'
+  - cd script
+  - chmod +x auto_merge.sh
+  - "./auto_merge.sh"
+env:
+  global:
+    secure: BWUxp7J4lkaLRcl0z+8wbwAJfxJY1p1nXn/20GMW+VKT2mWnSAGphWLkpXrmvi/5cY+3xSTyeaFqFDh9ACrZPRAhTZF0cfZJRuXplhgJML2066E8SwWfWiwd5OpdgYgxQXq0ZVLIAHD7MuwrS5p7oQEmct0wUvm4wVp2dfa6dqofaLKFEEDajYUaZzE2TOSW8jU/DZ9b+XpiV0LIgqxnAjLMt37eLmYtUYKXT0PEryDYUiPHgWkRXQPL+8Ip5n/PeZrvxzKgof9myjUDrqxttQEY2/wxjNZhFyuInqDNedrCfQD0R8xdPHFtR8x5Skpt9aUMyCwUViINuxiXk8fk3eG4Xe9Z1cGGQwD6lXIb8tKbIaIF3V62iB0e78GrfAvr7cVq/P/3P5ID7sNe0Phr7rrkmqrrJ+j00wAU3cUiwi6URz4+V72vihVM3NlyvQzgwZl4v8BtHiJFVjL3JNP5dGWgFsc2WTqqVUCJQzTvzUt5n6bO9tjp8rLxOBZaz/ZvuqL2L4nu3Gto3D98a8w5O99o/Nz1tZyZWY4LTIZZhwAzAy/4FFCjmS5GEjz+uxURI0Mes5hCnO6Kb35dPkN6rvMDjPVzVC3DvKU6iFyj8BFQyd0654eMKgEPBs6PUmqU6dPlgNKWeAn+2G7gw9t7uzMxFa/Q85fULmaPnPsLdGs=
