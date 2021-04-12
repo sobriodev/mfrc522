@@ -20,7 +20,6 @@ extern "C" {
 /* ----------------------- Public functions ------------------- */
 /* ------------------------------------------------------------ */
 
-/* TODO delete me */
 const char* identify(void);
 
 #ifdef __cplusplus
