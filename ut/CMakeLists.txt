@@ -14,13 +14,22 @@ SET(CMAKE_CXX_FLAGS "-include ${CPPUTEST_DIR}/include/CppUTest/MemoryLeakDetecto
 # Include directories
 include_directories(${MAIN_DIR}/include)
 include_directories(${CPPUTEST_DIR}/include)
+include_directories(stub)
 
 # Library directories
 link_directories(${CPPUTEST_DIR})
 
 # Executables
-add_executable(TestMfrc522Drv TestRunner.cpp TestMfrc522Drv.cpp)
-target_link_libraries(TestMfrc522Drv mfrc522_src CppUTest CppUTestExt)
+add_executable(TestMfrc522DrvCommon TestRunner.cpp TestMfrc522DrvCommon.cpp stub/StubCommon.cpp)
+target_link_libraries(TestMfrc522DrvCommon mfrc522_src CppUTest CppUTestExt)
+
+add_executable(TestMfrc522DrvLlDef TestRunner.cpp TestMfrc522DrvLlDef.cpp)
+target_link_libraries(TestMfrc522DrvLlDef mfrc522_src_ll_def CppUTest CppUTestExt)
+
+add_executable(TestMfrc522DrvLlPtr TestRunner.cpp TestMfrc522DrvLlPtr.cpp)
+target_link_libraries(TestMfrc522DrvLlPtr mfrc522_src CppUTest CppUTestExt)
 
 # Test suites
-add_test(NAME TestMfrc522Drv COMMAND TestMfrc522Drv -v)
+add_test(NAME TestMfrc522DrvCommon COMMAND TestMfrc522DrvCommon -v)
+add_test(NAME TestMfrc522DrvLlDef COMMAND TestMfrc522DrvLlDef -v)
+add_test(NAME TestMfrc522DrvLlPtr COMMAND TestMfrc522DrvLlPtr -v)

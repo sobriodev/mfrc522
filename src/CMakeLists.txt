@@ -15,8 +15,11 @@ endif()
 include_directories(${mfrc522_SOURCE_DIR}/include)
 
 add_library(mfrc522_src mfrc522_drv.c)
+target_compile_definitions(mfrc522_src PUBLIC MFRC522_LL_PTR)
 
 # Library versions for unit testing
 if(BUILD_FOR_UT)
-    # Nothing to do here
+    # Build also with second low-level communication method
+    add_library(mfrc522_src_ll_def mfrc522_drv.c)
+    target_compile_definitions(mfrc522_src_ll_def PUBLIC MFRC522_LL_DEF)
 endif()
