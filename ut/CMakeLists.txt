@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.12)
 project(mfrc522_ut CXX)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -Werror")
 
 SET(CURRENT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
@@ -20,7 +20,7 @@ include_directories(stub)
 link_directories(${CPPUTEST_DIR})
 
 # Executables
-add_executable(TestMfrc522DrvCommon TestRunner.cpp TestMfrc522DrvCommon.cpp stub/StubCommon.cpp)
+add_executable(TestMfrc522DrvCommon TestRunner.cpp TestMfrc522DrvCommon.cpp stub/Mfrc522FakeDev.cpp stub/StubCommon.cpp)
 target_link_libraries(TestMfrc522DrvCommon mfrc522_src CppUTest CppUTestExt)
 
 add_executable(TestMfrc522DrvLlDef TestRunner.cpp TestMfrc522DrvLlDef.cpp)
