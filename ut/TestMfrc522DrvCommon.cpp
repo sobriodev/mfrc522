@@ -1,5 +1,6 @@
 #include "TestRunner.h"
 #include "mfrc522_drv.h"
+#include "mfrc522_reg.h"
 #include "StubCommon.h"
 #include "Mfrc522FakeDev.h"
 
@@ -49,16 +50,33 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_init__LlReceiveError__LlErrorIsGenerated)
 
     auto status = mfrc522_drv_init(&conf);
     CHECK_EQUAL(mfrc522_drv_status_ll_err, status);
+
+    /* In a case low-level API returns an error 'chip_version' field should be equal to MFRC522_REG_VERSION_INVALID */
+    CHECK_EQUAL(MFRC522_REG_VERSION_INVALID, conf.chip_version);
+}
+
+TEST(TestMfrc522DrvCommon, mfrc522_drv_init__DeviceNotSupported__Failure)
+{
+    /* Populate fake device */
+    const auto fakeDev = Mfrc522FakeDev::getFakeDev();
+    fakeDev->addResponse(0x37, {0xAA});
+
+    mfrc522_drv_conf conf;
+    getDefaultConf(conf);
+    CHECK_EQUAL(mfrc522_drv_status_dev_err, mfrc522_drv_init(&conf));
 }
 
 TEST(TestMfrc522DrvCommon, mfrc522_drv_init__DeviceFound__Success)
 {
     /* Populate fake responses vector */
+    const u8 version = 0x9B;
     const auto fakeDev = Mfrc522FakeDev::getFakeDev();
-    fakeDev->addResponse(0x37, {0x9b});
+    fakeDev->addResponse(0x37, {version});
 
     mfrc522_drv_conf conf;
     getDefaultConf(conf);
-
     CHECK_EQUAL(mfrc522_drv_status_ok, mfrc522_drv_init(&conf));
+
+    /* Check if 'chip_version' field was set */
+    CHECK_EQUAL(version, conf.chip_version);
 }
