@@ -21,5 +21,6 @@ TEST(TestMfrc522DrvLlPtr, mfrc522_drv_init__NullCases)
     mfrc522_drv_conf conf;
     conf.ll_recv = nullptr;
     conf.ll_send = nullptr;
+    conf.ll_delay = nullptr;
     CHECK_EQUAL(mfrc522_drv_status_nullptr, mfrc522_drv_init(&conf));
 }

@@ -23,13 +23,13 @@ link_directories(${CPPUTEST_DIR})
 add_executable(TestMfrc522DrvCommon TestRunner.cpp TestMfrc522DrvCommon.cpp stub/Mfrc522FakeDev.cpp stub/StubCommon.cpp)
 target_link_libraries(TestMfrc522DrvCommon mfrc522_src CppUTest CppUTestExt)
 
-add_executable(TestMfrc522DrvLlDef TestRunner.cpp TestMfrc522DrvLlDef.cpp)
-target_link_libraries(TestMfrc522DrvLlDef mfrc522_src_ll_def CppUTest CppUTestExt)
-
 add_executable(TestMfrc522DrvLlPtr TestRunner.cpp TestMfrc522DrvLlPtr.cpp)
 target_link_libraries(TestMfrc522DrvLlPtr mfrc522_src CppUTest CppUTestExt)
 
+add_executable(TestMfrc522DrvNoLlDelay TestRunner.cpp TestMfrc522DrvNoLlDelay.cpp mock/MockCommon.cpp)
+target_link_libraries(TestMfrc522DrvNoLlDelay mfrc522_src_no_ll_delay CppUTest CppUTestExt)
+
 # Test suites
 add_test(NAME TestMfrc522DrvCommon COMMAND TestMfrc522DrvCommon -v)
-add_test(NAME TestMfrc522DrvLlDef COMMAND TestMfrc522DrvLlDef -v)
 add_test(NAME TestMfrc522DrvLlPtr COMMAND TestMfrc522DrvLlPtr -v)
+add_test(NAME TestMfrc522DrvNoLlDelay COMMAND TestMfrc522DrvNoLlDelay -v)

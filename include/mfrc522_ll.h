@@ -72,6 +72,18 @@ typedef mfrc522_ll_status (*mfrc522_ll_send)(u8 addr, u8 payload);
  *         - mfrc522_ll_status_ok on success
  */
 typedef mfrc522_ll_status (*mfrc522_ll_recv)(u8 addr, size bytes, u8* payload);
+
+#if MFRC522_LL_DELAY
+/**
+ * Low-level delay function type. When enabled, API calls can use it in certain situations as a 'sleep call' while
+ * waiting for an event, thus reducing bus congestion. When disabled, the library pools a device until condition is met,
+ * resulting in increased bus workload.
+ *
+ * @param period Number of microseconds to sleep.
+ */
+typedef void (*mfrc522_ll_delay)(u32 period);
+#endif
+
 #endif
 
 /* ------------------------------------------------------------ */
@@ -105,6 +117,18 @@ mfrc522_ll_status mfrc522_ll_send(u8 addr, u8 payload);
  *         - mfrc522_ll_status_ok on success
  */
 mfrc522_ll_status mfrc522_ll_recv(u8 addr, size bytes, u8* payload);
+
+#if MFRC522_LL_DELAY
+/**
+ * Low-level delay function type. When enabled, API calls can use it in certain situations as a 'sleep call' while
+ * waiting for an event, thus reducing bus congestion. When disabled, the library pools a device until condition is met,
+ * resulting in increased bus workload.
+ *
+ * @param period Number of microseconds to sleep.
+ */
+void mfrc522_ll_delay(u32 period);
+#endif
+
 #endif
 
 #ifdef __cplusplus

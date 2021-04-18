@@ -9,11 +9,20 @@ extern "C" {
 /* -------------------------- Macros -------------------------- */
 /* ------------------------------------------------------------ */
 
-/** Invalid chip version number */
+/**
+ * Invalid chip version number
+ */
 #define MFRC522_REG_VERSION_INVALID 0xFF
 
-/** Bit mask for Chiptype field in version register */
+/**
+ * Bit mask for Chiptype field in version register
+ */
 #define MFRC522_REG_VERSION_CHIP_TYPE_MSK 0xF0
+
+/**
+ * Bit mask for Command field in command register
+ */
+#define MFRC522_REG_COMMAND_CMD_MSK 0x0F
 
 /* ------------------------------------------------------------ */
 /* ------------------------ Data types ------------------------ */
@@ -96,6 +105,24 @@ typedef enum mfrc522_reg_
     mfrc522_reg_reserved12 = 0x3E, /**< Reserved */
     mfrc522_reg_reserved13 = 0x3F, /**< Reserved */
 } mfrc522_reg;
+
+/**
+ * MFRC522 command set
+ */
+typedef enum mfrc522_reg_cmd_
+{
+    mfrc522_reg_cmd_idle = 0x00, /**< Idle */
+    mfrc522_reg_cmd_mem = 0x01, /**< Mem */
+    mfrc522_reg_cmd_rand = 0x02, /**< Generate RandomID */
+    mfrc522_reg_cmd_crc = 0x03, /**< CalcCRC */
+    mfrc522_reg_cmd_transmit = 0x04, /**< Transmit */
+    mfrc522_reg_cmd_no_change = 0x07, /**< NoCmdChange */
+    mfrc522_reg_cmd_receive = 0x08, /**< Receive */
+    mfrc522_reg_cmd_transceive = 0x0C, /**< Transceive */
+    mfrc522_reg_cmd_reserved0 = 0x0D, /**< Reserved */
+    mfrc522_reg_cmd_authent = 0x0E, /**< MFAuthent */
+    mfrc522_reg_cmd_soft_reset = 0x0F /**< SoftReset */
+} mfrc522_reg_cmd;
 
 #ifdef __cplusplus
 }

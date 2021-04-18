@@ -1,11 +1,10 @@
 #include "StubCommon.h"
-#pragma clang diagnostic push
 
 /* ------------------------------------------------------------ */
 /* --------------------- Public functions --------------------- */
 /* ------------------------------------------------------------ */
 
-mfrc522_ll_status stub_mfrc522_ll_send_always_err(u8 addr, u8 payload)
+mfrc522_ll_status stubMfrc522SendError(u8 addr, u8 payload)
 {
     (void)addr;
     (void)payload;
@@ -14,7 +13,7 @@ mfrc522_ll_status stub_mfrc522_ll_send_always_err(u8 addr, u8 payload)
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "readability-non-const-parameter"
-mfrc522_ll_status stub_mfrc522_ll_recv_always_err(u8 addr, size bytes, u8* payload)
+mfrc522_ll_status stubMfrc522ReceiveError(u8 addr, size bytes, u8* payload)
 {
     (void)addr;
     (void)bytes;
@@ -22,3 +21,9 @@ mfrc522_ll_status stub_mfrc522_ll_recv_always_err(u8 addr, size bytes, u8* paylo
     return mfrc522_ll_status_recv_err;
 }
 #pragma clang diagnostic pop
+
+void stubMfrc522Delay(u32 period)
+{
+    (void)period;
+    /* Nothing to do here */
+}

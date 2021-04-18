@@ -2,13 +2,14 @@
 #define MFRC522_MFRC522FAKEDEV_H
 
 #include <utility>
+#include <tuple>
 #include <vector>
 #include <memory>
 
 #include "mfrc522_ll.h"
 
 using ResponseBytes = std::vector<u8>;
-using FakeResponse = std::pair<u8, ResponseBytes>;
+using FakeResponse = std::pair<u32, std::tuple<u8, ResponseBytes>>;
 using VectorOfFakeResponses = std::vector<FakeResponse>;
 
 /* NOTE: The class cannot be used in parallel tests because of static shared fake device */
@@ -19,7 +20,9 @@ private:
     VectorOfFakeResponses responses;
     bool strict = true;
 public:
-    void addResponse(u8 address, const ResponseBytes& bytes);
+    static const u32 INFINITE_RESPONSE = 0xFFFFFFFF;
+
+    void addResponse(u8 address, const ResponseBytes& bytes, u32 numTimes = 1);
     bool getNextResponse(u8 address, size bytes, u8* payload);
     void clearResponses();
 

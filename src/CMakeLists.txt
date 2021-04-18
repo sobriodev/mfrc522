@@ -15,11 +15,11 @@ endif()
 include_directories(${mfrc522_SOURCE_DIR}/include)
 
 add_library(mfrc522_src mfrc522_drv.c)
-target_compile_definitions(mfrc522_src PUBLIC MFRC522_LL_PTR)
+target_compile_definitions(mfrc522_src PUBLIC MFRC522_LL_PTR MFRC522_LL_DELAY)
 
 # Library versions for unit testing
 if(BUILD_FOR_UT)
-    # Build also with second low-level communication method
-    add_library(mfrc522_src_ll_def mfrc522_drv.c)
-    target_compile_definitions(mfrc522_src_ll_def PUBLIC MFRC522_LL_DEF)
+    # Build without low-level delay enabled
+    add_library(mfrc522_src_no_ll_delay mfrc522_drv.c)
+    target_compile_definitions(mfrc522_src_no_ll_delay PUBLIC MFRC522_LL_DEF)
 endif()
