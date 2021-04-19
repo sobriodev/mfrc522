@@ -71,7 +71,7 @@ mfrc522_drv_status mfrc522_drv_init(mfrc522_drv_conf* conf)
 #endif
 
     /* Try to get chip version from a device */
-    if (UNLIKELY(mfrc522_ll_status_ok != mfrc522_drv_read(conf, mfrc522_reg_version, 1, &conf->chip_version))) {
+    if (UNLIKELY(mfrc522_ll_status_ok != mfrc522_drv_read(conf, mfrc522_reg_version, &conf->chip_version))) {
         conf->chip_version = MFRC522_REG_VERSION_INVALID;
         return mfrc522_drv_status_ll_err;
     }
@@ -95,7 +95,7 @@ mfrc522_drv_status mfrc522_drv_read_until(const mfrc522_drv_conf* conf, mfrc522_
     u8 rc_decrement_step = (ru_conf->retry_cnt == MFRC522_DRV_RETRY_CNT_INF) ? 0 : 1;
 
     /* Read register first time */
-    PCD_TRY_READ(conf, ru_conf->addr, 1, &ru_conf->payload);
+    PCD_TRY_READ(conf, ru_conf->addr, &ru_conf->payload);
 
     while ((ru_conf->exp_payload != (ru_conf->payload & ru_conf->field_mask))) {
         if (!rc) {
@@ -103,7 +103,7 @@ mfrc522_drv_status mfrc522_drv_read_until(const mfrc522_drv_conf* conf, mfrc522_
         }
         rc -= rc_decrement_step;
         delay(conf, ru_conf->delay); /* Wait for a while and check again */
-        PCD_TRY_READ(conf, ru_conf->addr, 1, &ru_conf->payload);
+        PCD_TRY_READ(conf, ru_conf->addr, &ru_conf->payload);
     }
     return mfrc522_drv_status_ok;
 }

@@ -65,13 +65,12 @@ typedef mfrc522_ll_status (*mfrc522_ll_send)(u8 addr, u8 payload);
  * supported digital interface(s).
  *
  * @param addr MFRC522 register address.
- * @param bytes The number of bytes to receive.
- * @param payload Address of a buffer to store received data. Must be big enough to store all data.
+ * @param payload Address of a buffer to store received data.
  * @return An instance of mfrc522_ll_status. Valid return codes are:
  *         - mfrc522_ll_status_recv_err on error
  *         - mfrc522_ll_status_ok on success
  */
-typedef mfrc522_ll_status (*mfrc522_ll_recv)(u8 addr, size bytes, u8* payload);
+typedef mfrc522_ll_status (*mfrc522_ll_recv)(u8 addr, u8* payload);
 
 #if MFRC522_LL_DELAY
 /**
@@ -110,13 +109,12 @@ mfrc522_ll_status mfrc522_ll_send(u8 addr, u8 payload);
  * datasheet to check supported digital interface(s).
  *
  * @param addr MFRC522 register address.
- * @param bytes The number of bytes to receive.
- * @param payload Address of a buffer to store received data. Must be big enough to store all data.
+ * @param payload Address of a buffer to store received data.
  * @return An instance of mfrc522_ll_status. Valid return codes are:
  *         - mfrc522_ll_status_recv_err on error
  *         - mfrc522_ll_status_ok on success
  */
-mfrc522_ll_status mfrc522_ll_recv(u8 addr, size bytes, u8* payload);
+mfrc522_ll_status mfrc522_ll_recv(u8 addr, u8* payload);
 
 #if MFRC522_LL_DELAY
 /**

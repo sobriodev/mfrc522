@@ -27,7 +27,7 @@ extern "C" {
 #define MFRC522_DRV_RETRY_CNT_INF 0xFFFFFFFF
 
 /**
- * Default number of retries when condition is not fullfilled
+ * Default number of retries when condition is not fulfilled
  */
 #define MFRC522_DRV_DEF_RETRY_CNT 10
 
@@ -140,26 +140,25 @@ static inline mfrc522_ll_status mfrc522_drv_write(const mfrc522_drv_conf* conf, 
  *
  * @param conf Pointer to a configuration structure.
  * @param addr Register address.
- * @param sz Requested number of bytes to read.
  * @param payload Pointer to a buffer where incoming bytes are written. Must be big enough to store all data.
  * @return An instance of mfrc522_ll_status.
  */
-static inline mfrc522_ll_status mfrc522_drv_read(const mfrc522_drv_conf* conf, mfrc522_reg addr, size sz, u8* payload)
+static inline mfrc522_ll_status mfrc522_drv_read(const mfrc522_drv_conf* conf, mfrc522_reg addr, u8* payload)
 {
     ERROR_IF_EQ(conf, NULL, mfrc522_ll_status_recv_err);
     ERROR_IF_EQ(payload, NULL, mfrc522_ll_status_recv_err);
 #if MFRC522_LL_PTR
-    return conf->ll_recv(addr, sz, payload);
+    return conf->ll_recv(addr, payload);
 #elif MFRC522_LL_DEF
     (void)conf; /* Make compiler happy */
-    return mfrc522_ll_recv(addr, sz, payload);
+    return mfrc522_ll_recv(addr, payload);
 #endif
 }
 
 /**
  * Poll a PCD's register until certain value is returned.
  *
- * The function keeps reading from a register until requested value is returned. It works with 1-byte payloads only.
+ * The function keeps reading from a register until requested value is returned.
  * It is possible to pass maximum number of retries, after which an error code is returned or force 'infinite' version
  * by setting 'retry_cnt' field to MFRC522_DRV_RETRY_CNT_INF. The real number of retries may vary, depending on
  * MFRC522_CONF_RETRY_CNT_MUL configuration macro, when MFRC522_LL_DELAY macro is not enabled.

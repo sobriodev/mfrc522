@@ -15,7 +15,6 @@ void mfrc522UpdateLowLevelExpectations(const LowLevelCallParams& params)
         if (type) {
             mock().expectNCalls(n, "mfrc522_ll_recv")
             .withParameter("addr", addr)
-            .withParameter("bytes", 1) /* FIXME To be deleted */
             .withOutputParameterReturning("payload", payload, sizeof(*payload));
         } else {
             mock().expectNCalls(n, "mfrc522_ll_send")

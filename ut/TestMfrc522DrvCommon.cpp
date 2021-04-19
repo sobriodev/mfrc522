@@ -56,7 +56,6 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_init__LlReceiveError__LlErrorIsGenerated)
     auto llStatus = mfrc522_ll_status_recv_err;
     mock().expectOneCall("mfrc522_ll_recv")
     .withParameter("addr", mfrc522_reg_version)
-    .withParameter("bytes", 1) /* FIXME delete afterwards */
     .withOutputParameterReturning("payload", &payload, sizeof(payload))
     .andReturnValue(&llStatus);
 
@@ -95,10 +94,10 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_read__NullCases)
     mfrc522_drv_conf conf;
     u8 pl;
 
-    auto status = mfrc522_drv_read(&conf, mfrc522_reg_fifo_data_reg, 1, nullptr);
+    auto status = mfrc522_drv_read(&conf, mfrc522_reg_fifo_data_reg, nullptr);
     CHECK_EQUAL(mfrc522_ll_status_recv_err, status);
 
-    status = mfrc522_drv_read(nullptr, mfrc522_reg_fifo_data_reg, 1, &pl);
+    status = mfrc522_drv_read(nullptr, mfrc522_reg_fifo_data_reg, &pl);
     CHECK_EQUAL(mfrc522_ll_status_recv_err, status);
 }
 

@@ -11,13 +11,12 @@ mfrc522_ll_status mfrc522_ll_send(u8 addr, u8 payload)
     return *static_cast<mfrc522_ll_status*>(mock().returnPointerValueOrDefault(&defaultRet));
 }
 
-mfrc522_ll_status mfrc522_ll_recv(u8 addr, size bytes, u8* payload)
+mfrc522_ll_status mfrc522_ll_recv(u8 addr, u8* payload)
 {
     static auto defaultRet = mfrc522_ll_status_ok;
 
     mock().actualCall("mfrc522_ll_recv")
     .withParameter("addr", addr)
-    .withParameter("bytes", bytes)
     .withOutputParameter("payload", payload);
     return *static_cast<mfrc522_ll_status*>(mock().returnPointerValueOrDefault(&defaultRet));
 }
