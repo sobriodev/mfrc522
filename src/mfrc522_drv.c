@@ -5,8 +5,14 @@
 /* ------------------------ Private macros -------------------- */
 /* ------------------------------------------------------------ */
 
-/* Try to send bytes to device with returning a generic error code if necessary */
-#define PCD_TRY_WRITE(...)  \
+/* Try to send single-byte to device with returning a generic error code if necessary */
+#define PCD_TRY_WRITE_BYTE(...)  \
+do { \
+    if (UNLIKELY(mfrc522_ll_status_ok != mfrc522_drv_write_byte(__VA_ARGS__))) return mfrc522_drv_status_ll_err; \
+} while (0)
+
+/* Try to send multiple bytes to device with returning a generic error code if necessary */
+#define PCD_TRY_WRITE_MULTI(...)  \
 do { \
     if (UNLIKELY(mfrc522_ll_status_ok != mfrc522_drv_write(__VA_ARGS__))) return mfrc522_drv_status_ll_err; \
 } while (0)
@@ -125,7 +131,7 @@ mfrc522_drv_status mfrc522_soft_reset(const mfrc522_drv_conf* conf)
     ERROR_IF_NEQ(res, mfrc522_drv_status_ok);
 
     /* Send SoftReset command. Do not care of other bits - they will be set to defaults afterwards */
-    PCD_TRY_WRITE(conf, mfrc522_reg_command, mfrc522_reg_cmd_soft_reset);
+    PCD_TRY_WRITE_BYTE(conf, mfrc522_reg_command, mfrc522_reg_cmd_soft_reset);
 
     /* Wait until Idle command is active back */
     res = mfrc522_drv_read_until(conf, &ruc);

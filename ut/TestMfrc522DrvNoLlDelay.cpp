@@ -32,8 +32,8 @@ TEST(TestMfrc522DrvNoLlDelay, mfrc522_drv_read_until__LowLevelDelayDisabled__Ret
 {
     /* Populate fake responses */
     const auto retryCnt = 10;
-    lowLevelCallParams.push_back(LL_READ(1, mfrc522_reg_version, 0x9B));
-    lowLevelCallParams.push_back(LL_READ(retryCnt * MFRC522_CONF_RETRY_CNT_MUL + 1, mfrc522_reg_fifo_data_reg, 0x00));
+    lowLevelCallParams.push_back(READ(1, mfrc522_reg_version, 0x9B));
+    lowLevelCallParams.push_back(READ(retryCnt * MFRC522_CONF_RETRY_CNT_MUL + 1, mfrc522_reg_fifo_data_reg, 0x00));
     mfrc522UpdateLowLevelExpectations(lowLevelCallParams);
 
     /* Init device */

@@ -105,7 +105,7 @@ typedef struct mfrc522_drv_read_until_conf_
 mfrc522_drv_status mfrc522_drv_init(mfrc522_drv_conf* conf);
 
 /**
- * Write to a PCD.
+ * Write multiple bytes to a PCD's register.
  *
  * The function performs write to a PCD (Proximity Coupling Device). Depending on low-level call mechanism, 'pointer'
  * or 'definition' method is used.
@@ -115,18 +115,34 @@ mfrc522_drv_status mfrc522_drv_init(mfrc522_drv_conf* conf);
  *
  * @param conf Pointer to a configuration structure.
  * @param addr Register address.
- * @param payload Payload byte.
+ * @param sz Number of payload bytes.
+ * @param payload Payload bytes.
  * @return An instance of mfrc522_ll_status.
  */
-static inline mfrc522_ll_status mfrc522_drv_write(const mfrc522_drv_conf* conf, mfrc522_reg addr, u8 payload)
+static inline mfrc522_ll_status mfrc522_drv_write(const mfrc522_drv_conf* conf, mfrc522_reg addr, size sz, u8* payload)
 {
     ERROR_IF_EQ(conf, NULL, mfrc522_ll_status_send_err);
 #if MFRC522_LL_PTR
-    return conf->ll_send(addr, payload);
+    return conf->ll_send(addr, sz, payload);
 #elif MFRC522_LL_DEF
     (void)conf; /* Make compiler happy */
-    return mfrc522_ll_send(addr, payload);
+    return mfrc522_ll_send(addr, sz, payload);
 #endif
+}
+
+/**
+ * Write single byte to a PCD's register.
+ *
+ * The function is a wrapper on 'mfrc522_drv_write()' function.
+ *
+ * @param conf Pointer to a configuration structure.
+ * @param addr Register address.
+ * @param payload Payload byte.
+ * @return An instance of mfrc522_ll_status. Refer to 'mfrc522_drv_write()' function for more details.
+ */
+static inline mfrc522_ll_status mfrc522_drv_write_byte(const mfrc522_drv_conf* conf, mfrc522_reg addr, u8 payload)
+{
+    return mfrc522_drv_write(conf, addr, 1, &payload);
 }
 
 /**

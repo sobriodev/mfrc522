@@ -52,12 +52,13 @@ typedef enum mfrc522_ll_status_
  * supported digital interface(s).
  *
  * @param addr MFRC522 register address.
- * @param payload Payload byte.
+ * @param bytes Number of payload bytes.
+ * @param payload Payload bytes.
  * @return An instance of mfrc522_ll_status. Valid return codes are:
  *         - mfrc522_ll_status_send_err on error
  *         - mfrc522_ll_status_ok on success
  */
-typedef mfrc522_ll_status (*mfrc522_ll_send)(u8 addr, u8 payload);
+typedef mfrc522_ll_status (*mfrc522_ll_send)(u8 addr, size bytes, u8* payload);
 
 /**
  * Low-level receive function type. From high-level point of view the library does not assume which digital interface is
@@ -96,12 +97,13 @@ typedef void (*mfrc522_ll_delay)(u32 period);
  * to check supported digital interface(s).
  *
  * @param addr MFRC522 register address.
- * @param payload Payload byte.
+ * @param bytes Number of payload bytes.
+ * @param payload Payload bytes.
  * @return An instance of mfrc522_ll_status. Valid return codes are:
  *         - mfrc522_ll_status_send_err on error
  *         - mfrc522_ll_status_ok on success
  */
-mfrc522_ll_status mfrc522_ll_send(u8 addr, u8 payload);
+mfrc522_ll_status mfrc522_ll_send(u8 addr, size bytes, u8* payload);
 
 /**
  * Low-level function to receive data from a device. From high-level point of view the library does not assume which
