@@ -71,8 +71,10 @@ mfrc522_drv_status mfrc522_drv_init(mfrc522_drv_conf* conf)
 #endif
 
     /* Try to get chip version from a device */
-    conf->chip_version = MFRC522_REG_VERSION_INVALID;
-    PCD_TRY_READ(conf, mfrc522_reg_version, 1, &conf->chip_version);
+    if (UNLIKELY(mfrc522_ll_status_ok != mfrc522_drv_read(conf, mfrc522_reg_version, 1, &conf->chip_version))) {
+        conf->chip_version = MFRC522_REG_VERSION_INVALID;
+        return mfrc522_drv_status_ll_err;
+    }
 
     /* Chiptype 9xh stands for MFRC522 */
     if (MFRC522_CONF_CHIP_TYPE != (conf->chip_version & MFRC522_REG_VERSION_CHIP_TYPE_MSK)) {
@@ -115,8 +117,8 @@ mfrc522_drv_status mfrc522_soft_reset(const mfrc522_drv_conf* conf)
     ruc.addr = mfrc522_reg_command;
     ruc.field_mask = MFRC522_REG_COMMAND_CMD_MSK;
     ruc.exp_payload = mfrc522_reg_cmd_idle;
-    ruc.delay = 5;
-    ruc.retry_cnt = 10;
+    ruc.delay = 100; /* Give 100us delay */
+    ruc.retry_cnt = MFRC522_DRV_DEF_RETRY_CNT;
 
     /* Wait for current command to finish */
     mfrc522_drv_status res = mfrc522_drv_read_until(conf, &ruc);

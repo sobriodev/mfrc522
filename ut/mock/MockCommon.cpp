@@ -1,4 +1,4 @@
-#include "../TestRunner.h"
+#include "TestRunner.h"
 #include "mfrc522_ll.h"
 
 mfrc522_ll_status mfrc522_ll_send(u8 addr, u8 payload)
@@ -8,7 +8,6 @@ mfrc522_ll_status mfrc522_ll_send(u8 addr, u8 payload)
     mock().actualCall("mfrc522_ll_send")
     .withParameter("addr", addr)
     .withParameter("payload", payload);
-
     return *static_cast<mfrc522_ll_status*>(mock().returnPointerValueOrDefault(&defaultRet));
 }
 
@@ -20,7 +19,11 @@ mfrc522_ll_status mfrc522_ll_recv(u8 addr, size bytes, u8* payload)
     .withParameter("addr", addr)
     .withParameter("bytes", bytes)
     .withOutputParameter("payload", payload);
-
     return *static_cast<mfrc522_ll_status*>(mock().returnPointerValueOrDefault(&defaultRet));
 }
 
+void mfrc522_ll_delay(u32 period)
+{
+    mock().actualCall("mfrc522_ll_delay")
+    .withParameter("period", period);
+}

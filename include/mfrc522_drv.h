@@ -26,6 +26,11 @@ extern "C" {
  */
 #define MFRC522_DRV_RETRY_CNT_INF 0xFFFFFFFF
 
+/**
+ * Default number of retries when condition is not fullfilled
+ */
+#define MFRC522_DRV_DEF_RETRY_CNT 10
+
 /* ------------------------------------------------------------ */
 /* -------------------------- Data types ---------------------- */
 /* ------------------------------------------------------------ */
@@ -175,7 +180,8 @@ mfrc522_drv_status mfrc522_drv_read_until(const mfrc522_drv_conf* conf, mfrc522_
 /**
  * Perform soft reset on a PCD.
  *
- * The function does nothing when NULL was passed instead of a valid 'conf' pointer.
+ * The function waits until no command is executed.
+ * An error code is returned when NULL was passed instead of a valid 'conf' pointer.
  *
  * @param conf Pointer to a configuration structure.
  * @return An instance of 'mfrc522_drv_status'. On success, mfrc522_drv_status_ok is returned.

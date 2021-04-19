@@ -1,5 +1,7 @@
 #include "TestRunner.h"
 #include "mfrc522_drv.h"
+#include "Mfrc522MockWrapper.h"
+#include "mfrc522_conf.h"
 
 /* ------------------------------------------------------------ */
 /* ------------------------ Test groups ----------------------- */
@@ -7,6 +9,8 @@
 
 TEST_GROUP(TestMfrc522DrvNoLlDelay)
 {
+    LowLevelCallParams lowLevelCallParams = {};
+
     void setup() override
     {
         /* Nothing to do here */
@@ -14,6 +18,8 @@ TEST_GROUP(TestMfrc522DrvNoLlDelay)
 
     void teardown() override
     {
+        mock().checkExpectations();
+        mfrc522DestroyLowLevelParams(lowLevelCallParams);
         mock().clear();
     }
 };
@@ -22,35 +28,25 @@ TEST_GROUP(TestMfrc522DrvNoLlDelay)
 /* ------------------------ Test cases ------------------------ */
 /* ------------------------------------------------------------ */
 
-TEST(TestMfrc522DrvNoLlDelay, to_be_deleted)
+TEST(TestMfrc522DrvNoLlDelay, mfrc522_drv_read_until__LowLevelDelayDisabled__RetryCountIncreased)
 {
-    u8 payload = 0x9B;
+    /* Populate fake responses */
+    const auto retryCnt = 10;
+    lowLevelCallParams.push_back(LL_READ(1, mfrc522_reg_version, 0x9B));
+    lowLevelCallParams.push_back(LL_READ(retryCnt * MFRC522_CONF_RETRY_CNT_MUL + 1, mfrc522_reg_fifo_data_reg, 0x00));
+    mfrc522UpdateLowLevelExpectations(lowLevelCallParams);
 
-    mock().strictOrder();
-
-    mock().expectOneCall("mfrc522_ll_recv")
-    .withParameter("addr", mfrc522_reg_version)
-    .withParameter("bytes", 1)
-    .withOutputParameterReturning("payload", &payload, sizeof(payload));
-
+    /* Init device */
     mfrc522_drv_conf conf;
     auto status = mfrc522_drv_init(&conf);
     CHECK_EQUAL(mfrc522_drv_status_ok, status);
 
-    payload = 0x00;
-    mock().expectNCalls(101, "mfrc522_ll_recv")
-            .withParameter("addr", mfrc522_reg_fifo_data_reg)
-            .withParameter("bytes", 1)
-            .withOutputParameterReturning("payload", &payload, sizeof(payload));
-
     mfrc522_drv_read_until_conf ruConf;
     ruConf.addr = mfrc522_reg_fifo_data_reg;
     ruConf.exp_payload = 0xFF;
-    ruConf.field_mask = 0xFF;
-    ruConf.retry_cnt = 10;
+    ruConf.field_mask = 0x00;
+    ruConf.retry_cnt = retryCnt;
 
     status = mfrc522_drv_read_until(&conf, &ruConf);
     CHECK_EQUAL(mfrc522_drv_status_dev_rtr_err, status);
-
-    mock().checkExpectations();
 }
