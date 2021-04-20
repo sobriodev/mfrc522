@@ -89,6 +89,18 @@ mfrc522_drv_status mfrc522_drv_init(mfrc522_drv_conf* conf)
     return mfrc522_drv_status_ok;
 }
 
+mfrc522_ll_status mfrc522_drv_write_masked(const mfrc522_drv_conf* conf, mfrc522_reg addr, u8 payload, u8 mask)
+{
+    ERROR_IF_EQ(conf, NULL, mfrc522_ll_status_send_err);
+
+    u8 buff;
+    ERROR_IF_NEQ(mfrc522_drv_read(conf, addr, &buff), mfrc522_ll_status_ok);
+    buff &= ~mask;
+    buff |= (payload & mask);
+    ERROR_IF_NEQ(mfrc522_drv_write_byte(conf, addr, buff), mfrc522_ll_status_ok);
+    return mfrc522_ll_status_ok;
+}
+
 mfrc522_drv_status mfrc522_drv_read_until(const mfrc522_drv_conf* conf, mfrc522_drv_read_until_conf* ru_conf)
 {
     ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);

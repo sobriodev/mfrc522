@@ -231,3 +231,21 @@ TEST(TestMfrc522DrvCommon, mfrc522_soft_reset__IdleCommandNotReached__Failure)
     auto status = mfrc522_soft_reset(&conf);
     CHECK_EQUAL(mfrc522_drv_status_dev_rtr_err, status);
 }
+
+TEST(TestMfrc522DrvCommon, mfrc522_drv_write_masked__NullCases)
+{
+    auto status = mfrc522_drv_write_masked(nullptr, mfrc522_reg_demod, 0x0F, 0x0F);
+    CHECK_EQUAL(mfrc522_ll_status_send_err, status);
+}
+
+TEST(TestMfrc522DrvCommon, mfrc522_drv_write_masked__MaskedWritePerformed)
+{
+    auto conf = initDevice();
+
+    lowLevelCallParams.push_back(READ(1, mfrc522_reg_gs_n, 0x55));
+    lowLevelCallParams.push_back(WRITE1(1, mfrc522_reg_gs_n, 0x51));
+    mfrc522UpdateLowLevelExpectations(lowLevelCallParams);
+
+    auto status = mfrc522_drv_write_masked(&conf, mfrc522_reg_gs_n, 0x7B, 0x94);
+    CHECK_EQUAL(mfrc522_ll_status_ok, status);
+}

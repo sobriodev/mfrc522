@@ -146,6 +146,20 @@ static inline mfrc522_ll_status mfrc522_drv_write_byte(const mfrc522_drv_conf* c
 }
 
 /**
+ * Perform masked write to a PCD's register.
+ *
+ * The function sets new value of a register regarding payload and mask. Only bits selected in mask are affected.
+ * In a case when either 'conf' is NULL, mfrc522_ll_status_send_err is returned.
+ *
+ * @param conf Pointer to a configuration structure.
+ * @param addr Register address.
+ * @param payload Payload byte.
+ * @param mask Field mask.
+ * @return An instance of mfrc522_ll_status.
+ */
+mfrc522_ll_status mfrc522_drv_write_masked(const mfrc522_drv_conf* conf, mfrc522_reg addr, u8 payload, u8 mask);
+
+/**
  * Read from a PCD.
  *
  * The function performs read from a PCD (Proximity Coupling Device). Depending on low-level call mechanism, 'pointer'
