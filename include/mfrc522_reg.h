@@ -10,6 +10,12 @@ extern "C" {
 /* ------------------------------------------------------------ */
 
 /**
+ * Create 'pos' and 'msk' macros automatically. Note that in fact these are enum constants
+ */
+#define MFRC522_REG_FIELD_CREATE(NAME, MSK, POS) \
+enum { MFRC522_REG_##NAME##_MSK = (MSK), MFRC522_REG_##NAME##_POS = POS }
+
+/**
  * Macro to calculate byte mask based on field mask and position
  */
 #define MFRC522_REG_MSK_REAL(FIELD) (MFRC522_REG_##FIELD##_MSK << MFRC522_REG_##FIELD##_POS)
@@ -25,34 +31,29 @@ extern "C" {
 #define MFRC522_REG_VERSION_INVALID 0xFF
 
 /**
- * Bit mask and position of Chiptype field in Version register
+ * Bit fields for Version register
  */
-#define MFRC522_REG_VERSION_CHIPTYPE_MSK 0x0F
-#define MFRC522_REG_VERSION_CHIPTYPE_POS 4
+MFRC522_REG_FIELD_CREATE(VERSION_CHIPTYPE, 0x0F, 4);
 
 /**
- * Bit mask and position of Command field in Command register
+ * Bit fields for Command register
  */
-#define MFRC522_REG_COMMAND_CMD_MSK 0x0F
-#define MFRC522_REG_COMMAND_CMD_POS 0
+MFRC522_REG_FIELD_CREATE(COMMAND_CMD, 0x0F, 0);
 
 /**
- * Bit mask and position of TPrescaler_Hi field in TMode register
+ * Bit fields for TMode register
  */
-#define MFRC522_REG_TMODE_TPHI_MSK 0x0F
-#define MFRC522_REG_TMODE_TPHI_POS 0
+MFRC522_REG_FIELD_CREATE(TMODE_TPHI, 0x0F, 0);
 
 /**
- * Bit mask and position of TPrescalEven field in Demod register
+ * Bit fields for Demod register
  */
-#define MFRC522_REG_DEMOD_TPE_MSK 0x01
-#define MFRC522_REG_DEMOD_TPE_POS 4
+MFRC522_REG_FIELD_CREATE(DEMOD_TPE, 0x01, 4);
 
 /**
- * Bit mask and position of TStartNow field in Control register
+ * Bit fields for Control register
  */
-#define MFRC522_REG_CONTROL_TSN_MSK 0x01
-#define MFRC522_REG_CONTROL_TSN_POS 6
+MFRC522_REG_FIELD_CREATE(CONTROL_TSN, 0x01, 6);
 
 /* ------------------------------------------------------------ */
 /* ------------------------ Data types ------------------------ */
