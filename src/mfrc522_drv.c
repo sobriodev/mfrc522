@@ -17,11 +17,20 @@ do { \
     if (UNLIKELY(mfrc522_ll_status_ok != mfrc522_drv_write(__VA_ARGS__))) return mfrc522_drv_status_ll_err; \
 } while (0)
 
+/* Try to perform masked write with returning a generic error code if necessary */
+#define PCD_TRY_WRITE_MASKED(...)  \
+do { \
+    if (UNLIKELY(mfrc522_ll_status_ok != mfrc522_drv_write_masked(__VA_ARGS__))) return mfrc522_drv_status_ll_err; \
+} while (0)
+
 /* Try to receive bytes from device with returning a generic error code if necessary */
 #define PCD_TRY_READ(...) \
 do { \
     if (UNLIKELY(mfrc522_ll_status_ok != mfrc522_drv_read(__VA_ARGS__))) return mfrc522_drv_status_ll_err; \
 } while (0)
+
+/* Timer prescaler when using millisecond as a time unit */
+#define MFRC522_DRV_TIM_PRESCALER 1694
 
 /* ------------------------------------------------------------ */
 /* ----------------------- Private functions ------------------ */
@@ -148,6 +157,56 @@ mfrc522_drv_status mfrc522_soft_reset(const mfrc522_drv_conf* conf)
     /* Wait until Idle command is active back */
     res = mfrc522_drv_read_until(conf, &ruc);
     ERROR_IF_NEQ(res, mfrc522_drv_status_ok);
+
+    return mfrc522_drv_status_ok;
+}
+
+mfrc522_drv_status mfrc522_drv_tim_set(mfrc522_drv_tim_conf* tim_conf, u16 period)
+{
+    ERROR_IF_EQ(tim_conf, NULL, mfrc522_drv_status_nullptr);
+    if (UNLIKELY(0 == period || period > MFRC522_DRV_TIM_MAX_PERIOD)) {
+        return mfrc522_drv_status_tim_prd_err;
+    }
+
+    /*
+     * The formula used to calculate reload value (with TPrescaler == 1694):
+     * TReload = 4 * period - 1
+     */
+    tim_conf->prescaler = MFRC522_DRV_TIM_PRESCALER;
+    tim_conf->prescaler_type = mfrc522_drv_tim_psl_even;
+    tim_conf->reload_val = (4 * period) - 1;
+#if MFRC522_CONF_TIM_RELOAD_FIXED
+    ++tim_conf->reload_val;
+#endif
+
+    return mfrc522_drv_status_ok;
+}
+
+mfrc522_drv_status mfrc522_drv_tim_start(const mfrc522_drv_conf* conf, const mfrc522_drv_tim_conf* tim_conf)
+{
+    ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
+    ERROR_IF_EQ(tim_conf, NULL, mfrc522_drv_status_nullptr);
+
+    /* TODO change hardcoded values to macros */
+
+    /* Write to prescaler Lo and Hi registers */
+    u8 prescaler_lo = (u8)(tim_conf->prescaler & 0x00FF);
+    u8 prescaler_hi = (u8)((tim_conf->prescaler & 0x0F00) >> 8);
+    PCD_TRY_WRITE_BYTE(conf, mfrc522_reg_tim_prescaler, prescaler_lo);
+    PCD_TRY_WRITE_MASKED(conf, mfrc522_reg_tim_mode, prescaler_hi, 0x0F);
+
+    /* Write to prescaler type register */
+    u8 prescaler_type = (tim_conf->prescaler_type == mfrc522_drv_tim_psl_even) << 4;
+    PCD_TRY_WRITE_MASKED(conf, mfrc522_reg_demod, prescaler_type, 1 << 4);
+
+    /* Write to reload Lo and Hi registers */
+    u8 reload_lo = (u8)(tim_conf->reload_val & 0x00FF);
+    u8 reload_hi = (u8)((tim_conf->reload_val & 0xFF00) >> 8);
+    PCD_TRY_WRITE_BYTE(conf, mfrc522_reg_tim_reload_lo, reload_lo);
+    PCD_TRY_WRITE_BYTE(conf, mfrc522_reg_tim_reload_hi, reload_hi);
+
+    /* Immediately start timer */
+    PCD_TRY_WRITE_MASKED(conf, mfrc522_reg_control_reg, 1 << 6, 1 << 6);
 
     return mfrc522_drv_status_ok;
 }

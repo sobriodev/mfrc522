@@ -17,10 +17,26 @@
  * device has to respond is: delay * retry count.
  *
  * Case 2:
- * Delay function is disabled and retry count is set ot some value. In general, total number of time in which device has
+ * Delay function is disabled and retry count is set to some value. In general, total number of time in which device has
  * to respond is: retry count * time of executing one iteration of a loop. In some circumstances this may be not enough.
  * The multiplier has to be tuned, depending on bus settings, e.g. clock frequency and other links.
  */
 #define MFRC522_CONF_RETRY_CNT_MUL 10
+
+/**
+ * According to MFRC522 documentation, the formula to calculate timer period is:
+ * TPeriod = ((TPrescaler * 2 + Fixed) * (TReload + 1)) / 13.56 MHz,
+ * where 'Fixed' equals to 1 when odd prescaler is used, otherwise 'Fixed' equals to 2.
+ *
+ * However, tests shown that TReload is not increased by one. Maybe it depends on module version or some Chinese
+ * products behave in a different way. When below the macro is set, following formula is taken into use:
+ *
+ * TPeriod = ((TPrescaler * 2 + Fixed) * (TReload)) / 13.56 MHz,
+ * where 'Fixed' equals to 1 when odd prescaler is used, otherwise 'Fixed' equals to 2.
+ *
+ * The macro is used only in functions that convert given time period to TPrescaler and TReload. It does not apply when
+ * these values are set manually.
+ */
+#define MFRC522_CONF_TIM_RELOAD_FIXED 1
 
 #endif //MFRC522_MFRC522_CONF_H

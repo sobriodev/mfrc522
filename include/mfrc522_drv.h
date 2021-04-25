@@ -31,6 +31,11 @@ extern "C" {
  */
 #define MFRC522_DRV_DEF_RETRY_CNT 10
 
+/**
+ * Maximum timer period in milliseconds
+ */
+#define MFRC522_DRV_TIM_MAX_PERIOD 16383
+
 /* ------------------------------------------------------------ */
 /* -------------------------- Data types ---------------------- */
 /* ------------------------------------------------------------ */
@@ -47,7 +52,10 @@ typedef enum mfrc522_drv_status_
 
     /* Device errors */
     mfrc522_drv_status_dev_err, /**< Device not found */
-    mfrc522_drv_status_dev_rtr_err /**< Maximum number of read retries reached */
+    mfrc522_drv_status_dev_rtr_err, /**< Maximum number of read retries reached */
+
+    /* Timer related */
+    mfrc522_drv_status_tim_prd_err /**< Given timer period is too long */
 } mfrc522_drv_status;
 
 /**
@@ -78,6 +86,25 @@ typedef struct mfrc522_drv_read_until_conf_
     u32 delay; /**< Optional delay in microseconds between reads. Valid only if MFRC522_LL_DELAY is set */
     u32 retry_cnt; /**< Maximum number of retries */
 } mfrc522_drv_read_until_conf;
+
+/**
+ * Prescaler types for timer unit
+ */
+typedef enum mfrc522_drv_tim_psl_type_
+{
+    mfrc522_drv_tim_psl_odd, /**< Odd prescaler */
+    mfrc522_drv_tim_psl_even /**< Even prescaler */
+} mfrc522_drv_tim_psl_type;
+
+/**
+ * Timer configuration structure
+ */
+typedef struct mfrc522_drv_tim_conf_
+{
+    u16 prescaler; /**< Prescaler value. Only 12 lower bits are used */
+    mfrc522_drv_tim_psl_type prescaler_type; /**< Prescaler type */
+    u16 reload_val; /**< Reload value */
+} mfrc522_drv_tim_conf;
 
 /* ------------------------------------------------------------ */
 /* ----------------------- Public functions ------------------- */
@@ -216,6 +243,36 @@ mfrc522_drv_status mfrc522_drv_read_until(const mfrc522_drv_conf* conf, mfrc522_
  * @return An instance of 'mfrc522_drv_status'. On success, mfrc522_drv_status_ok is returned.
  */
 mfrc522_drv_status mfrc522_soft_reset(const mfrc522_drv_conf* conf);
+
+/**
+ * Initialize MFRC522 timer.
+ *
+ * The function performs initialization of 'tim_conf' fields according to 'period' parameter.
+ * Minimum timer period equals to 1ms.
+ * Maximum timer period is limited by MFRC522_DRV_TIM_MAX_PERIOD macro.
+ *
+ * The function returns error when NUll was passed instead of a 'tim_conf' pointer.
+ *
+ * @param tim_conf Pointer to a timer configuration structure.
+ * @param period Timer period in milliseconds.
+ * @return Status of the operation:
+ *         - mfrc522_drv_status_nullptr when NULL was passed instead of a valid pointer
+ *         - mfrc522_drv_status_tim_prd_err when timer period was incorrect
+ *         - mfrc522_drv_status_ok on success
+ */
+mfrc522_drv_status mfrc522_drv_tim_set(mfrc522_drv_tim_conf* tim_conf, u16 period);
+
+/**
+ * Start MFRC522 timer.
+ *
+ * The configuration structure passed as 'tim_conf' parameter has to be initialized prior to calling this function.
+ * The function returns error code when NULL was passed instead of a valid pointer.
+ *
+ * @param conf Pointer to a MFRC522 configuration structure.
+ * @param tim_conf Pointer to a timer configuration structure.
+ * @return Status of the operation. On success mfrc522_drv_status_ok is returned.
+ */
+mfrc522_drv_status mfrc522_drv_tim_start(const mfrc522_drv_conf* conf, const mfrc522_drv_tim_conf* tim_conf);
 
 #ifdef __cplusplus
 }

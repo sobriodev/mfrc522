@@ -37,7 +37,7 @@ typedef enum mfrc522_reg_
     mfrc522_reg_reserved0 = 0x00, /**< Reserved */
     mfrc522_reg_command = 0x01, /**< CommandReg */
     mfrc522_reg_com_irq_en = 0x02, /**< ComIEnReg */
-    mfrc522_reg_div_irq_en = 0x03, /**< DivLEnReg */
+    mfrc522_reg_div_irq_en = 0x03, /**< DivIEnReg */
     mfrc522_reg_com_irq = 0x04, /**< ComIrqReg */
     mfrc522_reg_div_irq = 0x05, /**< DivIrqReg */
     mfrc522_reg_error_reg = 0x06, /**< ErrorReg */
