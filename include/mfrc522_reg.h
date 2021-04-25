@@ -10,19 +10,49 @@ extern "C" {
 /* ------------------------------------------------------------ */
 
 /**
+ * Macro to calculate byte mask based on field mask and position
+ */
+#define MFRC522_REG_MSK_REAL(FIELD) (MFRC522_REG_##FIELD##_MSK << MFRC522_REG_##FIELD##_POS)
+
+/**
+ * Macro to represent 'msk' and 'pos' arguments
+ */
+#define MFRC522_REG_FIELD(FIELD) MFRC522_REG_##FIELD##_MSK, MFRC522_REG_##FIELD##_POS
+
+/**
  * Invalid chip version number
  */
 #define MFRC522_REG_VERSION_INVALID 0xFF
 
 /**
- * Bit mask for Chiptype field in version register
+ * Bit mask and position of Chiptype field in Version register
  */
-#define MFRC522_REG_VERSION_CHIP_TYPE_MSK 0xF0
+#define MFRC522_REG_VERSION_CHIPTYPE_MSK 0x0F
+#define MFRC522_REG_VERSION_CHIPTYPE_POS 4
 
 /**
- * Bit mask for Command field in command register
+ * Bit mask and position of Command field in Command register
  */
 #define MFRC522_REG_COMMAND_CMD_MSK 0x0F
+#define MFRC522_REG_COMMAND_CMD_POS 0
+
+/**
+ * Bit mask and position of TPrescaler_Hi field in TMode register
+ */
+#define MFRC522_REG_TMODE_TPHI_MSK 0x0F
+#define MFRC522_REG_TMODE_TPHI_POS 0
+
+/**
+ * Bit mask and position of TPrescalEven field in Demod register
+ */
+#define MFRC522_REG_DEMOD_TPE_MSK 0x01
+#define MFRC522_REG_DEMOD_TPE_POS 4
+
+/**
+ * Bit mask and position of TStartNow field in Control register
+ */
+#define MFRC522_REG_CONTROL_TSN_MSK 0x01
+#define MFRC522_REG_CONTROL_TSN_POS 6
 
 /* ------------------------------------------------------------ */
 /* ------------------------ Data types ------------------------ */

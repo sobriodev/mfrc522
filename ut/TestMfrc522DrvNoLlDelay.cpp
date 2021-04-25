@@ -44,7 +44,7 @@ TEST(TestMfrc522DrvNoLlDelay, mfrc522_drv_read_until__LowLevelDelayDisabled__Ret
     mfrc522_drv_read_until_conf ruConf;
     ruConf.addr = mfrc522_reg_fifo_data_reg;
     ruConf.exp_payload = 0xFF;
-    ruConf.field_mask = 0x00;
+    ruConf.mask = 0x00;
     ruConf.retry_cnt = retryCnt;
 
     status = mfrc522_drv_read_until(&conf, &ruConf);

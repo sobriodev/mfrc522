@@ -6,25 +6,25 @@
 /* ------------------------------------------------------------ */
 
 /* Try to send single-byte to device with returning a generic error code if necessary */
-#define PCD_TRY_WRITE_BYTE(...)  \
+#define TRY_WRITE_BYTE(...)  \
 do { \
     if (UNLIKELY(mfrc522_ll_status_ok != mfrc522_drv_write_byte(__VA_ARGS__))) return mfrc522_drv_status_ll_err; \
 } while (0)
 
 /* Try to send multiple bytes to device with returning a generic error code if necessary */
-#define PCD_TRY_WRITE_MULTI(...)  \
+#define TRY_WRITE_MULTI(...)  \
 do { \
     if (UNLIKELY(mfrc522_ll_status_ok != mfrc522_drv_write(__VA_ARGS__))) return mfrc522_drv_status_ll_err; \
 } while (0)
 
 /* Try to perform masked write with returning a generic error code if necessary */
-#define PCD_TRY_WRITE_MASKED(...)  \
+#define TRY_WRITE_MASKED(...)  \
 do { \
     if (UNLIKELY(mfrc522_ll_status_ok != mfrc522_drv_write_masked(__VA_ARGS__))) return mfrc522_drv_status_ll_err; \
 } while (0)
 
 /* Try to receive bytes from device with returning a generic error code if necessary */
-#define PCD_TRY_READ(...) \
+#define TRY_READ(...) \
 do { \
     if (UNLIKELY(mfrc522_ll_status_ok != mfrc522_drv_read(__VA_ARGS__))) return mfrc522_drv_status_ll_err; \
 } while (0)
@@ -92,20 +92,20 @@ mfrc522_drv_status mfrc522_drv_init(mfrc522_drv_conf* conf)
     }
 
     /* Chiptype 9xh stands for MFRC522 */
-    if (MFRC522_CONF_CHIP_TYPE != (conf->chip_version & MFRC522_REG_VERSION_CHIP_TYPE_MSK)) {
+    if (MFRC522_CONF_CHIP_TYPE != (conf->chip_version & MFRC522_REG_MSK_REAL(VERSION_CHIPTYPE))) {
         return mfrc522_drv_status_dev_err;
     }
     return mfrc522_drv_status_ok;
 }
 
-mfrc522_ll_status mfrc522_drv_write_masked(const mfrc522_drv_conf* conf, mfrc522_reg addr, u8 payload, u8 mask)
+mfrc522_ll_status mfrc522_drv_write_masked(const mfrc522_drv_conf* conf, mfrc522_reg addr, u8 val, u8 mask, u8 pos)
 {
     ERROR_IF_EQ(conf, NULL, mfrc522_ll_status_send_err);
 
     u8 buff;
     ERROR_IF_NEQ(mfrc522_drv_read(conf, addr, &buff), mfrc522_ll_status_ok);
-    buff &= ~mask;
-    buff |= (payload & mask);
+    buff &= ~(mask << pos);
+    buff |= ((val & mask) << pos);
     ERROR_IF_NEQ(mfrc522_drv_write_byte(conf, addr, buff), mfrc522_ll_status_ok);
     return mfrc522_ll_status_ok;
 }
@@ -122,15 +122,15 @@ mfrc522_drv_status mfrc522_drv_read_until(const mfrc522_drv_conf* conf, mfrc522_
     u8 rc_decrement_step = (ru_conf->retry_cnt == MFRC522_DRV_RETRY_CNT_INF) ? 0 : 1;
 
     /* Read register first time */
-    PCD_TRY_READ(conf, ru_conf->addr, &ru_conf->payload);
+    TRY_READ(conf, ru_conf->addr, &ru_conf->payload);
 
-    while ((ru_conf->exp_payload != (ru_conf->payload & ru_conf->field_mask))) {
+    while ((ru_conf->exp_payload != (ru_conf->payload & ru_conf->mask))) {
         if (!rc) {
             return mfrc522_drv_status_dev_rtr_err;
         }
         rc -= rc_decrement_step;
         delay(conf, ru_conf->delay); /* Wait for a while and check again */
-        PCD_TRY_READ(conf, ru_conf->addr, &ru_conf->payload);
+        TRY_READ(conf, ru_conf->addr, &ru_conf->payload);
     }
     return mfrc522_drv_status_ok;
 }
@@ -142,7 +142,7 @@ mfrc522_drv_status mfrc522_soft_reset(const mfrc522_drv_conf* conf)
     /* Populate read settings */
     mfrc522_drv_read_until_conf ruc;
     ruc.addr = mfrc522_reg_command;
-    ruc.field_mask = MFRC522_REG_COMMAND_CMD_MSK;
+    ruc.mask = MFRC522_REG_MSK_REAL(COMMAND_CMD);
     ruc.exp_payload = mfrc522_reg_cmd_idle;
     ruc.delay = 100; /* Give 100us delay */
     ruc.retry_cnt = MFRC522_DRV_DEF_RETRY_CNT;
@@ -152,7 +152,7 @@ mfrc522_drv_status mfrc522_soft_reset(const mfrc522_drv_conf* conf)
     ERROR_IF_NEQ(res, mfrc522_drv_status_ok);
 
     /* Send SoftReset command. Do not care of other bits - they will be set to defaults afterwards */
-    PCD_TRY_WRITE_BYTE(conf, mfrc522_reg_command, mfrc522_reg_cmd_soft_reset);
+    TRY_WRITE_BYTE(conf, mfrc522_reg_command, mfrc522_reg_cmd_soft_reset);
 
     /* Wait until Idle command is active back */
     res = mfrc522_drv_read_until(conf, &ruc);
@@ -187,26 +187,24 @@ mfrc522_drv_status mfrc522_drv_tim_start(const mfrc522_drv_conf* conf, const mfr
     ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
     ERROR_IF_EQ(tim_conf, NULL, mfrc522_drv_status_nullptr);
 
-    /* TODO change hardcoded values to macros */
-
     /* Write to prescaler Lo and Hi registers */
     u8 prescaler_lo = (u8)(tim_conf->prescaler & 0x00FF);
     u8 prescaler_hi = (u8)((tim_conf->prescaler & 0x0F00) >> 8);
-    PCD_TRY_WRITE_BYTE(conf, mfrc522_reg_tim_prescaler, prescaler_lo);
-    PCD_TRY_WRITE_MASKED(conf, mfrc522_reg_tim_mode, prescaler_hi, 0x0F);
+    TRY_WRITE_BYTE(conf, mfrc522_reg_tim_prescaler, prescaler_lo);
+    TRY_WRITE_MASKED(conf, mfrc522_reg_tim_mode, prescaler_hi, MFRC522_REG_FIELD(TMODE_TPHI));
 
     /* Write to prescaler type register */
-    u8 prescaler_type = (tim_conf->prescaler_type == mfrc522_drv_tim_psl_even) << 4;
-    PCD_TRY_WRITE_MASKED(conf, mfrc522_reg_demod, prescaler_type, 1 << 4);
+    u8 prescaler_type = (tim_conf->prescaler_type == mfrc522_drv_tim_psl_even);
+    TRY_WRITE_MASKED(conf, mfrc522_reg_demod, prescaler_type, MFRC522_REG_FIELD(DEMOD_TPE));
 
     /* Write to reload Lo and Hi registers */
     u8 reload_lo = (u8)(tim_conf->reload_val & 0x00FF);
     u8 reload_hi = (u8)((tim_conf->reload_val & 0xFF00) >> 8);
-    PCD_TRY_WRITE_BYTE(conf, mfrc522_reg_tim_reload_lo, reload_lo);
-    PCD_TRY_WRITE_BYTE(conf, mfrc522_reg_tim_reload_hi, reload_hi);
+    TRY_WRITE_BYTE(conf, mfrc522_reg_tim_reload_lo, reload_lo);
+    TRY_WRITE_BYTE(conf, mfrc522_reg_tim_reload_hi, reload_hi);
 
     /* Immediately start timer */
-    PCD_TRY_WRITE_MASKED(conf, mfrc522_reg_control_reg, 1 << 6, 1 << 6);
+    TRY_WRITE_MASKED(conf, mfrc522_reg_control_reg, 1, MFRC522_REG_FIELD(CONTROL_TSN));
 
     return mfrc522_drv_status_ok;
 }

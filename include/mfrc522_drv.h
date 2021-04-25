@@ -75,14 +75,14 @@ typedef struct mfrc522_drv_conf_
 } mfrc522_drv_conf;
 
 /**
- * Configuration structure used by 'mfrc522_drv_read_until' function
+ * Configuration structure used by 'mfrc522_drv_read_until()' function
  */
 typedef struct mfrc522_drv_read_until_conf_
 {
     mfrc522_reg addr; /**< Register address to read from */
     u8 payload; /**< Payload buffer to write to */
-    u8 field_mask; /**< Field bitmask. Set to 0xFF if all bits should be compared */
-    u8 exp_payload; /**< Expected payload. Used as the exit criterion */
+    u8 mask; /**< Field bitmask. Set to 0xFF if all bits should be compared */
+    u8 exp_payload; /**< Expected payload. Used as the exit criterion. */
     u32 delay; /**< Optional delay in microseconds between reads. Valid only if MFRC522_LL_DELAY is set */
     u32 retry_cnt; /**< Maximum number of retries */
 } mfrc522_drv_read_until_conf;
@@ -175,16 +175,18 @@ static inline mfrc522_ll_status mfrc522_drv_write_byte(const mfrc522_drv_conf* c
 /**
  * Perform masked write to a PCD's register.
  *
- * The function sets new value of a register regarding payload and mask. Only bits selected in mask are affected.
+ * The function sets new value of a register regarding value, position and mask. It is useful in cases when a single
+ * register contains multiple fields and only one of them should be changed. Only bits selected in mask are affected.
  * In a case when either 'conf' is NULL, mfrc522_ll_status_send_err is returned.
  *
  * @param conf Pointer to a configuration structure.
  * @param addr Register address.
- * @param payload Payload byte.
+ * @param val Field bits.
  * @param mask Field mask.
+ * @param pos Field position in a register.
  * @return An instance of mfrc522_ll_status.
  */
-mfrc522_ll_status mfrc522_drv_write_masked(const mfrc522_drv_conf* conf, mfrc522_reg addr, u8 payload, u8 mask);
+mfrc522_ll_status mfrc522_drv_write_masked(const mfrc522_drv_conf* conf, mfrc522_reg addr, u8 val, u8 mask, u8 pos);
 
 /**
  * Read from a PCD.

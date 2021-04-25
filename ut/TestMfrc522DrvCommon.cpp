@@ -120,7 +120,7 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_read_until__InfinityFlagEnabled__Success)
     mfrc522_drv_read_until_conf ruConf;
     ruConf.addr = mfrc522_reg_fifo_data_reg;
     ruConf.exp_payload = 0x0E;
-    ruConf.field_mask = 0x0F;
+    ruConf.mask = 0x0F;
     ruConf.retry_cnt = MFRC522_DRV_RETRY_CNT_INF;
     ruConf.delay = 1;
 
@@ -131,7 +131,7 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_read_until__InfinityFlagEnabled__Success)
 
     auto status = mfrc522_drv_read_until(&conf, &ruConf);
     CHECK_EQUAL(mfrc522_drv_status_ok, status);
-    CHECK_EQUAL(ruConf.exp_payload, ruConf.payload & ruConf.field_mask);
+    CHECK_EQUAL(ruConf.exp_payload, ruConf.payload & ruConf.mask);
 }
 
 TEST(TestMfrc522DrvCommon, mfrc522_drv_read_until__AnswerOnFirstTry__Success)
@@ -141,7 +141,7 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_read_until__AnswerOnFirstTry__Success)
     mfrc522_drv_read_until_conf ruConf;
     ruConf.addr = mfrc522_reg_fifo_data_reg;
     ruConf.exp_payload = 0xF0;
-    ruConf.field_mask = 0xF0;
+    ruConf.mask = 0xF0;
     ruConf.retry_cnt = 0;
     ruConf.delay = 1;
 
@@ -150,7 +150,7 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_read_until__AnswerOnFirstTry__Success)
 
     auto status = mfrc522_drv_read_until(&conf, &ruConf);
     CHECK_EQUAL(mfrc522_drv_status_ok, status);
-    CHECK_EQUAL(ruConf.exp_payload, ruConf.payload & ruConf.field_mask);
+    CHECK_EQUAL(ruConf.exp_payload, ruConf.payload & ruConf.mask);
 }
 
 TEST(TestMfrc522DrvCommon, mfrc522_drv_read_until__AnswerOnThirdTime__Success)
@@ -160,7 +160,7 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_read_until__AnswerOnThirdTime__Success)
     mfrc522_drv_read_until_conf ruConf;
     ruConf.addr = mfrc522_reg_fifo_data_reg;
     ruConf.exp_payload = 0x80;
-    ruConf.field_mask = 0xC0;
+    ruConf.mask = 0xC0;
     ruConf.retry_cnt = 2; /* One try + two retries */
     ruConf.delay = 1;
 
@@ -171,7 +171,7 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_read_until__AnswerOnThirdTime__Success)
 
     auto status = mfrc522_drv_read_until(&conf, &ruConf);
     CHECK_EQUAL(mfrc522_drv_status_ok, status);
-    CHECK_EQUAL(ruConf.exp_payload, ruConf.payload & ruConf.field_mask);
+    CHECK_EQUAL(ruConf.exp_payload, ruConf.payload & ruConf.mask);
 }
 
 TEST(TestMfrc522DrvCommon, mfrc522_drv_read_until__NoAnswerAfterAllTries__Failure)
@@ -181,7 +181,7 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_read_until__NoAnswerAfterAllTries__Failur
     mfrc522_drv_read_until_conf ruConf;
     ruConf.addr = mfrc522_reg_fifo_data_reg;
     ruConf.exp_payload = 0xAA;
-    ruConf.field_mask = 0xFF;
+    ruConf.mask = 0xFF;
     ruConf.retry_cnt = 10;
     ruConf.delay = 1;
 
@@ -234,7 +234,7 @@ TEST(TestMfrc522DrvCommon, mfrc522_soft_reset__IdleCommandNotReached__Failure)
 
 TEST(TestMfrc522DrvCommon, mfrc522_drv_write_masked__NullCases)
 {
-    auto status = mfrc522_drv_write_masked(nullptr, mfrc522_reg_demod, 0x0F, 0x0F);
+    auto status = mfrc522_drv_write_masked(nullptr, mfrc522_reg_demod, 0x0F, 0x0F, 0);
     CHECK_EQUAL(mfrc522_ll_status_send_err, status);
 }
 
@@ -242,11 +242,13 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_write_masked__MaskedWritePerformed)
 {
     auto conf = initDevice();
 
+    const u8 msk = 0x0F;
+    const u8 pos = 0;
     lowLevelCallParams.push_back(READ(1, mfrc522_reg_gs_n, 0x55));
-    lowLevelCallParams.push_back(WRITE1(1, mfrc522_reg_gs_n, 0x51));
+    lowLevelCallParams.push_back(WRITE1(1, mfrc522_reg_gs_n, 0x5D));
     mfrc522UpdateLowLevelExpectations(lowLevelCallParams);
 
-    auto status = mfrc522_drv_write_masked(&conf, mfrc522_reg_gs_n, 0x7B, 0x94);
+    auto status = mfrc522_drv_write_masked(&conf, mfrc522_reg_gs_n, 13, msk, pos);
     CHECK_EQUAL(mfrc522_ll_status_ok, status);
 }
 
