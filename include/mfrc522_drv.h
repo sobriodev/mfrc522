@@ -14,13 +14,6 @@ extern "C" {
 /* ---------------------------- Macros ------------------------ */
 /* ------------------------------------------------------------ */
 
-/** Major version */
-#define MFRC522_DRV_API_VERSION_MAJOR 0
-/** Minor version */
-#define MFRC522_DRV_API_VERSION_MINOR 0
-/** Revision version */
-#define MFRC522_DRV_VERSION_REVISION 0
-
 /**
  * Infinity flag recognized by 'mfrc522_drv_read_until_conf'
  */
@@ -43,8 +36,7 @@ extern "C" {
 /**
  * Status codes used by API functions
  */
-typedef enum mfrc522_drv_status_
-{
+typedef enum mfrc522_drv_status_ {
     mfrc522_drv_status_ok = 0, /**< Success */
     mfrc522_drv_status_nok, /**< Generic error code */
     mfrc522_drv_status_nullptr, /**< Unexpected NULL pointer */
@@ -61,8 +53,7 @@ typedef enum mfrc522_drv_status_
 /**
  * MFRC522 configuration values
  */
-typedef struct mfrc522_drv_conf_
-{
+typedef struct mfrc522_drv_conf_ {
 #if MFRC522_LL_PTR
     mfrc522_ll_send ll_send; /**< Low-level send function pointer */
     mfrc522_ll_recv ll_recv; /**< Low-level receive function pointer */
@@ -77,8 +68,7 @@ typedef struct mfrc522_drv_conf_
 /**
  * Configuration structure used by 'mfrc522_drv_read_until()' function
  */
-typedef struct mfrc522_drv_read_until_conf_
-{
+typedef struct mfrc522_drv_read_until_conf_ {
     mfrc522_reg addr; /**< Register address to read from */
     u8 payload; /**< Payload buffer to write to */
     u8 mask; /**< Field bitmask. Set to 0xFF if all bits should be compared */
@@ -90,8 +80,7 @@ typedef struct mfrc522_drv_read_until_conf_
 /**
  * Prescaler types for timer unit
  */
-typedef enum mfrc522_drv_tim_psl_type_
-{
+typedef enum mfrc522_drv_tim_psl_type_ {
     mfrc522_drv_tim_psl_odd, /**< Odd prescaler */
     mfrc522_drv_tim_psl_even /**< Even prescaler */
 } mfrc522_drv_tim_psl_type;
@@ -99,12 +88,20 @@ typedef enum mfrc522_drv_tim_psl_type_
 /**
  * Timer configuration structure
  */
-typedef struct mfrc522_drv_tim_conf_
-{
+typedef struct mfrc522_drv_tim_conf_ {
     u16 prescaler; /**< Prescaler value. Only 12 lower bits are used */
     mfrc522_drv_tim_psl_type prescaler_type; /**< Prescaler type */
     u16 reload_val; /**< Reload value */
 } mfrc522_drv_tim_conf;
+
+/**
+ * Interrupt request system settings
+ */
+typedef struct mfrc522_drv_irq_conf_
+{
+    bool irq_signal_inv; /**< When true, signal on IRQ pin is inverted with respect to IRQ bit */
+    bool irq_push_pull; /**< When true, IRQ pin is a CMOS output pin. When false, IRQ pin is open-drain output pin */
+} mfrc522_drv_irq_conf;
 
 /* ------------------------------------------------------------ */
 /* ----------------------- Public functions ------------------- */
@@ -255,7 +252,7 @@ mfrc522_drv_status mfrc522_soft_reset(const mfrc522_drv_conf* conf);
  *
  * The function returns error when NUll was passed instead of a 'tim_conf' pointer.
  *
- * @param tim_conf Pointer to a timer configuration structure.
+ * @param tim_conf Pointer to a timer configuration structure, where calculated values are stored.
  * @param period Timer period in milliseconds.
  * @return Status of the operation:
  *         - mfrc522_drv_status_nullptr when NULL was passed instead of a valid pointer
@@ -275,6 +272,47 @@ mfrc522_drv_status mfrc522_drv_tim_set(mfrc522_drv_tim_conf* tim_conf, u16 perio
  * @return Status of the operation. On success mfrc522_drv_status_ok is returned.
  */
 mfrc522_drv_status mfrc522_drv_tim_start(const mfrc522_drv_conf* conf, const mfrc522_drv_tim_conf* tim_conf);
+
+/**
+ * Initialize interrupt subsystem.
+ *
+ * The function sets up all registers and clear all interrupt flags.
+ * An error is returned if either 'conf' or 'irq_conf' parameter is null.
+ *
+ * @param conf Pointer to a configuration structure.
+ * @param irq_conf Pointer to an interrupt configuration structure.
+ * @return Status of the operation. On success mfrc522_drv_status_ok is returned.
+ */
+mfrc522_drv_status mfrc522_drv_irq_init(const mfrc522_drv_conf* conf, const mfrc522_drv_irq_conf* irq_conf);
+
+/**
+ * Clear interrupt request.
+ *
+ * The function may be used to clear specific interrupt. It is also possible to clear all available interrupt
+ * requests by passing 'mfrc522_reg_irq_all' enum constant.
+ * The function returns error when NUll was passed instead of a 'conf' pointer.
+ *
+ * @param conf Pointer to a configuration structure.
+ * @param irq Interrupt source to be cleared.
+ * @return Status of the operation. On success mfrc522_drv_status_ok is returned.
+ */
+mfrc522_drv_status mfrc522_drv_irq_clr(const mfrc522_drv_conf* conf, mfrc522_reg_irq irq);
+
+/**
+ * Enable or disable interrupt.
+ *
+ * The function allows specific interrupt to be propagated to IRQ pin.
+ * Note that in opposition to function 'mfrc522_drv_irq_clr()', it is not possible to enable or disable all
+ * interrupts in a single call. Passing 'mfrc522_reg_irq_all' throws 'mfrc522_drv_status_nok' error code.
+ *
+ * The function returns error when NUll was passed instead of a 'conf' pointer.
+ *
+ * @param conf Pointer to a configuration structure.
+ * @param irq Interrupt number.
+ * @param enable True if interrupt should be enabled, false if disabled.
+ * @return Status of the operation. On success mfrc522_drv_status_ok is returned.
+ */
+mfrc522_drv_status mfrc522_drv_irq_en(const mfrc522_drv_conf* conf, mfrc522_reg_irq irq, bool enable);
 
 #ifdef __cplusplus
 }

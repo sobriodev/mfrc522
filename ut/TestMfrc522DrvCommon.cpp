@@ -34,8 +34,10 @@ TEST_GROUP(TestMfrc522DrvCommon)
         auto status = mfrc522_drv_init(&conf);
         CHECK_EQUAL(mfrc522_drv_status_ok, status);
 
-        /* Flush params vector */
+        /* Flush params vector and check expectations */
+        mock().checkExpectations();
         mfrc522DestroyLowLevelParams(lowLevelCallParams);
+        mock().clear();
         return conf;
     }
 };
@@ -211,7 +213,7 @@ TEST(TestMfrc522DrvCommon, mfrc522_soft_reset__TypicalCase__Success)
     lowLevelCallParams.push_back(READ(1, mfrc522_reg_command, mfrc522_reg_cmd_idle));
     /* Phase 2: Perform soft reset */
     lowLevelCallParams.push_back(WRITE1(1, mfrc522_reg_command, mfrc522_reg_cmd_soft_reset));
-    /* Phase 3: Soft reset has not done yet */
+    /* Phase 3: Soft reset has not been done yet */
     lowLevelCallParams.push_back(READ(1, mfrc522_reg_command, mfrc522_reg_cmd_soft_reset));
     /* Phase 4: Idle command is active back */
     lowLevelCallParams.push_back(READ(1, mfrc522_reg_command, mfrc522_reg_cmd_idle));
@@ -303,9 +305,9 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_tim_set__Periods__Success)
 TEST(TestMfrc522DrvCommon, mfrc522_drv_tim_start__NullCases)
 {
     mfrc522_drv_conf conf;
-    mfrc522_drv_tim_conf tim_conf;
+    mfrc522_drv_tim_conf timConf;
 
-    auto status = mfrc522_drv_tim_start(nullptr, &tim_conf);
+    auto status = mfrc522_drv_tim_start(nullptr, &timConf);
     CHECK_EQUAL(mfrc522_drv_status_nullptr, status);
 
     status = mfrc522_drv_tim_start(&conf, nullptr);
@@ -313,3 +315,136 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_tim_start__NullCases)
 }
 
 /* TODO write unit tests to cover mfrc522_drv_tim_start() */
+
+TEST(TestMfrc522DrvCommon, mfrc522_drv_irq_init__NullCases)
+{
+    mfrc522_drv_conf conf;
+    mfrc522_drv_irq_conf irqConf;
+
+    auto status = mfrc522_drv_irq_init(nullptr, &irqConf);
+    CHECK_EQUAL(mfrc522_drv_status_nullptr, status);
+
+    status = mfrc522_drv_irq_init(&conf, nullptr);
+    CHECK_EQUAL(mfrc522_drv_status_nullptr, status);
+}
+
+TEST(TestMfrc522DrvCommon, mfrc522_drv_irq_init__Success)
+{
+    auto conf = initDevice();
+
+    /* Populate IRQ config fields */
+    mfrc522_drv_irq_conf irqConf;
+    irqConf.irq_push_pull = true;
+    irqConf.irq_signal_inv = false;
+
+    /* Expect that all IRQs are cleared */
+    lowLevelCallParams.push_back(WRITE1_A(1, mfrc522_reg_com_irq));
+    lowLevelCallParams.push_back(WRITE1_A(1, mfrc522_reg_div_irq));
+    /* Expect calls that configure IRQ registers */
+    lowLevelCallParams.push_back(WRITE1_A(1, mfrc522_reg_com_irq_en));
+    lowLevelCallParams.push_back(WRITE1_A(1, mfrc522_reg_div_irq_en));
+    mfrc522UpdateLowLevelExpectations(lowLevelCallParams);
+
+    auto status = mfrc522_drv_irq_init(&conf, &irqConf);
+    CHECK_EQUAL(mfrc522_drv_status_ok, status);
+}
+
+TEST(TestMfrc522DrvCommon, mfrc522_drv_irq_clr__NullCases)
+{
+    auto status = mfrc522_drv_irq_clr(nullptr, mfrc522_reg_irq_all);
+    CHECK_EQUAL(mfrc522_drv_status_nullptr, status);
+}
+
+TEST(TestMfrc522DrvCommon, mfrc522_drv_irq_clr__ClearAllIrqs__BothRegistersAreUpdated)
+{
+    auto conf = initDevice();
+
+    /* Expect both registers to be updated */
+    u8 word1_irq_bits = 0x7F;
+    u8 word2_irq_bits = 0x014;
+    lowLevelCallParams.push_back(WRITE1(1, mfrc522_reg_com_irq, word1_irq_bits));
+    lowLevelCallParams.push_back(WRITE1(1, mfrc522_reg_div_irq, word2_irq_bits));
+    mfrc522UpdateLowLevelExpectations(lowLevelCallParams);
+
+    auto status = mfrc522_drv_irq_clr(&conf, mfrc522_reg_irq_all);
+    CHECK_EQUAL(mfrc522_drv_status_ok, status);
+}
+
+TEST(TestMfrc522DrvCommon, mfrc522_drv_irq_clr__ClearIrqFromComReg__Success)
+{
+    auto conf = initDevice();
+
+    /* Expect ComIrqReg to be updated */
+    lowLevelCallParams.push_back(WRITE1(1, mfrc522_reg_com_irq, 1 << mfrc522_reg_irq_hi_alert));
+    mfrc522UpdateLowLevelExpectations(lowLevelCallParams);
+
+    auto status = mfrc522_drv_irq_clr(&conf, mfrc522_reg_irq_hi_alert);
+    CHECK_EQUAL(mfrc522_drv_status_ok, status);
+}
+
+TEST(TestMfrc522DrvCommon, mfrc522_drv_irq_clr__ClearIrqFromDivReg__Success)
+{
+    auto conf = initDevice();
+
+    /* Expect DivIrqReg to be updated */
+    u8 crc_irq_bit = 2;
+    lowLevelCallParams.push_back(WRITE1(1, mfrc522_reg_div_irq, (u8)(1 << crc_irq_bit)));
+    mfrc522UpdateLowLevelExpectations(lowLevelCallParams);
+
+    auto status = mfrc522_drv_irq_clr(&conf, mfrc522_reg_irq_crc);
+    CHECK_EQUAL(mfrc522_drv_status_ok, status);
+}
+
+TEST(TestMfrc522DrvCommon, mfrc522_drv_irq_en__NullCases)
+{
+    auto status = mfrc522_drv_irq_en(nullptr, mfrc522_reg_irq_idle, true);
+    CHECK_EQUAL(mfrc522_drv_status_nullptr, status);
+}
+
+TEST(TestMfrc522DrvCommon, mfrc522_drv_irq_en__IrqAllPassedAsAnArgument__ErrorIsReturned)
+{
+    auto conf = initDevice();
+
+    auto status = mfrc522_drv_irq_en(&conf, mfrc522_reg_irq_all, true);
+    CHECK_EQUAL(mfrc522_drv_status_nok, status);
+}
+
+TEST(TestMfrc522DrvCommon, mfrc522_drv_irq_en__EnableIrqInComReg__Success)
+{
+    auto conf = initDevice();
+
+    /* Pretend that some IRQs are enabled */
+    u8 actualIrqs = 0x41;
+    lowLevelCallParams.push_back(READ(1, mfrc522_reg_com_irq_en, actualIrqs));
+    lowLevelCallParams.push_back(WRITE1(1, mfrc522_reg_com_irq_en, (u8)(actualIrqs | (1 << mfrc522_reg_irq_idle))));
+    mfrc522UpdateLowLevelExpectations(lowLevelCallParams);
+
+    auto status = mfrc522_drv_irq_en(&conf, mfrc522_reg_irq_idle, true);
+    CHECK_EQUAL(mfrc522_drv_status_ok, status);
+}
+
+TEST(TestMfrc522DrvCommon, mfrc522_drv_irq_en__DisableIrqInComReg__Success)
+{
+    auto conf = initDevice();
+
+    /* Pretend that IRQ was enabled, this 0x00 should be written back */
+    u8 actualIrqs = 1 << mfrc522_reg_irq_idle;
+    lowLevelCallParams.push_back(READ(1, mfrc522_reg_com_irq_en, actualIrqs));
+    lowLevelCallParams.push_back(WRITE1(1, mfrc522_reg_com_irq_en, 0x00));
+    mfrc522UpdateLowLevelExpectations(lowLevelCallParams);
+
+    auto status = mfrc522_drv_irq_en(&conf, mfrc522_reg_irq_idle, false);
+    CHECK_EQUAL(mfrc522_drv_status_ok, status);
+}
+
+TEST(TestMfrc522DrvCommon, mfrc522_drv_ieq_en__EnableIrqInDivReg__Success)
+{
+    auto conf = initDevice();
+
+    lowLevelCallParams.push_back(READ(1, mfrc522_reg_div_irq_en, 0));
+    lowLevelCallParams.push_back(WRITE1(1, mfrc522_reg_div_irq_en, 1 << (mfrc522_reg_irq_crc & ~MFRC522_REG_IRQ_DIV)));
+    mfrc522UpdateLowLevelExpectations(lowLevelCallParams);
+
+    auto status = mfrc522_drv_irq_en(&conf, mfrc522_reg_irq_crc, true);
+    CHECK_EQUAL(mfrc522_drv_status_ok, status);
+}

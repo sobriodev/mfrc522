@@ -30,7 +30,11 @@ do { \
 } while (0)
 
 /* Timer prescaler when using millisecond as a time unit */
-#define MFRC522_DRV_TIM_PRESCALER 1694
+#define TIMER_PRESCALER 1694
+
+/* Masks to handle all possible interrupts */
+#define IRQ_ALL_COM_MASK 0x7F
+#define IRQ_ALL_DIV_MASK 0x14
 
 /* ------------------------------------------------------------ */
 /* ----------------------- Private functions ------------------ */
@@ -172,7 +176,7 @@ mfrc522_drv_status mfrc522_drv_tim_set(mfrc522_drv_tim_conf* tim_conf, u16 perio
      * The formula used to calculate reload value (with TPrescaler == 1694):
      * TReload = 4 * period - 1
      */
-    tim_conf->prescaler = MFRC522_DRV_TIM_PRESCALER;
+    tim_conf->prescaler = TIMER_PRESCALER;
     tim_conf->prescaler_type = mfrc522_drv_tim_psl_even;
     tim_conf->reload_val = (4 * period) - 1;
 #if MFRC522_CONF_TIM_RELOAD_FIXED
@@ -205,6 +209,62 @@ mfrc522_drv_status mfrc522_drv_tim_start(const mfrc522_drv_conf* conf, const mfr
 
     /* Immediately start timer */
     TRY_WRITE_MASKED(conf, mfrc522_reg_control_reg, 1, MFRC522_REG_FIELD(CONTROL_TSN));
+
+    return mfrc522_drv_status_ok;
+}
+
+mfrc522_drv_status mfrc522_drv_irq_init(const mfrc522_drv_conf* conf, const mfrc522_drv_irq_conf* irq_conf)
+{
+    ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
+    ERROR_IF_EQ(irq_conf, NULL, mfrc522_drv_status_nullptr);
+
+    /* Clear all interrupt flags */
+    mfrc522_drv_irq_clr(conf, mfrc522_reg_irq_all);
+
+    /* Update IRQ flags */
+    TRY_WRITE_MASKED(conf, mfrc522_reg_com_irq_en, irq_conf->irq_signal_inv, MFRC522_REG_FIELD(COMIEN_IRQINV));
+    TRY_WRITE_MASKED(conf, mfrc522_reg_div_irq_en, irq_conf->irq_push_pull, MFRC522_REG_FIELD(DIVIEN_IRQPUSHPULL));
+
+    return mfrc522_drv_status_ok;
+}
+
+mfrc522_drv_status mfrc522_drv_irq_clr(const mfrc522_drv_conf* conf, mfrc522_reg_irq irq)
+{
+    ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
+
+    /* Clear all interrupts if special flag was passed */
+    if (mfrc522_reg_irq_all == irq) {
+        TRY_WRITE_BYTE(conf, mfrc522_reg_com_irq, IRQ_ALL_COM_MASK);
+        TRY_WRITE_BYTE(conf, mfrc522_reg_div_irq, IRQ_ALL_DIV_MASK);
+    } else {
+        /* Find correct register to clear interrupt flag in */
+        u8 reg;
+        if (irq & MFRC522_REG_IRQ_DIV) {
+            irq &= ~MFRC522_REG_IRQ_DIV;
+            reg = mfrc522_reg_div_irq;
+        } else {
+            reg = mfrc522_reg_com_irq;
+        }
+        TRY_WRITE_BYTE(conf, reg, 1 << irq);
+    }
+
+    return mfrc522_drv_status_ok;
+}
+
+mfrc522_drv_status mfrc522_drv_irq_en(const mfrc522_drv_conf* conf, mfrc522_reg_irq irq, bool enable)
+{
+    ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
+    ERROR_IF_EQ(irq, mfrc522_reg_irq_all, mfrc522_drv_status_nok);
+
+    /* Find correct register to enable interrupt */
+    u8 reg;
+    if (irq & MFRC522_REG_IRQ_DIV) {
+        irq &= ~MFRC522_REG_IRQ_DIV;
+        reg = mfrc522_reg_div_irq_en;
+    } else {
+        reg = mfrc522_reg_com_irq_en;
+    }
+    TRY_WRITE_MASKED(conf, reg, enable, 0x01, irq);
 
     return mfrc522_drv_status_ok;
 }

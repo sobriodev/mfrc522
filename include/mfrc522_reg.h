@@ -13,7 +13,7 @@ extern "C" {
  * Create 'pos' and 'msk' macros automatically. Note that in fact these are enum constants
  */
 #define MFRC522_REG_FIELD_CREATE(NAME, MSK, POS) \
-enum { MFRC522_REG_##NAME##_MSK = (MSK), MFRC522_REG_##NAME##_POS = POS }
+enum { MFRC522_REG_##NAME##_MSK = (MSK), MFRC522_REG_##NAME##_POS = (POS) }
 
 /**
  * Macro to calculate byte mask based on field mask and position
@@ -29,6 +29,12 @@ enum { MFRC522_REG_##NAME##_MSK = (MSK), MFRC522_REG_##NAME##_POS = POS }
  * Invalid chip version number
  */
 #define MFRC522_REG_VERSION_INVALID 0xFF
+
+/**
+ * Pattern to distinguish between 'Com' and 'Div' interrupt sources. IRQ bits located in 'Div' register have 0xF0
+ * as a high order byte.
+ */
+#define MFRC522_REG_IRQ_DIV 0xF0
 
 /**
  * Bit fields for Version register
@@ -54,6 +60,16 @@ MFRC522_REG_FIELD_CREATE(DEMOD_TPE, 0x01, 4);
  * Bit fields for Control register
  */
 MFRC522_REG_FIELD_CREATE(CONTROL_TSN, 0x01, 6);
+
+/**
+ * Bit fields for ComIEn register
+ */
+MFRC522_REG_FIELD_CREATE(COMIEN_IRQINV, 0x01, 7);
+
+/**
+ * Bit fields for DivIEn register
+ */
+MFRC522_REG_FIELD_CREATE(DIVIEN_IRQPUSHPULL, 0x01, 7);
 
 /* ------------------------------------------------------------ */
 /* ------------------------ Data types ------------------------ */
@@ -154,6 +170,23 @@ typedef enum mfrc522_reg_cmd_
     mfrc522_reg_cmd_authent = 0x0E, /**< MFAuthent */
     mfrc522_reg_cmd_soft_reset = 0x0F /**< SoftReset */
 } mfrc522_reg_cmd;
+
+/**
+ * MFRC522 interrupt sources.
+ */
+typedef enum mfrc522_reg_irq_
+{
+    mfrc522_reg_irq_tx = 0x06, /**< Transmitter interrupt source */
+    mfrc522_reg_irq_rx = 0x05, /**< Receiver interrupt source */
+    mfrc522_reg_irq_idle = 0x04, /**< Idle interrupt source */
+    mfrc522_reg_irq_hi_alert = 0x03, /**< High alert interrupt source */
+    mfrc522_reg_irq_lo_alert = 0x02, /**< Low alert interrupt source */
+    mfrc522_reg_irq_err = 0x01, /**< Error interrupt source */
+    mfrc522_reg_irq_timer = 0x00, /**< Timer interrupt source */
+    mfrc522_reg_irq_mfin_act = MFRC522_REG_IRQ_DIV | 0xF4, /**< MFIN active interrupt source */
+    mfrc522_reg_irq_crc = MFRC522_REG_IRQ_DIV | 0x02, /**< CRC interrupt source */
+    mfrc522_reg_irq_all = 0xFF /**< Special flag to handle all available interrupt sources */
+} mfrc522_reg_irq;
 
 #ifdef __cplusplus
 }
