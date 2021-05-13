@@ -114,6 +114,7 @@ TEST(TestMfrc522DrvTimer, mfrc522_drv_tim_start__TypicalCase__TimerStarted)
     timerConf.prescaler_type = mfrc522_drv_tim_psl_odd;
     timerConf.prescaler = 0xFABC;
     timerConf.reload_val = 0x0CA0;
+    timerConf.periodic = true;
 
     /* Fill low-level calls vector */
     llCallParams.push_back(WRITE1(1, mfrc522_reg_tim_prescaler, 0xBC));
@@ -121,6 +122,7 @@ TEST(TestMfrc522DrvTimer, mfrc522_drv_tim_start__TypicalCase__TimerStarted)
     llCallParams.push_back(WRITE1_A(1, mfrc522_reg_demod));
     llCallParams.push_back(WRITE1(1, mfrc522_reg_tim_reload_lo, 0xA0));
     llCallParams.push_back(WRITE1(1, mfrc522_reg_tim_reload_hi, 0x0C));
+    llCallParams.push_back(WRITE1_A(1, mfrc522_reg_tim_mode));
     llCallParams.push_back(WRITE1_A(1, mfrc522_reg_control_reg));
     mfrc522UpdateLowLevelExpectations(llCallParams);
 

@@ -207,6 +207,9 @@ mfrc522_drv_status mfrc522_drv_tim_start(const mfrc522_drv_conf* conf, const mfr
     TRY_WRITE_BYTE(conf, mfrc522_reg_tim_reload_lo, reload_lo);
     TRY_WRITE_BYTE(conf, mfrc522_reg_tim_reload_hi, reload_hi);
 
+    /* Enable/disable periodicity flag */
+    TRY_WRITE_MASKED(conf, mfrc522_reg_tim_mode, tim_conf->periodic, MFRC522_REG_FIELD(TMODE_TAUTO_RESTART));
+
     /* Immediately start timer */
     TRY_WRITE_MASKED(conf, mfrc522_reg_control_reg, 1, MFRC522_REG_FIELD(CONTROL_TSN));
 
@@ -222,8 +225,8 @@ mfrc522_drv_status mfrc522_drv_irq_init(const mfrc522_drv_conf* conf, const mfrc
     mfrc522_drv_irq_clr(conf, mfrc522_reg_irq_all);
 
     /* Update IRQ flags */
-    TRY_WRITE_MASKED(conf, mfrc522_reg_com_irq_en, irq_conf->irq_signal_inv, MFRC522_REG_FIELD(COMIEN_IRQINV));
-    TRY_WRITE_MASKED(conf, mfrc522_reg_div_irq_en, irq_conf->irq_push_pull, MFRC522_REG_FIELD(DIVIEN_IRQPUSHPULL));
+    TRY_WRITE_MASKED(conf, mfrc522_reg_com_irq_en, irq_conf->irq_signal_inv, MFRC522_REG_FIELD(COMIEN_IRQ_INV));
+    TRY_WRITE_MASKED(conf, mfrc522_reg_div_irq_en, irq_conf->irq_push_pull, MFRC522_REG_FIELD(DIVIEN_IRQ_PUSHPULL));
 
     return mfrc522_drv_status_ok;
 }

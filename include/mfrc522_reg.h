@@ -50,6 +50,7 @@ MFRC522_REG_FIELD_CREATE(COMMAND_CMD, 0x0F, 0);
  * Bit fields for TMode register
  */
 MFRC522_REG_FIELD_CREATE(TMODE_TPHI, 0x0F, 0);
+MFRC522_REG_FIELD_CREATE(TMODE_TAUTO_RESTART, 0x01, 4);
 
 /**
  * Bit fields for Demod register
@@ -64,12 +65,12 @@ MFRC522_REG_FIELD_CREATE(CONTROL_TSN, 0x01, 6);
 /**
  * Bit fields for ComIEn register
  */
-MFRC522_REG_FIELD_CREATE(COMIEN_IRQINV, 0x01, 7);
+MFRC522_REG_FIELD_CREATE(COMIEN_IRQ_INV, 0x01, 7);
 
 /**
  * Bit fields for DivIEn register
  */
-MFRC522_REG_FIELD_CREATE(DIVIEN_IRQPUSHPULL, 0x01, 7);
+MFRC522_REG_FIELD_CREATE(DIVIEN_IRQ_PUSHPULL, 0x01, 7);
 
 /* ------------------------------------------------------------ */
 /* ------------------------ Data types ------------------------ */

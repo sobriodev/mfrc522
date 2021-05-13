@@ -36,7 +36,8 @@ extern "C" {
 /**
  * Status codes used by API functions
  */
-typedef enum mfrc522_drv_status_ {
+typedef enum mfrc522_drv_status_
+{
     mfrc522_drv_status_ok = 0, /**< Success */
     mfrc522_drv_status_nok, /**< Generic error code */
     mfrc522_drv_status_nullptr, /**< Unexpected NULL pointer */
@@ -53,7 +54,8 @@ typedef enum mfrc522_drv_status_ {
 /**
  * MFRC522 configuration values
  */
-typedef struct mfrc522_drv_conf_ {
+typedef struct mfrc522_drv_conf_
+{
 #if MFRC522_LL_PTR
     mfrc522_ll_send ll_send; /**< Low-level send function pointer */
     mfrc522_ll_recv ll_recv; /**< Low-level receive function pointer */
@@ -68,7 +70,8 @@ typedef struct mfrc522_drv_conf_ {
 /**
  * Configuration structure used by 'mfrc522_drv_read_until()' function
  */
-typedef struct mfrc522_drv_read_until_conf_ {
+typedef struct mfrc522_drv_read_until_conf_
+{
     mfrc522_reg addr; /**< Register address to read from */
     u8 payload; /**< Payload buffer to write to */
     u8 mask; /**< Field bitmask. Set to 0xFF if all bits should be compared */
@@ -80,7 +83,8 @@ typedef struct mfrc522_drv_read_until_conf_ {
 /**
  * Prescaler types for timer unit
  */
-typedef enum mfrc522_drv_tim_psl_type_ {
+typedef enum mfrc522_drv_tim_psl_type_
+{
     mfrc522_drv_tim_psl_odd, /**< Odd prescaler */
     mfrc522_drv_tim_psl_even /**< Even prescaler */
 } mfrc522_drv_tim_psl_type;
@@ -88,10 +92,12 @@ typedef enum mfrc522_drv_tim_psl_type_ {
 /**
  * Timer configuration structure
  */
-typedef struct mfrc522_drv_tim_conf_ {
+typedef struct mfrc522_drv_tim_conf_
+{
     u16 prescaler; /**< Prescaler value. Only 12 lower bits are used */
     mfrc522_drv_tim_psl_type prescaler_type; /**< Prescaler type */
     u16 reload_val; /**< Reload value */
+    bool periodic; /**< Periodicity flag */
 } mfrc522_drv_tim_conf;
 
 /**
@@ -249,6 +255,7 @@ mfrc522_drv_status mfrc522_soft_reset(const mfrc522_drv_conf* conf);
  * The function performs initialization of 'tim_conf' fields according to 'period' parameter.
  * Minimum timer period equals to 1ms.
  * Maximum timer period is limited by MFRC522_DRV_TIM_MAX_PERIOD macro.
+ * Note that the function does not modify all fields, e.g. periodicity flag has to be set manually.
  *
  * The function returns error when NUll was passed instead of a 'tim_conf' pointer.
  *
