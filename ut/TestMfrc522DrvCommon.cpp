@@ -197,13 +197,13 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_read_until__NoAnswerAfterAllTries__Failur
     CHECK_EQUAL(0x00, ruConf.payload);
 }
 
-TEST(TestMfrc522DrvCommon, mfrc522_soft_reset__NullCases)
+TEST(TestMfrc522DrvCommon, mfrc522_drv_soft_reset__NullCases)
 {
-    auto status = mfrc522_soft_reset(nullptr);
+    auto status = mfrc522_drv_soft_reset(nullptr);
     CHECK_EQUAL(mfrc522_drv_status_nullptr, status);
 }
 
-TEST(TestMfrc522DrvCommon, mfrc522_soft_reset__TypicalCase__Success)
+TEST(TestMfrc522DrvCommon, mfrc522_drv_soft_reset__TypicalCase__Success)
 {
     auto conf = initDevice();
 
@@ -219,18 +219,18 @@ TEST(TestMfrc522DrvCommon, mfrc522_soft_reset__TypicalCase__Success)
     lowLevelCallParams.push_back(READ(1, mfrc522_reg_command, mfrc522_reg_cmd_idle));
     mfrc522UpdateLowLevelExpectations(lowLevelCallParams);
 
-    auto status = mfrc522_soft_reset(&conf);
+    auto status = mfrc522_drv_soft_reset(&conf);
     CHECK_EQUAL(mfrc522_drv_status_ok, status);
 }
 
-TEST(TestMfrc522DrvCommon, mfrc522_soft_reset__IdleCommandNotReached__Failure)
+TEST(TestMfrc522DrvCommon, mfrc522_drv_soft_reset__IdleCommandNotReached__Failure)
 {
     auto conf = initDevice();
 
     lowLevelCallParams.push_back(READ(MFRC522_DRV_DEF_RETRY_CNT + 1, mfrc522_reg_command, mfrc522_reg_cmd_mem));
     mfrc522UpdateLowLevelExpectations(lowLevelCallParams);
 
-    auto status = mfrc522_soft_reset(&conf);
+    auto status = mfrc522_drv_soft_reset(&conf);
     CHECK_EQUAL(mfrc522_drv_status_dev_rtr_err, status);
 }
 

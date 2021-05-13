@@ -247,7 +247,7 @@ mfrc522_drv_status mfrc522_drv_read_until(const mfrc522_drv_conf* conf, mfrc522_
  * @param conf Pointer to a configuration structure.
  * @return An instance of 'mfrc522_drv_status'. On success, mfrc522_drv_status_ok is returned.
  */
-mfrc522_drv_status mfrc522_soft_reset(const mfrc522_drv_conf* conf);
+mfrc522_drv_status mfrc522_drv_soft_reset(const mfrc522_drv_conf* conf);
 
 /**
  * Initialize MFRC522 timer.

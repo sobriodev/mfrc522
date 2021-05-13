@@ -139,7 +139,7 @@ mfrc522_drv_status mfrc522_drv_read_until(const mfrc522_drv_conf* conf, mfrc522_
     return mfrc522_drv_status_ok;
 }
 
-mfrc522_drv_status mfrc522_soft_reset(const mfrc522_drv_conf* conf)
+mfrc522_drv_status mfrc522_drv_soft_reset(const mfrc522_drv_conf* conf)
 {
     ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
 
