@@ -83,7 +83,7 @@ mfrc522_drv_status mfrc522_drv_init(mfrc522_drv_conf* conf)
     /* In case 'pointer' low-level calls are used check for NULL also */
 #if MFRC522_LL_PTR
     ERROR_IF_EQ(conf->ll_send, NULL, mfrc522_drv_status_nullptr);
-    ERROR_IF_EQ(conf->ll_send, NULL, mfrc522_drv_status_nullptr);
+    ERROR_IF_EQ(conf->ll_recv, NULL, mfrc522_drv_status_nullptr);
 #if MFRC522_LL_DELAY
     ERROR_IF_EQ(conf->ll_delay, NULL, mfrc522_drv_status_nullptr);
 #endif
