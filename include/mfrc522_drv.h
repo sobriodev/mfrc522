@@ -281,6 +281,17 @@ mfrc522_drv_status mfrc522_drv_tim_set(mfrc522_drv_tim_conf* tim_conf, u16 perio
 mfrc522_drv_status mfrc522_drv_tim_start(const mfrc522_drv_conf* conf, const mfrc522_drv_tim_conf* tim_conf);
 
 /**
+ * Stop MFRC522 timer.
+ *
+ * The function stops timer unit immediately.
+ * The function returns error code when NULL was passed instead of a valid configuration pointer.
+ *
+ * @param conf Pointer to a configuration structure.
+ * @return Status of the operation. On success mfrc522_drv_status_ok is returned.
+ */
+mfrc522_drv_status mfrc522_drv_tim_stop(const mfrc522_drv_conf* conf);
+
+/**
  * Initialize interrupt subsystem.
  *
  * The function sets up all registers and clear all interrupt flags.

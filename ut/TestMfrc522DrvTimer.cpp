@@ -129,3 +129,20 @@ TEST(TestMfrc522DrvTimer, mfrc522_drv_tim_start__TypicalCase__TimerStarted)
     auto status = mfrc522_drv_tim_start(&conf, &timerConf);
     CHECK_EQUAL(mfrc522_drv_status_ok, status);
 }
+
+TEST(TestMfrc522DrvTimer, mfrc522_drv_tim_stop__NullCases)
+{
+    auto status = mfrc522_drv_tim_stop(nullptr);
+    CHECK_EQUAL(mfrc522_drv_status_nullptr, status);
+}
+
+TEST(TestMfrc522DrvTimer, mfrc522_drv_tim_stop__TimerStopped)
+{
+    auto device = initDevice();
+
+    llCallParams.push_back(WRITE1_A(1, mfrc522_reg_control_reg));
+    mfrc522UpdateLowLevelExpectations(llCallParams);
+
+    auto status = mfrc522_drv_tim_stop(&device);
+    CHECK_EQUAL(mfrc522_drv_status_ok, status);
+}
