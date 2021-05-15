@@ -211,7 +211,7 @@ mfrc522_drv_status mfrc522_drv_tim_start(const mfrc522_drv_conf* conf, const mfr
     TRY_WRITE_MASKED(conf, mfrc522_reg_tim_mode, tim_conf->periodic, MFRC522_REG_FIELD(TMODE_TAUTO_RESTART));
 
     /* Immediately start timer */
-    TRY_WRITE_MASKED(conf, mfrc522_reg_control_reg, 1, MFRC522_REG_FIELD(CONTROL_TSN));
+    TRY_WRITE_MASKED(conf, mfrc522_reg_control_reg, 1, MFRC522_REG_FIELD(CONTROL_TSTART));
 
     return mfrc522_drv_status_ok;
 }
@@ -220,7 +220,7 @@ mfrc522_drv_status mfrc522_drv_tim_stop(const mfrc522_drv_conf* conf)
 {
     ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
 
-    TRY_WRITE_MASKED(conf, mfrc522_reg_control_reg, 0, MFRC522_REG_FIELD(CONTROL_TSN));
+    TRY_WRITE_MASKED(conf, mfrc522_reg_control_reg, 1, MFRC522_REG_FIELD(CONTROL_TSTOP));
 
     return mfrc522_drv_status_ok;
 }
