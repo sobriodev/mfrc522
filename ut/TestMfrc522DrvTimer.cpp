@@ -1,46 +1,8 @@
-#include "TestRunner.h"
+#include "TestCommon.h"
 #include "mfrc522_drv.h"
-#include "mfrc522_reg.h"
-#include "Mfrc522MockWrapper.h"
+#include "Mockable.h" /* Provide mocks */
 
-/* ------------------------------------------------------------ */
-/* ------------------------ Test groups ----------------------- */
-/* ------------------------------------------------------------ */
-
-TEST_GROUP(TestMfrc522DrvTimer)
-{
-    LowLevelCallParams llCallParams = {};
-
-    void setup() override
-    {
-        /* Nothing to do here */
-    }
-
-    void teardown() override
-    {
-        mock().checkExpectations();
-        mfrc522DestroyLowLevelParams(llCallParams);
-        mock().clear();
-    }
-
-    /* Return initialized device structure by value. The function must be called prior to initializing fake device */
-    auto initDevice()
-    {
-        /* Add fake response to return version number */
-        llCallParams.push_back(READ(1, mfrc522_reg_version, 0x9B));
-        mfrc522UpdateLowLevelExpectations(llCallParams);
-
-        mfrc522_drv_conf conf;
-        auto status = mfrc522_drv_init(&conf);
-        CHECK_EQUAL(mfrc522_drv_status_ok, status);
-
-        /* Flush params vector and check expectations */
-        mock().checkExpectations();
-        mfrc522DestroyLowLevelParams(llCallParams);
-        mock().clear();
-        return conf;
-    }
-};
+using namespace testing;
 
 /* ------------------------------------------------------------ */
 /* ------------------------ Test cases ------------------------ */
@@ -49,7 +11,7 @@ TEST_GROUP(TestMfrc522DrvTimer)
 TEST(TestMfrc522DrvTimer, mfrc522_drv_tim_set__NullCases)
 {
     auto status = mfrc522_drv_tim_set(nullptr, 10);
-    CHECK_EQUAL(mfrc522_drv_status_nullptr, status);
+    ASSERT_EQ(mfrc522_drv_status_nullptr, status);
 }
 
 TEST(TestMfrc522DrvTimer, mfrc522_drv_tim_set__PeriodEqualsToZero__Failure)
@@ -57,7 +19,7 @@ TEST(TestMfrc522DrvTimer, mfrc522_drv_tim_set__PeriodEqualsToZero__Failure)
     mfrc522_drv_tim_conf conf;
 
     auto status = mfrc522_drv_tim_set(&conf, 0);
-    CHECK_EQUAL(mfrc522_drv_status_tim_prd_err, status);
+    ASSERT_EQ(mfrc522_drv_status_tim_prd_err, status);
 }
 
 TEST(TestMfrc522DrvTimer, mfrc522_drv_tim_set__PeriodTooLong__Failure)
@@ -65,7 +27,7 @@ TEST(TestMfrc522DrvTimer, mfrc522_drv_tim_set__PeriodTooLong__Failure)
     mfrc522_drv_tim_conf conf;
 
     auto status = mfrc522_drv_tim_set(&conf, MFRC522_DRV_TIM_MAX_PERIOD + 1);
-    CHECK_EQUAL(mfrc522_drv_status_tim_prd_err, status);
+    ASSERT_EQ(mfrc522_drv_status_tim_prd_err, status);
 }
 
 TEST(TestMfrc522DrvTimer, mfrc522_drv_tim_set__Periods__Success)
@@ -87,10 +49,10 @@ TEST(TestMfrc522DrvTimer, mfrc522_drv_tim_set__Periods__Success)
     for (const auto& row : testData) {
         mfrc522_drv_tim_conf conf;
         auto status = mfrc522_drv_tim_set(&conf, row.first);
-        CHECK_EQUAL(mfrc522_drv_status_ok, status);
-        CHECK_EQUAL(1694, conf.prescaler);
-        CHECK_EQUAL(mfrc522_drv_tim_psl_even, conf.prescaler_type);
-        CHECK_EQUAL(row.second, conf.reload_val);
+        ASSERT_EQ(mfrc522_drv_status_ok, status);
+        ASSERT_EQ(1694, conf.prescaler);
+        ASSERT_EQ(mfrc522_drv_tim_psl_even, conf.prescaler_type);
+        ASSERT_EQ(row.second, conf.reload_val);
     }
 }
 
@@ -100,15 +62,17 @@ TEST(TestMfrc522DrvTimer, mfrc522_drv_tim_start__NullCases)
     mfrc522_drv_tim_conf timConf;
 
     auto status = mfrc522_drv_tim_start(nullptr, &timConf);
-    CHECK_EQUAL(mfrc522_drv_status_nullptr, status);
+    ASSERT_EQ(mfrc522_drv_status_nullptr, status);
 
     status = mfrc522_drv_tim_start(&conf, nullptr);
-    CHECK_EQUAL(mfrc522_drv_status_nullptr, status);
+    ASSERT_EQ(mfrc522_drv_status_nullptr, status);
 }
 
 TEST(TestMfrc522DrvTimer, mfrc522_drv_tim_start__TypicalCase__TimerStarted)
 {
-    auto conf = initDevice();
+    INSTALL_HOOK(mfrc522_drv_init, mfrc522_drv_init__STUB);
+    mfrc522_drv_conf conf;
+    mfrc522_drv_init(&conf);
 
     mfrc522_drv_tim_conf timerConf;
     timerConf.prescaler_type = mfrc522_drv_tim_psl_odd;
@@ -116,33 +80,41 @@ TEST(TestMfrc522DrvTimer, mfrc522_drv_tim_start__TypicalCase__TimerStarted)
     timerConf.reload_val = 0x0CA0;
     timerConf.periodic = true;
 
-    /* Fill low-level calls vector */
-    llCallParams.push_back(WRITE1(1, mfrc522_reg_tim_prescaler, 0xBC));
-    llCallParams.push_back(WRITE1(1, mfrc522_reg_tim_mode, 0x0A));
-    llCallParams.push_back(WRITE1_A(1, mfrc522_reg_demod));
-    llCallParams.push_back(WRITE1(1, mfrc522_reg_tim_reload_lo, 0xA0));
-    llCallParams.push_back(WRITE1(1, mfrc522_reg_tim_reload_hi, 0x0C));
-    llCallParams.push_back(WRITE1_A(1, mfrc522_reg_tim_mode));
-    llCallParams.push_back(WRITE1_A(1, mfrc522_reg_control_reg));
-    mfrc522UpdateLowLevelExpectations(llCallParams);
+    /* Fill low-level calls */
+    INSTALL_MOCK(mfrc522_ll_send);
+    InSequence s;
+    CUTIE_EXPECT_CALL(mfrc522_ll_send, mfrc522_reg_tim_prescaler, 1, Pointee(0xBC))
+        .WillOnce(Return(mfrc522_ll_status_ok));
+    CUTIE_EXPECT_CALL(mfrc522_ll_send, mfrc522_reg_tim_mode, 1, Pointee(0x0A))
+        .WillOnce(Return(mfrc522_ll_status_ok));
+    CUTIE_EXPECT_CALL(mfrc522_ll_send, mfrc522_reg_demod, 1, _).WillOnce(Return(mfrc522_ll_status_ok));
+    CUTIE_EXPECT_CALL(mfrc522_ll_send, mfrc522_reg_tim_reload_lo, 1, Pointee(0xA0))
+        .WillOnce(Return(mfrc522_ll_status_ok));
+    CUTIE_EXPECT_CALL(mfrc522_ll_send, mfrc522_reg_tim_reload_hi, 1, Pointee(0x0C))
+        .WillOnce(Return(mfrc522_ll_status_ok));
+    CUTIE_EXPECT_CALL(mfrc522_ll_send, mfrc522_reg_tim_mode, 1, _).WillOnce(Return(mfrc522_ll_status_ok));
+    CUTIE_EXPECT_CALL(mfrc522_ll_send, mfrc522_reg_control_reg, 1, _).WillOnce(Return(mfrc522_ll_status_ok));
 
     auto status = mfrc522_drv_tim_start(&conf, &timerConf);
-    CHECK_EQUAL(mfrc522_drv_status_ok, status);
+    ASSERT_EQ(mfrc522_drv_status_ok, status);
 }
 
 TEST(TestMfrc522DrvTimer, mfrc522_drv_tim_stop__NullCases)
 {
     auto status = mfrc522_drv_tim_stop(nullptr);
-    CHECK_EQUAL(mfrc522_drv_status_nullptr, status);
+    ASSERT_EQ(mfrc522_drv_status_nullptr, status);
 }
 
 TEST(TestMfrc522DrvTimer, mfrc522_drv_tim_stop__TimerStopped)
 {
-    auto device = initDevice();
+    INSTALL_HOOK(mfrc522_drv_init, mfrc522_drv_init__STUB);
+    mfrc522_drv_conf conf;
+    mfrc522_drv_init(&conf);
 
-    llCallParams.push_back(WRITE1_A(1, mfrc522_reg_control_reg));
-    mfrc522UpdateLowLevelExpectations(llCallParams);
+    /* Set expectations */
+    InSequence s;
+    INSTALL_EXPECT_CALL(mfrc522_ll_send, mfrc522_reg_control_reg, 1, _).WillOnce(Return(mfrc522_ll_status_ok));;
 
-    auto status = mfrc522_drv_tim_stop(&device);
-    CHECK_EQUAL(mfrc522_drv_status_ok, status);
+    auto status = mfrc522_drv_tim_stop(&conf);
+    ASSERT_EQ(mfrc522_drv_status_ok, status);
 }

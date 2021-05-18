@@ -1,28 +1,20 @@
-#include "TestRunner.h"
+#include "TestCommon.h"
 #include "mfrc522_drv.h"
-#include "Mfrc522MockWrapper.h"
 #include "mfrc522_conf.h"
 
-/* ------------------------------------------------------------ */
-/* ------------------------ Test groups ----------------------- */
-/* ------------------------------------------------------------ */
+using namespace testing;
 
-TEST_GROUP(TestMfrc522DrvNoLlDelay)
-{
-    LowLevelCallParams lowLevelCallParams = {};
+/*
+ * As delay function is not present in the scope it is not possible to include Mockable.h file.
+ * Thus declare mocks manually.
+ */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic" /* Disable pedantic flag due to problem inside Cutie library */
 
-    void setup() override
-    {
-        /* Nothing to do here */
-    }
+DECLARE_MOCKABLE(mfrc522_ll_recv, 2);
+DECLARE_HOOKABLE(mfrc522_drv_init);
 
-    void teardown() override
-    {
-        mock().checkExpectations();
-        mfrc522DestroyLowLevelParams(lowLevelCallParams);
-        mock().clear();
-    }
-};
+#pragma GCC diagnostic pop
 
 /* ------------------------------------------------------------ */
 /* ------------------------ Test cases ------------------------ */
@@ -30,16 +22,15 @@ TEST_GROUP(TestMfrc522DrvNoLlDelay)
 
 TEST(TestMfrc522DrvNoLlDelay, mfrc522_drv_read_until__LowLevelDelayDisabled__RetryCountIncreased)
 {
+    /* Init device */
+    INSTALL_HOOK(mfrc522_drv_init, mfrc522_drv_init__STUB);
+    mfrc522_drv_conf conf;
+    mfrc522_drv_init(&conf);
+
     /* Populate fake responses */
     const auto retryCnt = 10;
-    lowLevelCallParams.push_back(READ(1, mfrc522_reg_version, 0x9B));
-    lowLevelCallParams.push_back(READ(retryCnt * MFRC522_CONF_RETRY_CNT_MUL + 1, mfrc522_reg_fifo_data_reg, 0x00));
-    mfrc522UpdateLowLevelExpectations(lowLevelCallParams);
-
-    /* Init device */
-    mfrc522_drv_conf conf;
-    auto status = mfrc522_drv_init(&conf);
-    CHECK_EQUAL(mfrc522_drv_status_ok, status);
+    INSTALL_EXPECT_CALL(mfrc522_ll_recv, mfrc522_reg_fifo_data_reg, _).Times(retryCnt * MFRC522_CONF_RETRY_CNT_MUL + 1)
+        .WillRepeatedly(DoAll(SetArgPointee<1>(0x00), Return(mfrc522_ll_status_ok)));
 
     mfrc522_drv_read_until_conf ruConf;
     ruConf.addr = mfrc522_reg_fifo_data_reg;
@@ -47,6 +38,6 @@ TEST(TestMfrc522DrvNoLlDelay, mfrc522_drv_read_until__LowLevelDelayDisabled__Ret
     ruConf.mask = 0x00;
     ruConf.retry_cnt = retryCnt;
 
-    status = mfrc522_drv_read_until(&conf, &ruConf);
-    CHECK_EQUAL(mfrc522_drv_status_dev_rtr_err, status);
+    auto status = mfrc522_drv_read_until(&conf, &ruConf);
+    ASSERT_EQ(mfrc522_drv_status_dev_rtr_err, status);
 }
