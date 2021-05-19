@@ -11,7 +11,7 @@ script:
 - make test
 after_success:
 - cd ..
-- coveralls -r . -b build --verbose --gcov=gcov --gcov-options '\-lpbc'
+- coveralls -r . -b build --exclude ut --exclude CMakeFiles --gcov=gcov --gcov-options '\-lpbc'
 - cd script
 - chmod +x auto_merge.sh
 - "./auto_merge.sh"
