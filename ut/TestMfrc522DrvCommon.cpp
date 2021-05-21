@@ -1,5 +1,6 @@
 #include "TestCommon.h"
 #include "mfrc522_drv.h"
+#include "mfrc522_conf.h"
 #include "Mockable.h" /* Provide mocks */
 
 using namespace testing;
@@ -45,12 +46,17 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_init__DeviceNotSupported__Failure)
 
 TEST(TestMfrc522DrvCommon, mfrc522_drv_init__DeviceFound__Success)
 {
-    INSTALL_HOOK(mfrc522_drv_init, mfrc522_drv_init__STUB);
+    /* Set expectations */
+    InSequence s;
+    INSTALL_EXPECT_CALL(mfrc522_ll_recv, mfrc522_reg_version, _).Times(1)
+            .WillRepeatedly(DoAll(SetArgPointee<1>(MFRC522_CONF_CHIP_TYPE), Return(mfrc522_ll_status_ok)));
+
     mfrc522_drv_conf conf;
-    mfrc522_drv_init(&conf);
+    auto status = mfrc522_drv_init(&conf);
+    ASSERT_EQ(mfrc522_drv_status_ok, status);
 
     /* Check if 'chip_version' field was set */
-    ASSERT_EQ(0x9B, conf.chip_version);
+    ASSERT_EQ(MFRC522_CONF_CHIP_TYPE, conf.chip_version);
 }
 
 TEST(TestMfrc522DrvCommon, mfrc522_drv_write__NullCases)

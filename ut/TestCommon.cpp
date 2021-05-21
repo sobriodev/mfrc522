@@ -1,10 +1,11 @@
 #include "TestCommon.h"
+#include "mfrc522_conf.h"
 
 using namespace testing;
 
 mfrc522_drv_status mfrc522_drv_init__STUB(mfrc522_drv_conf* conf)
 {
-    conf->chip_version = 0x9B;
+    conf->chip_version = MFRC522_CONF_CHIP_TYPE;
     return mfrc522_drv_status_ok;
 }
 

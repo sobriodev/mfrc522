@@ -15,6 +15,7 @@
 #pragma GCC diagnostic ignored "-Wpedantic" /* Disable pedantic flag due to problem inside Cutie library */
 
 /* Mocks */
+DECLARE_MOCKABLE(mfrc522_drv_init, 1);
 DECLARE_MOCKABLE(mfrc522_ll_send, 3);
 DECLARE_MOCKABLE(mfrc522_ll_recv, 2);
 DECLARE_MOCKABLE(mfrc522_ll_delay, 1);
