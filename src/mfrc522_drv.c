@@ -1,6 +1,8 @@
 #include "mfrc522_drv.h"
 #include "mfrc522_conf.h"
 
+#include <string.h>
+
 /* ------------------------------------------------------------ */
 /* ------------------------ Private macros -------------------- */
 /* ------------------------------------------------------------ */
@@ -106,11 +108,17 @@ mfrc522_ll_status mfrc522_drv_write_masked(const mfrc522_drv_conf* conf, mfrc522
 {
     ERROR_IF_EQ(conf, NULL, mfrc522_ll_status_send_err);
 
+    mfrc522_ll_status status;
     u8 buff;
-    ERROR_IF_NEQ(mfrc522_drv_read(conf, addr, &buff), mfrc522_ll_status_ok);
+    status = mfrc522_drv_read(conf, addr, &buff);
+    ERROR_IF_NEQ(status, mfrc522_ll_status_ok);
+
     buff &= ~(mask << pos);
     buff |= ((val & mask) << pos);
-    ERROR_IF_NEQ(mfrc522_drv_write_byte(conf, addr, buff), mfrc522_ll_status_ok);
+
+    status = mfrc522_drv_write_byte(conf, addr, buff);
+    ERROR_IF_NEQ(status, mfrc522_ll_status_ok);
+
     return mfrc522_ll_status_ok;
 }
 
@@ -277,6 +285,88 @@ mfrc522_drv_status mfrc522_drv_irq_en(const mfrc522_drv_conf* conf, mfrc522_reg_
         reg = mfrc522_reg_com_irq_en;
     }
     TRY_WRITE_MASKED(conf, reg, enable, 0x01, irq);
+
+    return mfrc522_drv_status_ok;
+}
+
+mfrc522_drv_status mfrc522_drv_self_test(mfrc522_drv_conf* conf)
+{
+    ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
+
+    mfrc522_drv_status status;
+
+    /* Step 1 - Perform a soft reset */
+    status = mfrc522_drv_soft_reset(conf);
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
+
+    /* Step 2 - Clear the internal buffer by writing 25 bytes of 00h */
+    TRY_WRITE_BYTE(conf, mfrc522_reg_fifo_data_reg, 0x00);
+    status = mfrc522_drv_invoke_cmd(conf, mfrc522_reg_cmd_mem);
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
+
+    /* Step 3 - Enable the self test by writing 09h to the AutoTestReg register */
+    TRY_WRITE_MASKED(conf, mfrc522_reg_auto_test, 0x09, MFRC522_REG_FIELD(AUTOTEST_SELFTEST));
+
+    /* Step 4 - Write 00h to the FIFO buffer */
+    TRY_WRITE_BYTE(conf, mfrc522_reg_fifo_data_reg, 0x00);
+
+    /* Step 5 - Start the self test with the CalcCRC command */
+    status = mfrc522_drv_invoke_cmd(conf, mfrc522_reg_cmd_crc);
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
+
+    /* Step 6 - Wait until FIFO buffer contains 64 bytes */
+    mfrc522_drv_read_until_conf rc;
+    rc.addr = mfrc522_reg_fifo_level_reg;
+    rc.mask = 0xFF;
+    rc.exp_payload = 0x40; /* 64 bytes */
+    rc.delay = 100;
+    rc.retry_cnt = MFRC522_DRV_DEF_RETRY_CNT;
+
+    status = mfrc522_drv_read_until(conf, &rc);
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
+
+    /* Step 7 - Read content from the FIFO buffer and store it inside device's configuration structure */
+    u8 buff;
+    for (size i = 0; i < 64; ++i) {
+        TRY_READ(conf, mfrc522_reg_fifo_data_reg, &buff);
+        conf->self_test_out[i] = buff;
+    }
+
+    /* Step 8 - Compare output bytes with expected ones */
+    u8 expected[MFRC522_DRV_SELF_TEST_FIFO_SZ] = {MFRC522_CONF_SELF_TEST_FIFO_OUT};
+    if (UNLIKELY(memcmp(expected, conf->self_test_out, MFRC522_DRV_SELF_TEST_FIFO_SZ))) {
+        return mfrc522_drv_status_self_test_err;
+    }
+
+    return mfrc522_drv_status_ok;
+}
+
+mfrc522_drv_status mfrc522_drv_invoke_cmd(const mfrc522_drv_conf* conf, mfrc522_reg_cmd cmd)
+{
+    ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
+
+    /* Write to command register */
+    TRY_WRITE_MASKED(conf, mfrc522_reg_command, cmd, MFRC522_REG_FIELD(COMMAND_CMD));
+
+    mfrc522_drv_read_until_conf ru_conf;
+    ru_conf.addr = mfrc522_reg_command;
+    ru_conf.mask = MFRC522_REG_MSK_REAL(COMMAND_CMD);
+    ru_conf.exp_payload = mfrc522_reg_cmd_idle;
+    ru_conf.delay = 5; /* Give some delay */
+    ru_conf.retry_cnt = MFRC522_DRV_DEF_RETRY_CNT;
+
+    mfrc522_drv_status status;
+    switch (cmd) {
+        /* These commands terminate automatically. Wait until Idle command is active back */
+        case mfrc522_reg_cmd_idle:
+        case mfrc522_reg_cmd_mem:
+        case mfrc522_reg_cmd_rand:
+        case mfrc522_reg_cmd_soft_reset:
+            status = mfrc522_drv_read_until(conf, &ru_conf);
+            ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
+        default:
+            break;
+    }
 
     return mfrc522_drv_status_ok;
 }

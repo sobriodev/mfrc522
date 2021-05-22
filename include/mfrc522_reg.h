@@ -73,6 +73,11 @@ MFRC522_REG_FIELD_CREATE(COMIEN_IRQ_INV, 0x01, 7);
  */
 MFRC522_REG_FIELD_CREATE(DIVIEN_IRQ_PUSHPULL, 0x01, 7);
 
+/**
+ * Bit fields for AutoTestReg register
+ */
+MFRC522_REG_FIELD_CREATE(AUTOTEST_SELFTEST, 0x0F, 0);
+
 /* ------------------------------------------------------------ */
 /* ------------------------ Data types ------------------------ */
 /* ------------------------------------------------------------ */
