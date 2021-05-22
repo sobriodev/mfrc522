@@ -21,7 +21,7 @@ mfrc522_ll_status mfrc522_ll_send(u8 addr, size bytes, u8* payload) // NOLINT(re
 mfrc522_ll_status mfrc522_ll_recv(u8 addr, u8* payload) // NOLINT(readability-non-const-parameter)
 {
     static_cast<void>(addr);
-    static_cast<void>(payload);
+    *payload = 0x00;
     return mfrc522_ll_status_ok;
 }
 

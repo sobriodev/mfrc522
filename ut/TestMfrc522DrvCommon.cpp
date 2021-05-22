@@ -258,3 +258,128 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_write_masked__MaskedWritePerformed)
     auto status = mfrc522_drv_write_masked(&conf, mfrc522_reg_gs_n, 13, msk, pos);
     ASSERT_EQ(mfrc522_ll_status_ok, status);
 }
+
+TEST(TestMfrc522DrvCommon, mfrc522_drv_self_test__NullCases)
+{
+    auto status = mfrc522_drv_self_test(nullptr);
+    ASSERT_EQ(mfrc522_drv_status_nullptr, status);
+}
+
+TEST(TestMfrc522DrvCommon, mfrc522_drv_self_test__TypicalCase__Success)
+{
+    INSTALL_HOOK(mfrc522_drv_init, mfrc522_drv_init__STUB);
+    mfrc522_drv_conf conf;
+    mfrc522_drv_init(&conf);
+
+    /* Self test procedure */
+    MOCK_COMMON_INIT();
+    INSTALL_MOCK(mfrc522_drv_soft_reset);
+    INSTALL_MOCK(mfrc522_drv_invoke_cmd);
+
+    /* 1. Soft reset */
+    CUTIE_EXPECT_CALL(mfrc522_drv_soft_reset, &conf).WillOnce(Return(mfrc522_drv_status_ok));
+    /* 2. Clear the internal buffer */
+    CUTIE_EXPECT_CALL(mfrc522_ll_send, mfrc522_reg_fifo_data_reg, 1, Pointee(0x00))
+        .WillOnce(Return(mfrc522_ll_status_ok));
+    CUTIE_EXPECT_CALL(mfrc522_drv_invoke_cmd, &conf, mfrc522_reg_cmd_mem).WillOnce(Return(mfrc522_drv_status_ok));
+    /* 3. Enable the self test by writing 09h to the AutoTestReg register */
+    CUTIE_EXPECT_CALL(mfrc522_ll_send, mfrc522_reg_auto_test, 1, _).WillOnce(Return(mfrc522_ll_status_ok));
+    /* 4. Write 00h to the FIFO buffer */
+    CUTIE_EXPECT_CALL(mfrc522_ll_send, mfrc522_reg_fifo_data_reg, 1, Pointee(0x00))
+        .WillOnce(Return(mfrc522_ll_status_ok));
+    /* 5. Start the self test with the CalcCRC command */
+    CUTIE_EXPECT_CALL(mfrc522_drv_invoke_cmd, &conf, mfrc522_reg_cmd_crc).WillOnce(Return(mfrc522_drv_status_ok));
+    /* 6 Wait until FIFO buffer contains 64 bytes */
+    CUTIE_EXPECT_CALL(mfrc522_ll_recv, mfrc522_reg_fifo_level_reg, _)
+        .WillOnce(DoAll(SetArgPointee<1>(64), Return(mfrc522_ll_status_ok)));
+    /* Read FIFO contents */
+    u8 ret[MFRC522_DRV_SELF_TEST_FIFO_SZ] = {MFRC522_CONF_SELF_TEST_FIFO_OUT};
+    for (const auto& r : ret) {
+        CUTIE_EXPECT_CALL(mfrc522_ll_recv, mfrc522_reg_fifo_data_reg, _)
+            .WillOnce(DoAll(SetArgPointee<1>(r), Return(mfrc522_ll_status_ok)));
+    }
+
+    auto status = mfrc522_drv_self_test(&conf);
+    ASSERT_EQ(mfrc522_drv_status_ok, status);
+
+    /* Check if internal buffer was filled */
+    ASSERT_EQ(0, memcmp(ret, conf.self_test_out, MFRC522_DRV_SELF_TEST_FIFO_SZ));
+}
+
+TEST(TestMfrc522DrvCommon, mfrc522_drv_self_test__FifoContentsDoNotMatchExpectedOnes__Failure)
+{
+    INSTALL_HOOK(mfrc522_drv_init, mfrc522_drv_init__STUB);
+    mfrc522_drv_conf conf;
+    mfrc522_drv_init(&conf);
+
+    /* Self test procedure */
+    MOCK_COMMON_INIT();
+    INSTALL_MOCK(mfrc522_drv_soft_reset);
+    INSTALL_MOCK(mfrc522_drv_invoke_cmd);
+
+    /* 1. Soft reset */
+    CUTIE_EXPECT_CALL(mfrc522_drv_soft_reset, &conf).WillOnce(Return(mfrc522_drv_status_ok));
+    /* 2. Clear the internal buffer */
+    CUTIE_EXPECT_CALL(mfrc522_ll_send, mfrc522_reg_fifo_data_reg, 1, Pointee(0x00))
+        .WillOnce(Return(mfrc522_ll_status_ok));
+    CUTIE_EXPECT_CALL(mfrc522_drv_invoke_cmd, &conf, mfrc522_reg_cmd_mem).WillOnce(Return(mfrc522_drv_status_ok));
+    /* 3. Enable the self test by writing 09h to the AutoTestReg register */
+    CUTIE_EXPECT_CALL(mfrc522_ll_send, mfrc522_reg_auto_test, 1, _).WillOnce(Return(mfrc522_ll_status_ok));
+    /* 4. Write 00h to the FIFO buffer */
+    CUTIE_EXPECT_CALL(mfrc522_ll_send, mfrc522_reg_fifo_data_reg, 1, Pointee(0x00))
+        .WillOnce(Return(mfrc522_ll_status_ok));
+    /* 5. Start the self test with the CalcCRC command */
+    CUTIE_EXPECT_CALL(mfrc522_drv_invoke_cmd, &conf, mfrc522_reg_cmd_crc).WillOnce(Return(mfrc522_drv_status_ok));
+    /* 6 Wait until FIFO buffer contains 64 bytes */
+    CUTIE_EXPECT_CALL(mfrc522_ll_recv, mfrc522_reg_fifo_level_reg, _)
+            .WillOnce(DoAll(SetArgPointee<1>(64), Return(mfrc522_ll_status_ok)));
+    /* Read FIFO contents */
+    u8 ret[MFRC522_DRV_SELF_TEST_FIFO_SZ] = {0x00}; /* Set expected bytes to 0x00 */
+    for (const auto& r : ret) {
+        CUTIE_EXPECT_CALL(mfrc522_ll_recv, mfrc522_reg_fifo_data_reg, _)
+                .WillOnce(DoAll(SetArgPointee<1>(r), Return(mfrc522_ll_status_ok)));
+    }
+
+    auto status = mfrc522_drv_self_test(&conf);
+    ASSERT_EQ(mfrc522_drv_status_self_test_err, status);
+}
+
+TEST(TestMfrc522DrvCommon, mfrc522_drv_invoke_cmd__NullCases)
+{
+    auto status = mfrc522_drv_invoke_cmd(nullptr, mfrc522_reg_cmd_idle);
+    ASSERT_EQ(mfrc522_drv_status_nullptr, status);
+}
+
+TEST(TestMfrc522DrvCommon, mfrc522_drv_invoke_cmd__InvokeCmdThatTerminates__LookIfIdleCmdIsActiveBack)
+{
+    INSTALL_HOOK(mfrc522_drv_init, mfrc522_drv_init__STUB);
+    mfrc522_drv_conf conf;
+    mfrc522_drv_init(&conf);
+
+    /* Set expectations */
+    InSequence s;
+    INSTALL_EXPECT_CALL(mfrc522_ll_recv, mfrc522_reg_command, _)
+        /* Called when new command needs to be invoked */
+        .WillOnce(DoAll(SetArgPointee<1>(0x00), Return(mfrc522_ll_status_ok)))
+        /* Idle command is active back */
+        .WillOnce(DoAll(SetArgPointee<1>(mfrc522_reg_cmd_idle), Return(mfrc522_ll_status_ok)));
+
+    auto status = mfrc522_drv_invoke_cmd(&conf, mfrc522_reg_cmd_mem);
+    ASSERT_EQ(mfrc522_drv_status_ok, status);
+}
+
+TEST(TestMfrc522DrvCommon, mfrc522_drv_invoke_cmd__InvokeCmdThatDoesNotTerminateItself__WaitLoopDisabled)
+{
+    INSTALL_HOOK(mfrc522_drv_init, mfrc522_drv_init__STUB);
+    mfrc522_drv_conf conf;
+    mfrc522_drv_init(&conf);
+
+    /* Set expectations */
+    InSequence s;
+    INSTALL_EXPECT_CALL(mfrc522_ll_recv, mfrc522_reg_command, _)
+        /* Called when new command needs to be invoked */
+        .WillOnce(DoAll(SetArgPointee<1>(0x00), Return(mfrc522_ll_status_ok)));
+
+    auto status = mfrc522_drv_invoke_cmd(&conf, mfrc522_reg_cmd_transceive);
+    ASSERT_EQ(mfrc522_drv_status_ok, status);
+}

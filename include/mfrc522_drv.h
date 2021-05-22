@@ -29,6 +29,11 @@ extern "C" {
  */
 #define MFRC522_DRV_TIM_MAX_PERIOD 16383
 
+/**
+ * The number of bytes returned in self test mode
+ */
+#define MFRC522_DRV_SELF_TEST_FIFO_SZ 64
+
 /* ------------------------------------------------------------ */
 /* -------------------------- Data types ---------------------- */
 /* ------------------------------------------------------------ */
@@ -42,6 +47,7 @@ typedef enum mfrc522_drv_status_
     mfrc522_drv_status_nok, /**< Generic error code */
     mfrc522_drv_status_nullptr, /**< Unexpected NULL pointer */
     mfrc522_drv_status_ll_err, /**< An error occurred during low-level call */
+    mfrc522_drv_status_self_test_err, /**< Mismatch between expected and actual FIFO output during device self-test */
 
     /* Device errors */
     mfrc522_drv_status_dev_err, /**< Device not found */
@@ -65,6 +71,7 @@ typedef struct mfrc522_drv_conf_
 #endif
     /* Read-only fields. Do not modify manually */
     u8 chip_version; /**< Chip version number */
+    u8 self_test_out[MFRC522_DRV_SELF_TEST_FIFO_SZ]; /**< Self test bytes */
 } mfrc522_drv_conf;
 
 /**
@@ -331,6 +338,32 @@ mfrc522_drv_status mfrc522_drv_irq_clr(const mfrc522_drv_conf* conf, mfrc522_reg
  * @return Status of the operation. On success mfrc522_drv_status_ok is returned.
  */
 mfrc522_drv_status mfrc522_drv_irq_en(const mfrc522_drv_conf* conf, mfrc522_reg_irq irq, bool enable);
+
+/**
+ * Perform device self-test procedure.
+ *
+ * The function returns 'mfrc522_drv_status_self_test_err' if received test data differs from expected
+ * bytes (stored inside 'MFRC522_CONF_SELF_TEST_FIFO_OUT' configuration macro).
+ * After self-test procedure, the output data is stored inside device's configuration structure.
+ *
+ * The function returns error when NUll was passed instead of a 'conf' pointer.
+ *
+ * @param conf Pointer to a configuration structure.
+ * @return Status of the operation. On success mfrc522_drv_status_ok is returned.
+ */
+mfrc522_drv_status mfrc522_drv_self_test(mfrc522_drv_conf* conf);
+
+/**
+ * Invoke a MFRC522 command.
+ *
+ * In a case, when finite operation should be executed, the function waits until idle command is active back.
+ * The function returns error when NUll was passed instead of a 'conf' pointer.
+ *
+ * @param conf Pointer to a configuration structure.
+ * @param cmd Command to be invoked.
+ * @return Status of the operation. On success mfrc522_drv_status_ok is returned.
+ */
+mfrc522_drv_status mfrc522_drv_invoke_cmd(const mfrc522_drv_conf* conf, mfrc522_reg_cmd cmd);
 
 #ifdef __cplusplus
 }
