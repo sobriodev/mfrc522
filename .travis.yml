@@ -2,19 +2,20 @@ language: c
 os: linux
 dist: bionic
 before_install:
-- pip install --user cpp-coveralls
+  - chmod +x script/*
+  - mkdir -p build && cd build
+  - mkdir -p dependencies && cd dependencies
+  - ../../script/travis_install_dependencies.sh
+  - cd ..
 script:
-- mkdir -p build
-- cd build
-- cmake -D BUILD_WITH_COVERAGE=ON ..
-- make
-- make test
+  - cmake -DBUILD_WITH_COVERAGE=ON -DBUILD_FOR_UT=ON ..
+  - make
+  - make install
+  - ctest
+  - cd ..
 after_success:
-- cd ..
-- coveralls -r . -b build --exclude ut --gcov=gcov --gcov-options '\-lpbc'
-- cd script
-- chmod +x auto_merge.sh
-- "./auto_merge.sh"
+  - coveralls -r . -b build --exclude ut --gcov=gcov --gcov-options '\-lpbc'
+  - ../script/auto_merge.sh
 env:
   global:
     secure: ZWQeUZLghGlnXAm7SY8u22QGXmJRtLzKt7NEO+H1W2nF1ZrxaDYJe9o0ZdctEEatNmsNIyLfIFT5O3DmhJ2oxtgk/wSFHwVj7T5hmPy/WMsXWLlyhWJIWxX5YsnfyiyYIWwoKw2fIXrrNK510TOHPtfRftIjtBTnkxrRv2I4qg8Who8tOl8ojIKCOVD9vfZvNvd+Mo7nSBL6UkH19rj/FM8C3hQu0+QBFLE/6z8HfLHGqmTEkG/3xTWZGSk4boY2xplE0Xkbq0WXWDJBOvrbtcUiw8IDE6LmbT2CXI0EwN/cta/t0MN/HQI8Qvu8sSbto9e/jSIkj6jam0PWQJJUddbluBiefCrexpxtnIA2j+X4fimIrPmYbGpWj/MCMo/beY6Lly0g//Uxp7aE/couxorddI6FgouaX3nqMpBG4oNItFXJXj5kyDuePDTedLlrGPUYOekg76KbuHE4J2LrISgJbJcPR9DbiN1vr4q2nIdR39ACu/C/O9/0PWlbHI/kOlcgMeBUBwyqaoHEprneIli8ugMgfmO4YFrdsXF/iQBEGWBLG9xmbfR1L0RnBHiJ8Atvqwar51Ek8No8psCjGmYDQqCYa/cnSa9tX/VGvD/tB2PdpC+7syaXmsGhauuYt+JGjp6DsslQ5+2WGyMdn3+uExZ+2Icww6MYp+LxJFk=

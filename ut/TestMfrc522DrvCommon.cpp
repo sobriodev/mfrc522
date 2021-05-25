@@ -1,14 +1,23 @@
-#include "TestCommon.h"
 #include "mfrc522_drv.h"
 #include "mfrc522_conf.h"
+#include <gtest/gtest.h>
+#include <gmock/gmock.h>
 #include "Mockable.h" /* Provide mocks */
+
+/* Required by C Mock library */
+DEFINE_MOCKABLE(mfrc522_ll_status, mfrc522_ll_send, (u8, size, u8*));
+DEFINE_MOCKABLE(mfrc522_ll_status, mfrc522_ll_recv, (u8, u8*));
+DEFINE_MOCKABLE(void, mfrc522_ll_delay, (u32));
+DEFINE_MOCKABLE(mfrc522_drv_status, mfrc522_drv_init, (mfrc522_drv_conf*));
+DEFINE_MOCKABLE(mfrc522_drv_status, mfrc522_drv_soft_reset, (const mfrc522_drv_conf*));
+DEFINE_MOCKABLE(mfrc522_drv_status, mfrc522_drv_invoke_cmd, (const mfrc522_drv_conf*, mfrc522_reg_cmd));
 
 using namespace testing;
 
 /* ------------------------------------------------------------ */
 /* ------------------------ Test cases ------------------------ */
 /* ------------------------------------------------------------ */
-//
+
 TEST(TestMfrc522DrvCommon, mfrc522_drv_init__NullCases)
 {
     auto status = mfrc522_drv_init(nullptr);
@@ -21,8 +30,8 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_init__LlReceiveError__LlErrorIsGenerated)
     auto llStatus = mfrc522_ll_status_recv_err;
 
     /* Set expectations */
-    InSequence seq;
-    INSTALL_EXPECT_CALL(mfrc522_ll_recv, mfrc522_reg_version, _)
+    MOCK(mfrc522_ll_recv);
+    MOCK_CALL(mfrc522_ll_recv, mfrc522_reg_version, _)
         .WillOnce(DoAll(SetArgPointee<1>(payload), Return(llStatus)));
 
     mfrc522_drv_conf conf;
@@ -35,8 +44,8 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_init__LlReceiveError__LlErrorIsGenerated)
 TEST(TestMfrc522DrvCommon, mfrc522_drv_init__DeviceNotSupported__Failure)
 {
     /* Set expectations */
-    InSequence seq;
-    INSTALL_EXPECT_CALL(mfrc522_ll_recv, mfrc522_reg_version, _)
+    MOCK(mfrc522_ll_recv);
+    MOCK_CALL( mfrc522_ll_recv, mfrc522_reg_version, _)
         .WillOnce(DoAll(SetArgPointee<1>(0xAA), Return(mfrc522_ll_status_ok)));
 
     mfrc522_drv_conf conf;
@@ -47,9 +56,9 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_init__DeviceNotSupported__Failure)
 TEST(TestMfrc522DrvCommon, mfrc522_drv_init__DeviceFound__Success)
 {
     /* Set expectations */
-    InSequence s;
-    INSTALL_EXPECT_CALL(mfrc522_ll_recv, mfrc522_reg_version, _).Times(1)
-            .WillRepeatedly(DoAll(SetArgPointee<1>(MFRC522_CONF_CHIP_TYPE), Return(mfrc522_ll_status_ok)));
+    MOCK(mfrc522_ll_recv);
+    MOCK_CALL(mfrc522_ll_recv, mfrc522_reg_version, _)
+        .WillOnce(DoAll(SetArgPointee<1>(MFRC522_CONF_CHIP_TYPE), Return(mfrc522_ll_status_ok)));
 
     mfrc522_drv_conf conf;
     auto status = mfrc522_drv_init(&conf);
@@ -91,9 +100,7 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_read_until__NullCases)
 
 TEST(TestMfrc522DrvCommon, mfrc522_drv_read_until__InfinityFlagEnabled__Success)
 {
-    INSTALL_HOOK(mfrc522_drv_init, mfrc522_drv_init__STUB);
-    mfrc522_drv_conf conf;
-    mfrc522_drv_init(&conf);
+    auto conf = initDevice();
 
     mfrc522_drv_read_until_conf ruConf;
     ruConf.addr = mfrc522_reg_fifo_data_reg;
@@ -103,11 +110,11 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_read_until__InfinityFlagEnabled__Success)
     ruConf.delay = 1;
 
     /* Populate fake responses */
-    INSTALL_MOCK(mfrc522_ll_recv);
+    MOCK(mfrc522_ll_recv);
     InSequence s;
-    CUTIE_EXPECT_CALL(mfrc522_ll_recv, ruConf.addr, _).Times(100)
+    MOCK_CALL(mfrc522_ll_recv, ruConf.addr, _).Times(100)
         .WillRepeatedly(DoAll(SetArgPointee<1>(0x00), Return(mfrc522_ll_status_ok)));
-    CUTIE_EXPECT_CALL(mfrc522_ll_recv, ruConf.addr, _)
+    MOCK_CALL(mfrc522_ll_recv, ruConf.addr, _)
         .WillOnce(DoAll(SetArgPointee<1>(ruConf.exp_payload), Return(mfrc522_ll_status_ok)));
 
     auto status = mfrc522_drv_read_until(&conf, &ruConf);
@@ -117,9 +124,7 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_read_until__InfinityFlagEnabled__Success)
 
 TEST(TestMfrc522DrvCommon, mfrc522_drv_read_until__AnswerOnFirstTry__Success)
 {
-    INSTALL_HOOK(mfrc522_drv_init, mfrc522_drv_init__STUB);
-    mfrc522_drv_conf conf;
-    mfrc522_drv_init(&conf);
+    auto conf = initDevice();
 
     mfrc522_drv_read_until_conf ruConf;
     ruConf.addr = mfrc522_reg_fifo_data_reg;
@@ -129,8 +134,8 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_read_until__AnswerOnFirstTry__Success)
     ruConf.delay = 1;
 
     /* Set expectations */
-    InSequence seq;
-    INSTALL_EXPECT_CALL(mfrc522_ll_recv, ruConf.addr, _)
+    MOCK(mfrc522_ll_recv);
+    MOCK_CALL(mfrc522_ll_recv, ruConf.addr, _)
         .WillOnce(DoAll(SetArgPointee<1>(ruConf.exp_payload), Return(mfrc522_ll_status_ok)));
 
     auto status = mfrc522_drv_read_until(&conf, &ruConf);
@@ -140,9 +145,7 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_read_until__AnswerOnFirstTry__Success)
 
 TEST(TestMfrc522DrvCommon, mfrc522_drv_read_until__AnswerOnThirdTime__Success)
 {
-    INSTALL_HOOK(mfrc522_drv_init, mfrc522_drv_init__STUB);
-    mfrc522_drv_conf conf;
-    mfrc522_drv_init(&conf);
+    auto conf = initDevice();
 
     mfrc522_drv_read_until_conf ruConf;
     ruConf.addr = mfrc522_reg_fifo_data_reg;
@@ -152,8 +155,9 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_read_until__AnswerOnThirdTime__Success)
     ruConf.delay = 1;
 
     /* Set expectations */
+    MOCK(mfrc522_ll_recv);
     InSequence seq;
-    INSTALL_EXPECT_CALL(mfrc522_ll_recv, ruConf.addr, _)
+    MOCK_CALL(mfrc522_ll_recv, ruConf.addr, _)
         .WillOnce(DoAll(SetArgPointee<1>(0x00), Return(mfrc522_ll_status_ok)))
         .WillOnce(DoAll(SetArgPointee<1>(0x40), Return(mfrc522_ll_status_ok)))
         .WillOnce(DoAll(SetArgPointee<1>(0x8F), Return(mfrc522_ll_status_ok)));
@@ -165,9 +169,7 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_read_until__AnswerOnThirdTime__Success)
 
 TEST(TestMfrc522DrvCommon, mfrc522_drv_read_until__NoAnswerAfterAllTries__Failure)
 {
-    INSTALL_HOOK(mfrc522_drv_init, mfrc522_drv_init__STUB);
-    mfrc522_drv_conf conf;
-    mfrc522_drv_init(&conf);
+    auto conf = initDevice();
 
     mfrc522_drv_read_until_conf ruConf;
     ruConf.addr = mfrc522_reg_fifo_data_reg;
@@ -177,8 +179,8 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_read_until__NoAnswerAfterAllTries__Failur
     ruConf.delay = 1;
 
     /* Set expectations */
-    InSequence seq;
-    INSTALL_EXPECT_CALL(mfrc522_ll_recv, ruConf.addr, _).Times(static_cast<i32>(ruConf.retry_cnt + 1))
+    MOCK(mfrc522_ll_recv);
+    MOCK_CALL(mfrc522_ll_recv, ruConf.addr, _).Times(static_cast<i32>(ruConf.retry_cnt + 1))
         .WillRepeatedly(DoAll(SetArgPointee<1>(0x00), Return(mfrc522_ll_status_ok)));
 
     auto status = mfrc522_drv_read_until(&conf, &ruConf);
@@ -196,13 +198,12 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_soft_reset__NullCases)
 
 TEST(TestMfrc522DrvCommon, mfrc522_drv_soft_reset__TypicalCase__Success)
 {
-    INSTALL_HOOK(mfrc522_drv_init, mfrc522_drv_init__STUB);
-    mfrc522_drv_conf conf;
-    mfrc522_drv_init(&conf);
+    auto conf = initDevice();
 
     /* Create expectations */
+    MOCK(mfrc522_ll_recv);
     InSequence seq;
-    INSTALL_EXPECT_CALL(mfrc522_ll_recv, mfrc522_reg_command, _)
+    MOCK_CALL(mfrc522_ll_recv, mfrc522_reg_command, _)
         /* Phase 0: Some command is running */
         .WillOnce(DoAll(SetArgPointee<1>(mfrc522_reg_cmd_mem), Return(mfrc522_ll_status_ok)))
         /* Phase 1: Idle command is active */
@@ -220,13 +221,11 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_soft_reset__TypicalCase__Success)
 
 TEST(TestMfrc522DrvCommon, mfrc522_drv_soft_reset__IdleCommandNotReached__Failure)
 {
-    INSTALL_HOOK(mfrc522_drv_init, mfrc522_drv_init__STUB);
-    mfrc522_drv_conf conf;
-    mfrc522_drv_init(&conf);
+    auto conf = initDevice();
 
     /* Create expectations */
-    InSequence seq;
-    INSTALL_EXPECT_CALL(mfrc522_ll_recv, mfrc522_reg_command, _).Times(static_cast<i32>(MFRC522_DRV_DEF_RETRY_CNT + 1))
+    MOCK(mfrc522_ll_recv);
+    MOCK_CALL(mfrc522_ll_recv, mfrc522_reg_command, _).Times(MFRC522_DRV_DEF_RETRY_CNT + 1)
         .WillRepeatedly(DoAll(SetArgPointee<1>(mfrc522_reg_cmd_mem), Return(mfrc522_ll_status_ok)));
 
     auto status = mfrc522_drv_soft_reset(&conf);
@@ -241,18 +240,18 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_write_masked__NullCases)
 
 TEST(TestMfrc522DrvCommon, mfrc522_drv_write_masked__MaskedWritePerformed)
 {
-    INSTALL_HOOK(mfrc522_drv_init, mfrc522_drv_init__STUB);
-    mfrc522_drv_conf conf;
-    mfrc522_drv_init(&conf);
+    auto conf = initDevice();
 
     const u8 msk = 0x0F;
     const u8 pos = 0;
 
     /* Set expectations */
-    InSequence seq;
-    INSTALL_EXPECT_CALL(mfrc522_ll_recv, mfrc522_reg_gs_n, _)
+    MOCK(mfrc522_ll_recv);
+    MOCK(mfrc522_ll_send);
+    InSequence seq;//
+    MOCK_CALL(mfrc522_ll_recv, mfrc522_reg_gs_n, _)
         .WillOnce(DoAll(SetArgPointee<1>(0x55), Return(mfrc522_ll_status_ok)));
-    INSTALL_EXPECT_CALL(mfrc522_ll_send, mfrc522_reg_gs_n, 1, Pointee(0x5D))
+    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_gs_n, 1, Pointee(0x5D))
         .WillOnce(Return(mfrc522_ll_status_ok));
 
     auto status = mfrc522_drv_write_masked(&conf, mfrc522_reg_gs_n, 13, msk, pos);
@@ -267,35 +266,39 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_self_test__NullCases)
 
 TEST(TestMfrc522DrvCommon, mfrc522_drv_self_test__TypicalCase__Success)
 {
-    INSTALL_HOOK(mfrc522_drv_init, mfrc522_drv_init__STUB);
-    mfrc522_drv_conf conf;
-    mfrc522_drv_init(&conf);
+    auto conf = initDevice();
 
     /* Self test procedure */
-    MOCK_COMMON_INIT();
-    INSTALL_MOCK(mfrc522_drv_soft_reset);
-    INSTALL_MOCK(mfrc522_drv_invoke_cmd);
-
+    MOCK(mfrc522_ll_recv);
+    MOCK(mfrc522_ll_send);
+    MOCK(mfrc522_drv_soft_reset);
+    MOCK(mfrc522_drv_invoke_cmd);
+    IGNORE_REDUNDANT_LL_RECV_CALLS();
+    InSequence s;
     /* 1. Soft reset */
-    CUTIE_EXPECT_CALL(mfrc522_drv_soft_reset, &conf).WillOnce(Return(mfrc522_drv_status_ok));
+    MOCK_CALL(mfrc522_drv_soft_reset, &conf)
+        .WillOnce(Return(mfrc522_drv_status_ok));
     /* 2. Clear the internal buffer */
-    CUTIE_EXPECT_CALL(mfrc522_ll_send, mfrc522_reg_fifo_data_reg, 1, Pointee(0x00))
+    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_fifo_data_reg, 1, Pointee(0x00))
         .WillOnce(Return(mfrc522_ll_status_ok));
-    CUTIE_EXPECT_CALL(mfrc522_drv_invoke_cmd, &conf, mfrc522_reg_cmd_mem).WillOnce(Return(mfrc522_drv_status_ok));
+    MOCK_CALL(mfrc522_drv_invoke_cmd, &conf, mfrc522_reg_cmd_mem)
+        .WillOnce(Return(mfrc522_drv_status_ok));
     /* 3. Enable the self test by writing 09h to the AutoTestReg register */
-    CUTIE_EXPECT_CALL(mfrc522_ll_send, mfrc522_reg_auto_test, 1, _).WillOnce(Return(mfrc522_ll_status_ok));
+    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_auto_test, 1, _)
+        .WillOnce(Return(mfrc522_ll_status_ok));
     /* 4. Write 00h to the FIFO buffer */
-    CUTIE_EXPECT_CALL(mfrc522_ll_send, mfrc522_reg_fifo_data_reg, 1, Pointee(0x00))
+    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_fifo_data_reg, 1, Pointee(0x00))
         .WillOnce(Return(mfrc522_ll_status_ok));
     /* 5. Start the self test with the CalcCRC command */
-    CUTIE_EXPECT_CALL(mfrc522_drv_invoke_cmd, &conf, mfrc522_reg_cmd_crc).WillOnce(Return(mfrc522_drv_status_ok));
+    MOCK_CALL(mfrc522_drv_invoke_cmd, &conf, mfrc522_reg_cmd_crc)
+        .WillOnce(Return(mfrc522_drv_status_ok));
     /* 6 Wait until FIFO buffer contains 64 bytes */
-    CUTIE_EXPECT_CALL(mfrc522_ll_recv, mfrc522_reg_fifo_level_reg, _)
+    MOCK_CALL(mfrc522_ll_recv, mfrc522_reg_fifo_level_reg, _)
         .WillOnce(DoAll(SetArgPointee<1>(64), Return(mfrc522_ll_status_ok)));
     /* Read FIFO contents */
     u8 ret[MFRC522_DRV_SELF_TEST_FIFO_SZ] = {MFRC522_CONF_SELF_TEST_FIFO_OUT};
     for (const auto& r : ret) {
-        CUTIE_EXPECT_CALL(mfrc522_ll_recv, mfrc522_reg_fifo_data_reg, _)
+        MOCK_CALL(mfrc522_ll_recv, mfrc522_reg_fifo_data_reg, _)
             .WillOnce(DoAll(SetArgPointee<1>(r), Return(mfrc522_ll_status_ok)));
     }
 
@@ -308,35 +311,39 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_self_test__TypicalCase__Success)
 
 TEST(TestMfrc522DrvCommon, mfrc522_drv_self_test__FifoContentsDoNotMatchExpectedOnes__Failure)
 {
-    INSTALL_HOOK(mfrc522_drv_init, mfrc522_drv_init__STUB);
-    mfrc522_drv_conf conf;
-    mfrc522_drv_init(&conf);
+    auto conf = initDevice();
 
     /* Self test procedure */
-    MOCK_COMMON_INIT();
-    INSTALL_MOCK(mfrc522_drv_soft_reset);
-    INSTALL_MOCK(mfrc522_drv_invoke_cmd);
-
+    MOCK(mfrc522_ll_recv);
+    MOCK(mfrc522_ll_send);
+    MOCK(mfrc522_drv_soft_reset);
+    MOCK(mfrc522_drv_invoke_cmd);
+    IGNORE_REDUNDANT_LL_RECV_CALLS();
+    InSequence s;
     /* 1. Soft reset */
-    CUTIE_EXPECT_CALL(mfrc522_drv_soft_reset, &conf).WillOnce(Return(mfrc522_drv_status_ok));
+    MOCK_CALL(mfrc522_drv_soft_reset, &conf)
+            .WillOnce(Return(mfrc522_drv_status_ok));
     /* 2. Clear the internal buffer */
-    CUTIE_EXPECT_CALL(mfrc522_ll_send, mfrc522_reg_fifo_data_reg, 1, Pointee(0x00))
-        .WillOnce(Return(mfrc522_ll_status_ok));
-    CUTIE_EXPECT_CALL(mfrc522_drv_invoke_cmd, &conf, mfrc522_reg_cmd_mem).WillOnce(Return(mfrc522_drv_status_ok));
+    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_fifo_data_reg, 1, Pointee(0x00))
+            .WillOnce(Return(mfrc522_ll_status_ok));
+    MOCK_CALL(mfrc522_drv_invoke_cmd, &conf, mfrc522_reg_cmd_mem)
+            .WillOnce(Return(mfrc522_drv_status_ok));
     /* 3. Enable the self test by writing 09h to the AutoTestReg register */
-    CUTIE_EXPECT_CALL(mfrc522_ll_send, mfrc522_reg_auto_test, 1, _).WillOnce(Return(mfrc522_ll_status_ok));
+    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_auto_test, 1, _)
+            .WillOnce(Return(mfrc522_ll_status_ok));
     /* 4. Write 00h to the FIFO buffer */
-    CUTIE_EXPECT_CALL(mfrc522_ll_send, mfrc522_reg_fifo_data_reg, 1, Pointee(0x00))
-        .WillOnce(Return(mfrc522_ll_status_ok));
+    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_fifo_data_reg, 1, Pointee(0x00))
+            .WillOnce(Return(mfrc522_ll_status_ok));
     /* 5. Start the self test with the CalcCRC command */
-    CUTIE_EXPECT_CALL(mfrc522_drv_invoke_cmd, &conf, mfrc522_reg_cmd_crc).WillOnce(Return(mfrc522_drv_status_ok));
+    MOCK_CALL(mfrc522_drv_invoke_cmd, &conf, mfrc522_reg_cmd_crc)
+            .WillOnce(Return(mfrc522_drv_status_ok));
     /* 6 Wait until FIFO buffer contains 64 bytes */
-    CUTIE_EXPECT_CALL(mfrc522_ll_recv, mfrc522_reg_fifo_level_reg, _)
+    MOCK_CALL(mfrc522_ll_recv, mfrc522_reg_fifo_level_reg, _)
             .WillOnce(DoAll(SetArgPointee<1>(64), Return(mfrc522_ll_status_ok)));
     /* Read FIFO contents */
-    u8 ret[MFRC522_DRV_SELF_TEST_FIFO_SZ] = {0x00}; /* Set expected bytes to 0x00 */
+    u8 ret[MFRC522_DRV_SELF_TEST_FIFO_SZ] = {0x00}; /* Only zeros returned */
     for (const auto& r : ret) {
-        CUTIE_EXPECT_CALL(mfrc522_ll_recv, mfrc522_reg_fifo_data_reg, _)
+        MOCK_CALL(mfrc522_ll_recv, mfrc522_reg_fifo_data_reg, _)
                 .WillOnce(DoAll(SetArgPointee<1>(r), Return(mfrc522_ll_status_ok)));
     }
 
@@ -352,13 +359,12 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_invoke_cmd__NullCases)
 
 TEST(TestMfrc522DrvCommon, mfrc522_drv_invoke_cmd__InvokeCmdThatTerminates__LookIfIdleCmdIsActiveBack)
 {
-    INSTALL_HOOK(mfrc522_drv_init, mfrc522_drv_init__STUB);
-    mfrc522_drv_conf conf;
-    mfrc522_drv_init(&conf);
+    auto conf = initDevice();
 
     /* Set expectations */
+    MOCK(mfrc522_ll_recv);
     InSequence s;
-    INSTALL_EXPECT_CALL(mfrc522_ll_recv, mfrc522_reg_command, _)
+    MOCK_CALL(mfrc522_ll_recv, mfrc522_reg_command, _)
         /* Called when new command needs to be invoked */
         .WillOnce(DoAll(SetArgPointee<1>(0x00), Return(mfrc522_ll_status_ok)))
         /* Idle command is active back */
@@ -370,13 +376,12 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_invoke_cmd__InvokeCmdThatTerminates__Look
 
 TEST(TestMfrc522DrvCommon, mfrc522_drv_invoke_cmd__InvokeCmdThatDoesNotTerminateItself__WaitLoopDisabled)
 {
-    INSTALL_HOOK(mfrc522_drv_init, mfrc522_drv_init__STUB);
-    mfrc522_drv_conf conf;
-    mfrc522_drv_init(&conf);
+    auto conf = initDevice();
 
     /* Set expectations */
+    MOCK(mfrc522_ll_recv);
     InSequence s;
-    INSTALL_EXPECT_CALL(mfrc522_ll_recv, mfrc522_reg_command, _)
+    MOCK_CALL(mfrc522_ll_recv, mfrc522_reg_command, _)
         /* Called when new command needs to be invoked */
         .WillOnce(DoAll(SetArgPointee<1>(0x00), Return(mfrc522_ll_status_ok)));
 

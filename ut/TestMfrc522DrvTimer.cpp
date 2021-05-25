@@ -1,6 +1,11 @@
-#include "TestCommon.h"
 #include "mfrc522_drv.h"
+#include "mfrc522_conf.h"
+#include <gtest/gtest.h>
+#include <gmock/gmock.h>
 #include "Mockable.h" /* Provide mocks */
+
+/* Required by C Mock library */
+DEFINE_MOCKABLE(mfrc522_ll_status, mfrc522_ll_send, (u8, size, u8*));
 
 using namespace testing;
 
@@ -70,9 +75,7 @@ TEST(TestMfrc522DrvTimer, mfrc522_drv_tim_start__NullCases)
 
 TEST(TestMfrc522DrvTimer, mfrc522_drv_tim_start__TypicalCase__TimerStarted)
 {
-    INSTALL_HOOK(mfrc522_drv_init, mfrc522_drv_init__STUB);
-    mfrc522_drv_conf conf;
-    mfrc522_drv_init(&conf);
+    auto conf = initDevice();
 
     mfrc522_drv_tim_conf timerConf;
     timerConf.prescaler_type = mfrc522_drv_tim_psl_odd;
@@ -81,19 +84,19 @@ TEST(TestMfrc522DrvTimer, mfrc522_drv_tim_start__TypicalCase__TimerStarted)
     timerConf.periodic = true;
 
     /* Fill low-level calls */
-    INSTALL_MOCK(mfrc522_ll_send);
+    MOCK(mfrc522_ll_send);
     InSequence s;
-    CUTIE_EXPECT_CALL(mfrc522_ll_send, mfrc522_reg_tim_prescaler, 1, Pointee(0xBC))
+    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_tim_prescaler, 1, Pointee(0xBC))
         .WillOnce(Return(mfrc522_ll_status_ok));
-    CUTIE_EXPECT_CALL(mfrc522_ll_send, mfrc522_reg_tim_mode, 1, Pointee(0x0A))
+    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_tim_mode, 1, Pointee(0x0A))
         .WillOnce(Return(mfrc522_ll_status_ok));
-    CUTIE_EXPECT_CALL(mfrc522_ll_send, mfrc522_reg_demod, 1, _).WillOnce(Return(mfrc522_ll_status_ok));
-    CUTIE_EXPECT_CALL(mfrc522_ll_send, mfrc522_reg_tim_reload_lo, 1, Pointee(0xA0))
+    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_demod, 1, _).WillOnce(Return(mfrc522_ll_status_ok));
+    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_tim_reload_lo, 1, Pointee(0xA0))
         .WillOnce(Return(mfrc522_ll_status_ok));
-    CUTIE_EXPECT_CALL(mfrc522_ll_send, mfrc522_reg_tim_reload_hi, 1, Pointee(0x0C))
+    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_tim_reload_hi, 1, Pointee(0x0C))
         .WillOnce(Return(mfrc522_ll_status_ok));
-    CUTIE_EXPECT_CALL(mfrc522_ll_send, mfrc522_reg_tim_mode, 1, _).WillOnce(Return(mfrc522_ll_status_ok));
-    CUTIE_EXPECT_CALL(mfrc522_ll_send, mfrc522_reg_control_reg, 1, _).WillOnce(Return(mfrc522_ll_status_ok));
+    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_tim_mode, 1, _).WillOnce(Return(mfrc522_ll_status_ok));
+    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_control_reg, 1, _).WillOnce(Return(mfrc522_ll_status_ok));
 
     auto status = mfrc522_drv_tim_start(&conf, &timerConf);
     ASSERT_EQ(mfrc522_drv_status_ok, status);
@@ -107,13 +110,11 @@ TEST(TestMfrc522DrvTimer, mfrc522_drv_tim_stop__NullCases)
 
 TEST(TestMfrc522DrvTimer, mfrc522_drv_tim_stop__TimerStopped)
 {
-    INSTALL_HOOK(mfrc522_drv_init, mfrc522_drv_init__STUB);
-    mfrc522_drv_conf conf;
-    mfrc522_drv_init(&conf);
+    auto conf = initDevice();
 
     /* Set expectations */
-    InSequence s;
-    INSTALL_EXPECT_CALL(mfrc522_ll_send, mfrc522_reg_control_reg, 1, _).WillOnce(Return(mfrc522_ll_status_ok));;
+    MOCK(mfrc522_ll_send);
+    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_control_reg, 1, _).WillOnce(Return(mfrc522_ll_status_ok));;
 
     auto status = mfrc522_drv_tim_stop(&conf);
     ASSERT_EQ(mfrc522_drv_status_ok, status);
