@@ -16,7 +16,7 @@ cd ..
 echo '*** Installing CMock library ***'
 git clone https://github.com/hjagodzinski/C-Mock $CMOCK_DIR
 cd $CMOCK_DIR || exit
-make install
+sudo make install
 cd ..
 
 # Cpp-coveralls
