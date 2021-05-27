@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
 project(mfrc522 C)
-enable_testing()
 
 set(CMAKE_C_STANDARD 99)
 
