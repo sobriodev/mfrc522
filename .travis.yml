@@ -12,7 +12,10 @@ script:
   - cmake -DBUILD_WITH_COVERAGE=ON -DBUILD_FOR_UT=ON ..
   - make
   - sudo make install
+  # First test run (without memcheck)
   - ctest
+  # Second test run with valgrind enabled
+  - ctest --overwrite MemoryCheckCommandOptions="--gen-suppressions=all --leak-check=full --leak-resolution=med --track-origins=yes --error-exitcode=1" -T memcheck
   - cd ..
 after_success:
   - coveralls -r . -b build --exclude ut --gcov=gcov --gcov-options '\-lpbc'
