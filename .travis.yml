@@ -7,6 +7,7 @@ before_install:
   - mkdir -p dependencies && cd dependencies
   - ../../script/travis_install_dependencies.sh
   - cd ..
+  - rm -rf dependencies
 script:
   - cmake -DBUILD_WITH_COVERAGE=ON -DBUILD_FOR_UT=ON ..
   - make
