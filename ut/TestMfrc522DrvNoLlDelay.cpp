@@ -1,20 +1,13 @@
-#include "TestCommon.h"
 #include "mfrc522_drv.h"
 #include "mfrc522_conf.h"
+#include <gtest/gtest.h>
+#include <gmock/gmock.h>
+#include "Mockable.h"
+
+/* Required by C Mock library */
+DEFINE_MOCKABLE(mfrc522_ll_status, mfrc522_ll_recv, (u8, u8*));
 
 using namespace testing;
-
-/*
- * As delay function is not present in the scope it is not possible to include Mockable.h file.
- * Thus declare mocks manually.
- */
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wpedantic" /* Disable pedantic flag due to problem inside Cutie library */
-
-DECLARE_MOCKABLE(mfrc522_ll_recv, 2);
-DECLARE_HOOKABLE(mfrc522_drv_init);
-
-#pragma GCC diagnostic pop
 
 /* ------------------------------------------------------------ */
 /* ------------------------ Test cases ------------------------ */
@@ -23,13 +16,12 @@ DECLARE_HOOKABLE(mfrc522_drv_init);
 TEST(TestMfrc522DrvNoLlDelay, mfrc522_drv_read_until__LowLevelDelayDisabled__RetryCountIncreased)
 {
     /* Init device */
-    INSTALL_HOOK(mfrc522_drv_init, mfrc522_drv_init__STUB);
-    mfrc522_drv_conf conf;
-    mfrc522_drv_init(&conf);
+    auto conf = initDevice();
 
     /* Populate fake responses */
+    MOCK(mfrc522_ll_recv);
     const auto retryCnt = 10;
-    INSTALL_EXPECT_CALL(mfrc522_ll_recv, mfrc522_reg_fifo_data_reg, _).Times(retryCnt * MFRC522_CONF_RETRY_CNT_MUL + 1)
+    MOCK_CALL(mfrc522_ll_recv, mfrc522_reg_fifo_data_reg, _).Times(retryCnt * MFRC522_CONF_RETRY_CNT_MUL + 1)
         .WillRepeatedly(DoAll(SetArgPointee<1>(0x00), Return(mfrc522_ll_status_ok)));
 
     mfrc522_drv_read_until_conf ruConf;

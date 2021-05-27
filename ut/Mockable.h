@@ -2,29 +2,47 @@
 #define MFRC522_MOCKABLE_H
 
 #include "mfrc522_drv.h"
+#include "mfrc522_ll.h"
+#include <cmock/cmock.h>
 
-/*
- * Caution!
- * DECLARE_MOCKABLE() and DECLARE_HOOKABLE() macros mix declarations and definitions internally.
- * Thus it would be reasonably to keep calls to the macros inside source file.
- * Keeping them inside header file just for convenience.
- * Do not include the file in more than one source file or 'multiple definitions' error will be definitely reported!
- */
+/* ------------------------------------------------------------ */
+/* -------------------------- Macros -------------------------- */
+/* ------------------------------------------------------------ */
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wpedantic" /* Disable pedantic flag due to problem inside Cutie library */
+/* Just for convenience */
+#define DECLARE_MOCKABLE(RET, FUNC, ARGS) \
+class FUNC##__MOCK : public CMockMocker<FUNC##__MOCK> \
+{ \
+public:\
+    CMOCK_MOCK_METHOD(RET, FUNC, ARGS) \
+}
 
-/* Mocks */
-DECLARE_MOCKABLE(mfrc522_drv_init, 1);
-DECLARE_MOCKABLE(mfrc522_drv_soft_reset, 1);
-DECLARE_MOCKABLE(mfrc522_drv_invoke_cmd, 2);
-DECLARE_MOCKABLE(mfrc522_ll_send, 3);
-DECLARE_MOCKABLE(mfrc522_ll_recv, 2);
-DECLARE_MOCKABLE(mfrc522_ll_delay, 1);
+#define DEFINE_MOCKABLE(RET, FUNC, ARGS) \
+CMOCK_MOCK_FUNCTION(FUNC##__MOCK, RET, FUNC, ARGS) static_assert(true, "Semicolon required")
 
-/* Stubs */
-DECLARE_HOOKABLE(mfrc522_drv_init);
+#define MOCK(FUNC) FUNC##__MOCK FUNC##__mocked
+#define STUB(FUNC) NiceMock<FUNC##__MOCK> FUNC##__mocked
+#define MOCK_CALL(FUNC, ...) EXPECT_CALL(FUNC##__mocked, FUNC(__VA_ARGS__))
+#define STUB_CALL(FUNC, ...) ON_CALL(FUNC##__mocked, FUNC(__VA_ARGS__))
+#define IGNORE_REDUNDANT_LL_RECV_CALLS() MOCK_CALL(mfrc522_ll_recv, _, _).Times(AnyNumber())
 
-#pragma GCC diagnostic pop
+/* ------------------------------------------------------------ */
+/* -------------------------- Data types ---------------------- */
+/* ------------------------------------------------------------ */
+
+/* Put mock declarations here */
+DECLARE_MOCKABLE(mfrc522_ll_status, mfrc522_ll_send, (u8, size, u8*));
+DECLARE_MOCKABLE(mfrc522_ll_status, mfrc522_ll_recv, (u8, u8*));
+DECLARE_MOCKABLE(void, mfrc522_ll_delay, (u32));
+DECLARE_MOCKABLE(mfrc522_drv_status, mfrc522_drv_init, (mfrc522_drv_conf*));
+DECLARE_MOCKABLE(mfrc522_drv_status, mfrc522_drv_soft_reset, (const mfrc522_drv_conf*));
+DECLARE_MOCKABLE(mfrc522_drv_status, mfrc522_drv_invoke_cmd, (const mfrc522_drv_conf*, mfrc522_reg_cmd));
+
+/* ------------------------------------------------------------ */
+/* ----------------------- Public functions ------------------- */
+/* ------------------------------------------------------------ */
+
+/* Stub function to initialize mfrc522 device */
+mfrc522_drv_conf initDevice();
 
 #endif //MFRC522_MOCKABLE_H

@@ -1,5 +1,5 @@
-#include "TestCommon.h"
 #include "mfrc522_drv.h"
+#include <gtest/gtest.h>
 
 /* ------------------------------------------------------------ */
 /* --------------------- Private functions -------------------- */
