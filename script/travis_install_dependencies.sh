@@ -9,7 +9,7 @@ git clone https://github.com/google/googletest $GOOGLETEST_DIR
 cd $GOOGLETEST_DIR || exit
 cmake .
 make
-make install
+sudo make install
 cd ..
 
 # CMock library

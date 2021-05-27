@@ -5,7 +5,7 @@ before_install:
   - chmod +x script/*
   - mkdir -p build && cd build
   - mkdir -p dependencies && cd dependencies
-  - sudo ../../script/travis_install_dependencies.sh
+  - ../../script/travis_install_dependencies.sh
   - cd ..
 script:
   - cmake -DBUILD_WITH_COVERAGE=ON -DBUILD_FOR_UT=ON ..
