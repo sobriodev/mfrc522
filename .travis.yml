@@ -1,6 +1,6 @@
 language: c
 os: linux
-dist: bionic
+dist: focal
 before_install:
   - chmod +x script/*
   - mkdir -p build && cd build
