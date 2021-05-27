@@ -5,12 +5,12 @@ before_install:
   - chmod +x script/*
   - mkdir -p build && cd build
   - mkdir -p dependencies && cd dependencies
-  - ../../script/travis_install_dependencies.sh
+  - sudo ../../script/travis_install_dependencies.sh
   - cd ..
 script:
   - cmake -DBUILD_WITH_COVERAGE=ON -DBUILD_FOR_UT=ON ..
   - make
-  - make install
+  - sudo make install
   - ctest
   - cd ..
 after_success:

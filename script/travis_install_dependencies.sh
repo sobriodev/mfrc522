@@ -21,4 +21,4 @@ cd ..
 
 # Cpp-coveralls
 echo '*** Installing cpp-coveralls ***'
-pip3 install --user cpp-coveralls
+pip install --user cpp-coveralls
