@@ -19,6 +19,9 @@ extern "C" {
 /** Return a value if it differs from expected one */
 #define ERROR_IF_NEQ(ACT, EXP) do { if (UNLIKELY((EXP) != (ACT))) return (ACT); } while (0)
 
+/** Calculate size of an array */
+#define SIZE_ARRAY(ARR) (sizeof((ARR)) / sizeof((ARR)[0]))
+
 #ifdef __cplusplus
 }
 #endif

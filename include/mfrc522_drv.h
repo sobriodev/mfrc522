@@ -5,6 +5,7 @@
 #include "common.h"
 #include "mfrc522_ll.h"
 #include "mfrc522_reg.h"
+#include "mfrc522_picc.h"
 
 #ifdef __cplusplus
 extern "C" {

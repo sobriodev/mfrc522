@@ -34,6 +34,11 @@ target_link_libraries(TestMfrc522DrvTimer gmock_main gmock gtest pthread)
 target_link_libraries(TestMfrc522DrvTimer mfrc522_src_ut)
 target_link_options(TestMfrc522DrvTimer PRIVATE "-rdynamic" "LINKER:--no-as-needed" "-ldl")
 
+add_executable(TestMfrc522Picc TestMfrc522Picc.cpp)
+target_link_libraries(TestMfrc522Picc gmock_main gmock gtest pthread)
+target_link_libraries(TestMfrc522Picc mfrc522_src_ut)
+target_link_options(TestMfrc522Picc PRIVATE "-rdynamic" "LINKER:--no-as-needed" "-ldl")
+
 ###################
 ### Test suites ###
 ###################
@@ -42,3 +47,4 @@ add_test(NAME TestMfrc522DrvIrq COMMAND TestMfrc522DrvIrq)
 add_test(NAME TestMfrc522DrvLlPtr COMMAND TestMfrc522DrvLlPtr)
 add_test(NAME TestMfrc522DrvNoLlDelay COMMAND TestMfrc522DrvNoLlDelay)
 add_test(NAME TestMfrc522DrvTimer COMMAND TestMfrc522DrvTimer)
+add_test(NAME TestMfrc522Picc COMMAND TestMfrc522Picc)
