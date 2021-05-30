@@ -78,6 +78,11 @@ MFRC522_REG_FIELD_CREATE(DIVIEN_IRQ_PUSHPULL, 0x01, 7);
  */
 MFRC522_REG_FIELD_CREATE(AUTOTEST_SELFTEST, 0x0F, 0);
 
+/**
+ * Bit fields for FifoLevel register
+ */
+MFRC522_REG_FIELD_CREATE(FIFOLEVEL_FLUSH, 0x01, 7);
+
 /* ------------------------------------------------------------ */
 /* ------------------------ Data types ------------------------ */
 /* ------------------------------------------------------------ */

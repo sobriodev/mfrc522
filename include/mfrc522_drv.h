@@ -226,6 +226,62 @@ static inline mfrc522_ll_status mfrc522_drv_read(const mfrc522_drv_conf* conf, m
 }
 
 /**
+ * Store single byte in the FIFO buffer.
+ *
+ * @param conf Pointer to a device configuration structure.
+ * @param byte Byte to be written.
+ * @return 'mfrc522_drv_status_ok' on success, 'mfrc522_drv_status_ll_err' on failure.
+ */
+static inline mfrc522_drv_status mfrc522_drv_fifo_store(const mfrc522_drv_conf* conf, u8 byte)
+{
+    return (mfrc522_ll_status_ok == mfrc522_drv_write_byte(conf, mfrc522_reg_fifo_data_reg, byte))
+            ? mfrc522_drv_status_ok : mfrc522_drv_status_ll_err;
+}
+
+/**
+ * Store multiple bytes in the FIFO buffer.
+ *
+ * @param conf Pointer to a device configuration structure.
+ * @param bytes Vector of bytes to be written
+ * @param sz The number of bytes to be written
+ * @return 'mfrc522_drv_status_ok' on success, 'mfrc522_drv_status_ll_err' on failure.
+ */
+static inline mfrc522_drv_status mfrc522_drv_fifo_store_mul(const mfrc522_drv_conf* conf, u8* bytes, size sz)
+{
+    return (mfrc522_ll_status_ok == mfrc522_drv_write(conf, mfrc522_reg_fifo_data_reg, sz, bytes))
+            ? mfrc522_drv_status_ok : mfrc522_drv_status_ll_err;
+}
+
+/**
+ * Read single byte from the FIFO buffer.
+ *
+ * Call to this function is valid only when FIFO buffer contains at least single byte inside.
+ * Otherwise garbage value may be returned.
+ *
+ * @param conf Pointer to a device configuration structure.
+ * @param out Buffer to write output byte to.
+ * @return 'mfrc522_drv_status_ok' on success, 'mfrc522_drv_status_ll_err' on failure.
+ */
+static inline mfrc522_drv_status mfrc522_drv_fifo_read(const mfrc522_drv_conf* conf, u8* out)
+{
+    return (mfrc522_ll_status_ok == mfrc522_drv_read(conf, mfrc522_reg_fifo_data_reg, out))
+            ? mfrc522_drv_status_ok : mfrc522_drv_status_ll_err;
+}
+
+/**
+ * Flush the FIFO buffer.
+ *
+ * @param conf Pointer to a device configuration structure.
+ * @return 'mfrc522_drv_status_ok' on success, 'mfrc522_drv_status_ll_err' on failure.
+ */
+static inline mfrc522_drv_status mfrc522_drv_fifo_flush(const mfrc522_drv_conf* conf)
+{
+    return (mfrc522_ll_status_ok == mfrc522_drv_write_masked(conf, mfrc522_reg_fifo_level_reg, 1,
+                                                             MFRC522_REG_FIELD(FIFOLEVEL_FLUSH)))
+            ? mfrc522_drv_status_ok : mfrc522_drv_status_ll_err;
+}
+
+/**
  * Poll a PCD's register until certain value is returned.
  *
  * The function keeps reading from a register until requested value is returned.

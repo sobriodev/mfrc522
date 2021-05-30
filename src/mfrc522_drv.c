@@ -300,7 +300,8 @@ mfrc522_drv_status mfrc522_drv_self_test(mfrc522_drv_conf* conf)
     ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
 
     /* Step 2 - Clear the internal buffer by writing 25 bytes of 00h */
-    TRY_WRITE_BYTE(conf, mfrc522_reg_fifo_data_reg, 0x00);
+    status = mfrc522_drv_fifo_store(conf, 0x00);
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
     status = mfrc522_drv_invoke_cmd(conf, mfrc522_reg_cmd_mem);
     ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
 
@@ -308,7 +309,8 @@ mfrc522_drv_status mfrc522_drv_self_test(mfrc522_drv_conf* conf)
     TRY_WRITE_MASKED(conf, mfrc522_reg_auto_test, 0x09, MFRC522_REG_FIELD(AUTOTEST_SELFTEST));
 
     /* Step 4 - Write 00h to the FIFO buffer */
-    TRY_WRITE_BYTE(conf, mfrc522_reg_fifo_data_reg, 0x00);
+    status = mfrc522_drv_fifo_store(conf, 0x00);
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
 
     /* Step 5 - Start the self test with the CalcCRC command */
     status = mfrc522_drv_invoke_cmd(conf, mfrc522_reg_cmd_crc);
@@ -328,7 +330,8 @@ mfrc522_drv_status mfrc522_drv_self_test(mfrc522_drv_conf* conf)
     /* Step 7 - Read content from the FIFO buffer and store it inside device's configuration structure */
     u8 buff;
     for (size i = 0; i < 64; ++i) {
-        TRY_READ(conf, mfrc522_reg_fifo_data_reg, &buff);
+        status = mfrc522_drv_fifo_read(conf, &buff);
+        ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
         conf->self_test_out[i] = buff;
     }
 

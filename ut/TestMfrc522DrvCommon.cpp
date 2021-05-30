@@ -70,7 +70,8 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_init__DeviceFound__Success)
 
 TEST(TestMfrc522DrvCommon, mfrc522_drv_write__NullCases)
 {
-    auto status = mfrc522_drv_write_byte(nullptr, mfrc522_reg_fifo_data_reg, 0xAB);
+    u8 payload = 0xAB;
+    auto status = mfrc522_drv_write(nullptr, mfrc522_reg_fifo_data_reg, 1, &payload);
     ASSERT_EQ(mfrc522_ll_status_send_err, status);
 }
 
@@ -84,6 +85,61 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_read__NullCases)
 
     status = mfrc522_drv_read(nullptr, mfrc522_reg_fifo_data_reg, &pl);
     ASSERT_EQ(mfrc522_ll_status_recv_err, status);
+}
+
+TEST(TestMfrc522DrvCommon, mfrc522_drv_fifo_store__ValidLowLevelCallIsMade)
+{
+    auto device = initDevice();
+
+    /* Expect that low-level call is made */
+    MOCK(mfrc522_ll_send);
+    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_fifo_data_reg, 1, Pointee(0xBC)).WillOnce(Return(mfrc522_ll_status_ok));
+
+    auto status = mfrc522_drv_fifo_store(&device, 0xBC);
+    ASSERT_EQ(mfrc522_drv_status_ok, status);
+}
+
+TEST(TestMfrc522DrvCommon, mfrc522_drv_fifo_store_mul__ValidLowLevelCallIsMade)
+{
+    auto dev = initDevice();
+
+    /* Bytes to be stored */
+    u8 bytes[] = {0xAA, 0xBB, 0xCC};
+
+    /* Expect that low-level call is made */
+    MOCK(mfrc522_ll_send);
+    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_fifo_data_reg, SIZE_ARRAY(bytes), &bytes[0])
+        .WillOnce(Return(mfrc522_ll_status_ok));
+
+    auto status = mfrc522_drv_fifo_store_mul(&dev, &bytes[0], SIZE_ARRAY(bytes));
+    ASSERT_EQ(mfrc522_drv_status_ok, status);
+}
+
+TEST(TestMfrc522DrvCommon, mfrc522_drv_fifo_read__ValidLowLevelCallIsMade)
+{
+    auto dev = initDevice();
+    u8 buffer;
+
+    /* Expect that low-level call is made */
+    MOCK(mfrc522_ll_recv);
+    MOCK_CALL(mfrc522_ll_recv, mfrc522_reg_fifo_data_reg, &buffer)
+        .WillOnce(DoAll(SetArgPointee<1>(0xFA), Return(mfrc522_ll_status_ok)));
+
+    auto status = mfrc522_drv_fifo_read(&dev, &buffer);
+    ASSERT_EQ(mfrc522_drv_status_ok, status);
+    ASSERT_EQ(0xFA, buffer);
+}
+
+TEST(TestMfrc522DrvCommon, mfrc522_drv_fifo_flush__ValidLowLevelCallIsMade)
+{
+    auto dev = initDevice();
+
+    /* Expect that low-level call is made */
+    MOCK(mfrc522_ll_send);
+    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_fifo_level_reg, 1, Pointee(0x80)).WillOnce(Return(mfrc522_ll_status_ok));
+
+    auto status = mfrc522_drv_fifo_flush(&dev);
+    ASSERT_EQ(mfrc522_drv_status_ok, status);
 }
 
 TEST(TestMfrc522DrvCommon, mfrc522_drv_read_until__NullCases)
