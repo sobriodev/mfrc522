@@ -35,6 +35,16 @@ extern "C" {
  */
 #define MFRC522_DRV_SELF_TEST_FIFO_SZ 64
 
+/**
+ * Total number of bytes returned by 'Random' command
+ */
+#define MFRC522_DRV_RAND_TOTAL 25
+
+/**
+ * The number of random bytes returned by 'Random' command
+ */
+#define MFRC522_DRV_RAND_BYTES 10
+
 /* ------------------------------------------------------------ */
 /* -------------------------- Data types ---------------------- */
 /* ------------------------------------------------------------ */
@@ -466,6 +476,25 @@ mfrc522_drv_status mfrc522_drv_crc_init(const mfrc522_drv_conf* conf, const mfrc
  * @return Status of the operation. On success 'mfrc522_drv_status_ok' is returned.
  */
 mfrc522_drv_status mfrc522_drv_crc_compute(const mfrc522_drv_conf* conf, u16* out);
+
+/**
+ * Generate random ID.
+ *
+ * The function uses on-chip Random Number Generator to generate n-bytes random ID.
+ * Up to ten random bytes can be returned via single call of this function.
+ * When 'num_rand' is greater than ten, ten bytes are returned.
+ * Passing zero as 'num_rand' is also valid - none bytes are written into the buffer then.
+ * The output buffer has to be large enough to accommodate output data.
+ *
+ * Note: Data written to the buffer is valid only when 'ok' status code was returned.
+ * The function return an error code in a case when NULL was passed instead of a valid pointer.
+ *
+ * @param conf Pointer to a device's configuration structure.
+ * @param out A buffer to store outcome data.
+ * @param num_rand Number of random bytes to be returned.
+ * @return Status of the operation. On success 'mfrc522_drv_status_ok' is returned.
+ */
+mfrc522_drv_status mfrc522_drv_generate_rand(const mfrc522_drv_conf* conf, u8* out, size num_rand);
 
 #ifdef __cplusplus
 }

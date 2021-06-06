@@ -512,3 +512,89 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_crc_compute__TypicalCase__CrcComputed)
     ASSERT_EQ(crcLo, (out & 0x00FF));
     ASSERT_EQ(crcHi, ((out & 0xFF00) >> 8));
 }
+
+TEST(TestMfrc522DrvCommon, mfrc522_drv_generate_rand__NullCases)
+{
+    auto device = initDevice();
+    u8 buffer;
+    size sz = 1;
+
+    auto status = mfrc522_drv_generate_rand(&device, nullptr, sz);
+    ASSERT_EQ(mfrc522_drv_status_nullptr, status);
+    status = mfrc522_drv_generate_rand(nullptr, &buffer, sz);
+    ASSERT_EQ(mfrc522_drv_status_nullptr, status);
+}
+
+TEST(TestMfrc522DrvCommon, mfrc522_drv_generate_rand__TypicalCase__Success) {
+    auto device = initDevice();
+    u8 randomByteIdx[MFRC522_DRV_RAND_BYTES] = {MFRC522_CONF_RAND_BYTE_IDX};
+    u8 returnedBytes[MFRC522_DRV_RAND_TOTAL] = {0x00};
+    for (const auto &i : randomByteIdx) {
+        returnedBytes[i] = 0xCF;
+    }
+
+    /* Set expectations */
+    MOCK(mfrc522_ll_recv);
+    MOCK(mfrc522_drv_invoke_cmd);
+    IGNORE_REDUNDANT_LL_RECV_CALLS();
+    InSequence s;
+    /* 'Rand' command is invoked */
+    MOCK_CALL(mfrc522_drv_invoke_cmd, &device, mfrc522_reg_cmd_rand).WillOnce(Return(mfrc522_drv_status_ok));
+    /* 'Mem' command is invoked */
+    MOCK_CALL(mfrc522_drv_invoke_cmd, &device, mfrc522_reg_cmd_mem).WillOnce(Return(mfrc522_drv_status_ok));
+    /* 25 bytes are read from the FIFO buffer */
+    for (const auto& i: returnedBytes) {
+        MOCK_CALL(mfrc522_ll_recv, mfrc522_reg_fifo_data_reg, _)
+            .WillOnce(DoAll(SetArgPointee<1>(i), Return(mfrc522_ll_status_ok)));
+    }
+
+    u8 out[10];
+    auto status = mfrc522_drv_generate_rand(&device, &out[0], 10);
+    ASSERT_EQ(mfrc522_drv_status_ok, status);
+    for (const auto& i : out) {
+        ASSERT_EQ(0xCF, i);
+    }
+}
+
+TEST(TestMfrc522DrvCommon, mfrc522_drv_generate_rand__ZeroBytesRequested__OutputBufferRemainsTheSame)
+{
+    auto device = initDevice();
+
+    u8 out = 0xAA;
+    auto status = mfrc522_drv_generate_rand(&device, &out, 0);
+    ASSERT_EQ(mfrc522_drv_status_ok, status);
+    ASSERT_EQ(0xAA, out);
+}
+
+TEST(TestMfrc522DrvCommon, mfrc522_drv_generate_rand__MoreThanTenBytesRequested__TenBytesReturned)
+{
+    auto device = initDevice();
+    u8 randomByteIdx[MFRC522_DRV_RAND_BYTES] = {MFRC522_CONF_RAND_BYTE_IDX};
+    u8 returnedBytes[MFRC522_DRV_RAND_TOTAL] = {0x00};
+    for (const auto &i : randomByteIdx) {
+        returnedBytes[i] = 0xCF;
+    }
+
+    /* Set expectations */
+    MOCK(mfrc522_ll_recv);
+    MOCK(mfrc522_drv_invoke_cmd);
+    IGNORE_REDUNDANT_LL_RECV_CALLS();
+    InSequence s;
+    /* 'Rand' command is invoked */
+    MOCK_CALL(mfrc522_drv_invoke_cmd, &device, mfrc522_reg_cmd_rand).WillOnce(Return(mfrc522_drv_status_ok));
+    /* 'Mem' command is invoked */
+    MOCK_CALL(mfrc522_drv_invoke_cmd, &device, mfrc522_reg_cmd_mem).WillOnce(Return(mfrc522_drv_status_ok));
+    /* 25 bytes are read from the FIFO buffer */
+    for (const auto& i: returnedBytes) {
+        MOCK_CALL(mfrc522_ll_recv, mfrc522_reg_fifo_data_reg, _)
+                .WillOnce(DoAll(SetArgPointee<1>(i), Return(mfrc522_ll_status_ok)));
+    }
+
+    u8 out[11] = {0x00};
+    auto status = mfrc522_drv_generate_rand(&device, &out[0], 11); /* Request 11 bytes */
+    ASSERT_EQ(mfrc522_drv_status_ok, status);
+    for (size i = 0; i < 10; ++i) {
+        ASSERT_EQ(0xCF, out[i]);
+    }
+    ASSERT_EQ(0x00, out[10]); /* Last byte shall be zeroed */
+}

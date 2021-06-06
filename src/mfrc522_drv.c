@@ -419,3 +419,40 @@ mfrc522_drv_status mfrc522_drv_crc_compute(const mfrc522_drv_conf* conf, u16* ou
 
     return mfrc522_drv_status_ok;
 }
+
+mfrc522_drv_status mfrc522_drv_generate_rand(const mfrc522_drv_conf* conf, u8* out, size num_rand)
+{
+    ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
+    ERROR_IF_EQ(out, NULL, mfrc522_drv_status_nullptr);
+    if (num_rand > MFRC522_DRV_RAND_BYTES) {
+        num_rand = MFRC522_DRV_RAND_BYTES;
+    }
+
+    mfrc522_drv_status status;
+    /* Invoke 'Random' command */
+    status = mfrc522_drv_invoke_cmd(conf, mfrc522_reg_cmd_rand);
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
+    /* Copy bytes from internal buffer into the FIFO buffer */
+    status = mfrc522_drv_invoke_cmd(conf, mfrc522_reg_cmd_mem);
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
+
+    /* Copy data from the FIFO buffer */
+    size rand_bytes_idx[MFRC522_DRV_RAND_BYTES] = {MFRC522_CONF_RAND_BYTE_IDX};
+    u8 rand_bytes[MFRC522_DRV_RAND_BYTES];
+    u8 buff;
+    size currentIdx = 0;
+    for (size i = 0; i < MFRC522_DRV_RAND_TOTAL; ++i) {
+        status = mfrc522_drv_fifo_read(conf, &buff);
+        ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
+        for (size j = 0; j < MFRC522_DRV_RAND_BYTES; ++j) {
+            if (i == rand_bytes_idx[j]) {
+                rand_bytes[currentIdx++] = buff;
+            }
+        }
+    }
+
+    /* Copy requested number of random bytes into the final buffer */
+    memcpy(out, rand_bytes, num_rand);
+
+    return mfrc522_drv_status_ok;
+}

@@ -53,4 +53,16 @@
 0xED, 0x20, 0x1B, 0x74, 0x65, 0x9C, 0xFD, 0x32, \
 0xEF, 0xCB, 0x9B, 0x01, 0x68, 0xE9, 0x78, 0xEC
 
+/**
+ * The random ID generator returns 25 bytes. Fifteen of them are fixed numbers. The remaining ten bytes are random.
+ * The macro is used to describe which bytes should be regarded as random ones.
+ * Each byte index shall be remain between 0 and 24.
+ *
+ * Do not use any braces in this macro.
+ * The list must contain exactly ten indexes.
+ * Indexes shall be separated with a comma and appear in the list in ascending order.
+ */
+#define MFRC522_CONF_RAND_BYTE_IDX \
+2, 3, 4, 8, 9, 10, 11, 12, 13, 24
+
 #endif //MFRC522_MFRC522_CONF_H
