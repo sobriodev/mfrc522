@@ -98,7 +98,7 @@ mfrc522_drv_status mfrc522_drv_init(mfrc522_drv_conf* conf)
     }
 
     /* Chiptype 9xh stands for MFRC522 */
-    if (MFRC522_CONF_CHIP_TYPE != (conf->chip_version & MFRC522_REG_MSK_REAL(VERSION_CHIPTYPE))) {
+    if (MFRC522_CONF_CHIP_TYPE != (conf->chip_version & MFRC522_REG_FIELD_MSK_REAL(VERSION_CHIPTYPE))) {
         return mfrc522_drv_status_dev_err;
     }
     return mfrc522_drv_status_ok;
@@ -154,7 +154,7 @@ mfrc522_drv_status mfrc522_drv_soft_reset(const mfrc522_drv_conf* conf)
     /* Populate read settings */
     mfrc522_drv_read_until_conf ruc;
     ruc.addr = mfrc522_reg_command;
-    ruc.mask = MFRC522_REG_MSK_REAL(COMMAND_CMD);
+    ruc.mask = MFRC522_REG_FIELD_MSK_REAL(COMMAND_CMD);
     ruc.exp_payload = mfrc522_reg_cmd_idle;
     ruc.delay = 100; /* Give 100us delay */
     ruc.retry_cnt = MFRC522_DRV_DEF_RETRY_CNT;
@@ -353,7 +353,7 @@ mfrc522_drv_status mfrc522_drv_invoke_cmd(const mfrc522_drv_conf* conf, mfrc522_
 
     mfrc522_drv_read_until_conf ru_conf;
     ru_conf.addr = mfrc522_reg_command;
-    ru_conf.mask = MFRC522_REG_MSK_REAL(COMMAND_CMD);
+    ru_conf.mask = MFRC522_REG_FIELD_MSK_REAL(COMMAND_CMD);
     ru_conf.exp_payload = mfrc522_reg_cmd_idle;
     ru_conf.delay = 5; /* Give some delay */
     ru_conf.retry_cnt = MFRC522_DRV_DEF_RETRY_CNT;
@@ -370,6 +370,52 @@ mfrc522_drv_status mfrc522_drv_invoke_cmd(const mfrc522_drv_conf* conf, mfrc522_
         default:
             break;
     }
+
+    return mfrc522_drv_status_ok;
+}
+
+mfrc522_drv_status mfrc522_drv_crc_init(const mfrc522_drv_conf* conf, const mfrc522_drv_crc_conf* crc_conf)
+{
+    ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
+    ERROR_IF_EQ(crc_conf, NULL, mfrc522_drv_status_nullptr);
+
+    /* Write to the registers associated with CRC coprocessor */
+    TRY_WRITE_MASKED(conf, mfrc522_reg_mode, crc_conf->preset, MFRC522_REG_FIELD(MODE_CRC_PRESET));
+    TRY_WRITE_MASKED(conf, mfrc522_reg_mode, crc_conf->msb_first, MFRC522_REG_FIELD(MODE_CRC_MSBFIRST));
+
+    return mfrc522_drv_status_ok;
+}
+
+mfrc522_drv_status mfrc522_drv_crc_compute(const mfrc522_drv_conf* conf, u16* out)
+{
+    ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
+    ERROR_IF_EQ(out, NULL, mfrc522_drv_status_nullptr);
+
+    /* Start computing CRC */
+    mfrc522_drv_status status;
+    status = mfrc522_drv_invoke_cmd(conf, mfrc522_reg_cmd_crc);
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
+
+    /* Wait until ready bit is set */
+    mfrc522_drv_read_until_conf ru_conf;
+    ru_conf.addr = mfrc522_reg_status1_reg;
+    ru_conf.exp_payload = 1 << MFRC522_REG_FIELD_POS(STATUS1_CRC_READY);
+    ru_conf.mask = MFRC522_REG_FIELD_MSK_REAL(STATUS1_CRC_READY);
+    ru_conf.retry_cnt = MFRC522_DRV_DEF_RETRY_CNT;
+    ru_conf.delay = 1;
+    status = mfrc522_drv_read_until(conf, &ru_conf);
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
+
+    /* CRC command does not terminate itself. Thus activate Idle command back */
+    status = mfrc522_drv_invoke_cmd(conf, mfrc522_reg_cmd_idle);
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
+
+    /* Read computed value and write into the buffer */
+    u8 crc_lo;
+    u8 crc_hi;
+    TRY_READ(conf, mfrc522_reg_crc_result_lsb, &crc_lo);
+    TRY_READ(conf, mfrc522_reg_crc_result_msb, &crc_hi);
+    *out = crc_lo | (crc_hi << 8);
 
     return mfrc522_drv_status_ok;
 }

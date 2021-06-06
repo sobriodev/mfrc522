@@ -18,12 +18,22 @@ enum { MFRC522_REG_##NAME##_MSK = (MSK), MFRC522_REG_##NAME##_POS = (POS) }
 /**
  * Macro to calculate byte mask based on field mask and position
  */
-#define MFRC522_REG_MSK_REAL(FIELD) (MFRC522_REG_##FIELD##_MSK << MFRC522_REG_##FIELD##_POS)
+#define MFRC522_REG_FIELD_MSK_REAL(FIELD) (MFRC522_REG_##FIELD##_MSK << MFRC522_REG_##FIELD##_POS)
 
 /**
  * Macro to represent 'msk' and 'pos' arguments
  */
 #define MFRC522_REG_FIELD(FIELD) MFRC522_REG_##FIELD##_MSK, MFRC522_REG_##FIELD##_POS
+
+/**
+ * Get position of a specific field
+ */
+#define MFRC522_REG_FIELD_POS(FIELD) (MFRC522_REG_##FIELD##_POS)
+
+/**
+ * Get mask of a specific field
+ */
+#define MFRC522_REG_FIELD_MSK(FIELD) (MFRC522_REG_##FIELD##_MSK)
 
 /**
  * Invalid chip version number
@@ -74,7 +84,7 @@ MFRC522_REG_FIELD_CREATE(COMIEN_IRQ_INV, 0x01, 7);
 MFRC522_REG_FIELD_CREATE(DIVIEN_IRQ_PUSHPULL, 0x01, 7);
 
 /**
- * Bit fields for AutoTestReg register
+ * Bit fields for AutoTest register
  */
 MFRC522_REG_FIELD_CREATE(AUTOTEST_SELFTEST, 0x0F, 0);
 
@@ -82,6 +92,17 @@ MFRC522_REG_FIELD_CREATE(AUTOTEST_SELFTEST, 0x0F, 0);
  * Bit fields for FifoLevel register
  */
 MFRC522_REG_FIELD_CREATE(FIFOLEVEL_FLUSH, 0x01, 7);
+
+/**
+ * Bit fields for Mode register
+ */
+MFRC522_REG_FIELD_CREATE(MODE_CRC_MSBFIRST, 0x01, 7);
+MFRC522_REG_FIELD_CREATE(MODE_CRC_PRESET, 0x03, 0);
+
+/**
+ * Bit fields for Status1 register
+ */
+MFRC522_REG_FIELD_CREATE(STATUS1_CRC_READY, 0x01, 5);
 
 /* ------------------------------------------------------------ */
 /* ------------------------ Data types ------------------------ */

@@ -436,11 +436,79 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_invoke_cmd__InvokeCmdThatDoesNotTerminate
 
     /* Set expectations */
     MOCK(mfrc522_ll_recv);
-    InSequence s;
     MOCK_CALL(mfrc522_ll_recv, mfrc522_reg_command, _)
         /* Called when new command needs to be invoked */
         .WillOnce(DoAll(SetArgPointee<1>(0x00), Return(mfrc522_ll_status_ok)));
 
     auto status = mfrc522_drv_invoke_cmd(&conf, mfrc522_reg_cmd_transceive);
     ASSERT_EQ(mfrc522_drv_status_ok, status);
+}
+
+TEST(TestMfrc522DrvCommon, mfrc522_drv_crc_init__NullCases)
+{
+    auto device = initDevice();
+    mfrc522_drv_crc_conf crc;
+
+    auto status = mfrc522_drv_crc_init(&device, nullptr);
+    ASSERT_EQ(mfrc522_drv_status_nullptr, status);
+    status = mfrc522_drv_crc_init(nullptr, &crc);
+    ASSERT_EQ(mfrc522_drv_status_nullptr, status);
+}
+
+TEST(TestMfrc522DrvCommon, mfrc522_drv_crc_init__TypicalCase__Success)
+{
+    auto device = initDevice();
+    mfrc522_drv_crc_conf crcConfig;
+    crcConfig.msb_first = true;
+    crcConfig.preset = mfrc522_drv_crc_preset_6363;
+
+    /* Set expectations */
+    MOCK(mfrc522_ll_send);
+    InSequence s;
+    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_mode, 1, Pointee(0x01)).WillOnce(Return(mfrc522_ll_status_ok));
+    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_mode, 1, Pointee(1 << 7)).WillOnce(Return(mfrc522_ll_status_ok));
+
+    auto status = mfrc522_drv_crc_init(&device, &crcConfig);
+    ASSERT_EQ(mfrc522_drv_status_ok, status);
+}
+
+TEST(TestMfrc522DrvCommon, mfrc522_drv_crc_compute__NullCases)
+{
+    auto device = initDevice();
+    u16 buffer;
+
+    auto status = mfrc522_drv_crc_compute(nullptr, &buffer);
+    ASSERT_EQ(mfrc522_drv_status_nullptr, status);
+    status = mfrc522_drv_crc_compute(&device, nullptr);
+    ASSERT_EQ(mfrc522_drv_status_nullptr, status);
+}
+
+TEST(TestMfrc522DrvCommon, mfrc522_drv_crc_compute__TypicalCase__CrcComputed)
+{
+    auto device = initDevice();
+    u8 crcLo = 0xAA;
+    u8 crcHi = 0xBB;
+
+    /* Set expectations */
+    MOCK(mfrc522_ll_recv);
+    MOCK(mfrc522_drv_invoke_cmd);
+    InSequence s;
+    /* Phase 1: CRC command should be invoked */
+    MOCK_CALL(mfrc522_drv_invoke_cmd, &device, mfrc522_reg_cmd_crc).WillOnce(Return(mfrc522_drv_status_ok));
+    /* Phase 2: CRC coprocessor has computed the value */
+    MOCK_CALL(mfrc522_ll_recv, mfrc522_reg_status1_reg, _)
+        .WillOnce(DoAll(SetArgPointee<1>(1 << 5), Return(mfrc522_ll_status_ok)));
+    /* Phase 3: Activate Idle command back */
+    MOCK_CALL(mfrc522_drv_invoke_cmd, &device, mfrc522_reg_cmd_idle).WillOnce(Return(mfrc522_drv_status_ok));
+    /* Phase 4: Computed value is read */
+    MOCK_CALL(mfrc522_ll_recv, mfrc522_reg_crc_result_lsb, _)
+            .WillOnce(DoAll(SetArgPointee<1>(crcLo), Return(mfrc522_ll_status_ok)));
+    MOCK_CALL(mfrc522_ll_recv, mfrc522_reg_crc_result_msb, _)
+            .WillOnce(DoAll(SetArgPointee<1>(crcHi), Return(mfrc522_ll_status_ok)));
+
+    u16 out;
+    auto status = mfrc522_drv_crc_compute(&device, &out);
+    ASSERT_EQ(mfrc522_drv_status_ok, status);
+    ASSERT_EQ(crcLo, (out & 0x00FF));
+    ASSERT_EQ(crcHi, ((out & 0xFF00) >> 8));
 }

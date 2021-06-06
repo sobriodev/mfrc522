@@ -117,6 +117,26 @@ typedef struct mfrc522_drv_irq_conf_
     bool irq_push_pull; /**< When true, IRQ pin is a CMOS output pin. When false, IRQ pin is open-drain output pin */
 } mfrc522_drv_irq_conf;
 
+/**
+ * CRC coprocessor preset values
+ */
+typedef enum mfrc522_drv_crc_preset_
+{
+    mfrc522_drv_crc_preset_0000 = 0x00, /**< 0x0000 */
+    mfrc522_drv_crc_preset_6363 = 0x01, /**< 0x6363 */
+    mfrc522_drv_crc_preset_A671 = 0x02, /**< 0xA671 */
+    mfrc522_drv_crc_preset_FFFF = 0x03 /**< 0xFFFF */
+} mfrc522_drv_crc_preset;
+
+/**
+ * CRC coprocessor settings
+ */
+typedef struct mfrc522_drv_crc_conf_
+{
+    mfrc522_drv_crc_preset preset; /**< Preset value */
+    bool msb_first; /**< If true, the CRC unit computes CRC with MSB first */
+} mfrc522_drv_crc_conf;
+
 /* ------------------------------------------------------------ */
 /* ----------------------- Public functions ------------------- */
 /* ------------------------------------------------------------ */
@@ -421,6 +441,31 @@ mfrc522_drv_status mfrc522_drv_self_test(mfrc522_drv_conf* conf);
  * @return Status of the operation. On success mfrc522_drv_status_ok is returned.
  */
 mfrc522_drv_status mfrc522_drv_invoke_cmd(const mfrc522_drv_conf* conf, mfrc522_reg_cmd cmd);
+
+/**
+ * Initialize CRC coprocessor.
+ *
+ * The CRC polynomial is fixed to x^16 + x^12 + x^5 + 1.
+ * The function returns error when either 'conf' or 'crc_conf' is NULL.
+ *
+ * @param conf Pointer to a device configuration structure.
+ * @param crc_conf Pointer to a CRC configuration structure.
+ * @return Status of the operation. On success 'mfrc522_drv_status_ok' is returned.
+ */
+mfrc522_drv_status mfrc522_drv_crc_init(const mfrc522_drv_conf* conf, const mfrc522_drv_crc_conf* crc_conf);
+
+/**
+ * Compute 16-bit CRC.
+ *
+ * The function calculates CRC based on FIFO contents. The CRC coprocessor shall be initialized prior to call to this
+ * function, as well as FIFO buffer should contain desired data.
+ * Computed CRC value is only valid, when 'ok' status code was returned.
+ *
+ * @param conf Pointer to a device's configuration structure.
+ * @param out Buffer to store the outcome in.
+ * @return Status of the operation. On success 'mfrc522_drv_status_ok' is returned.
+ */
+mfrc522_drv_status mfrc522_drv_crc_compute(const mfrc522_drv_conf* conf, u16* out);
 
 #ifdef __cplusplus
 }
