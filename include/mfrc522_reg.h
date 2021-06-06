@@ -120,15 +120,15 @@ typedef enum mfrc522_reg_
     mfrc522_reg_div_irq_en = 0x03, /**< DivIEnReg */
     mfrc522_reg_com_irq = 0x04, /**< ComIrqReg */
     mfrc522_reg_div_irq = 0x05, /**< DivIrqReg */
-    mfrc522_reg_error_reg = 0x06, /**< ErrorReg */
-    mfrc522_reg_status1_reg = 0x07, /**< Status1Reg */
-    mfrc522_reg_status2_reg = 0x08, /**< Status2Reg */
-    mfrc522_reg_fifo_data_reg = 0x09, /**< FIFODataReg */
-    mfrc522_reg_fifo_level_reg = 0x0A, /**< FIFOLevelReg */
-    mfrc522_reg_water_level_reg = 0x0B, /**< WaterLevelReg */
-    mfrc522_reg_control_reg = 0x0C, /**< ControlReg */
-    mfrc522_reg_bit_framing_reg = 0x0D, /**< BitFramingReg */
-    mfrc522_reg_coll_reg = 0x0E, /**< CollReg */
+    mfrc522_reg_error = 0x06, /**< ErrorReg */
+    mfrc522_reg_status1 = 0x07, /**< Status1Reg */
+    mfrc522_reg_status2 = 0x08, /**< Status2Reg */
+    mfrc522_reg_fifo_data = 0x09, /**< FIFODataReg */
+    mfrc522_reg_fifo_level = 0x0A, /**< FIFOLevelReg */
+    mfrc522_reg_water_level = 0x0B, /**< WaterLevelReg */
+    mfrc522_reg_control = 0x0C, /**< ControlReg */
+    mfrc522_reg_bit_framing = 0x0D, /**< BitFramingReg */
+    mfrc522_reg_coll = 0x0E, /**< CollReg */
     mfrc522_reg_reserved1 = 0x0F, /**< Reserved */
 
     /* Page 1: Command */

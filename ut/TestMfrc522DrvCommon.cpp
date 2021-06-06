@@ -71,7 +71,7 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_init__DeviceFound__Success)
 TEST(TestMfrc522DrvCommon, mfrc522_drv_write__NullCases)
 {
     u8 payload = 0xAB;
-    auto status = mfrc522_drv_write(nullptr, mfrc522_reg_fifo_data_reg, 1, &payload);
+    auto status = mfrc522_drv_write(nullptr, mfrc522_reg_fifo_data, 1, &payload);
     ASSERT_EQ(mfrc522_ll_status_send_err, status);
 }
 
@@ -80,10 +80,10 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_read__NullCases)
     mfrc522_drv_conf conf;
     u8 pl;
 
-    auto status = mfrc522_drv_read(&conf, mfrc522_reg_fifo_data_reg, nullptr);
+    auto status = mfrc522_drv_read(&conf, mfrc522_reg_fifo_data, nullptr);
     ASSERT_EQ(mfrc522_ll_status_recv_err, status);
 
-    status = mfrc522_drv_read(nullptr, mfrc522_reg_fifo_data_reg, &pl);
+    status = mfrc522_drv_read(nullptr, mfrc522_reg_fifo_data, &pl);
     ASSERT_EQ(mfrc522_ll_status_recv_err, status);
 }
 
@@ -93,7 +93,7 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_fifo_store__ValidLowLevelCallIsMade)
 
     /* Expect that low-level call is made */
     MOCK(mfrc522_ll_send);
-    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_fifo_data_reg, 1, Pointee(0xBC)).WillOnce(Return(mfrc522_ll_status_ok));
+    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_fifo_data, 1, Pointee(0xBC)).WillOnce(Return(mfrc522_ll_status_ok));
 
     auto status = mfrc522_drv_fifo_store(&device, 0xBC);
     ASSERT_EQ(mfrc522_drv_status_ok, status);
@@ -108,7 +108,7 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_fifo_store_mul__ValidLowLevelCallIsMade)
 
     /* Expect that low-level call is made */
     MOCK(mfrc522_ll_send);
-    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_fifo_data_reg, SIZE_ARRAY(bytes), &bytes[0])
+    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_fifo_data, SIZE_ARRAY(bytes), &bytes[0])
         .WillOnce(Return(mfrc522_ll_status_ok));
 
     auto status = mfrc522_drv_fifo_store_mul(&dev, &bytes[0], SIZE_ARRAY(bytes));
@@ -122,7 +122,7 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_fifo_read__ValidLowLevelCallIsMade)
 
     /* Expect that low-level call is made */
     MOCK(mfrc522_ll_recv);
-    MOCK_CALL(mfrc522_ll_recv, mfrc522_reg_fifo_data_reg, &buffer)
+    MOCK_CALL(mfrc522_ll_recv, mfrc522_reg_fifo_data, &buffer)
         .WillOnce(DoAll(SetArgPointee<1>(0xFA), Return(mfrc522_ll_status_ok)));
 
     auto status = mfrc522_drv_fifo_read(&dev, &buffer);
@@ -136,7 +136,7 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_fifo_flush__ValidLowLevelCallIsMade)
 
     /* Expect that low-level call is made */
     MOCK(mfrc522_ll_send);
-    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_fifo_level_reg, 1, Pointee(0x80)).WillOnce(Return(mfrc522_ll_status_ok));
+    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_fifo_level, 1, Pointee(0x80)).WillOnce(Return(mfrc522_ll_status_ok));
 
     auto status = mfrc522_drv_fifo_flush(&dev);
     ASSERT_EQ(mfrc522_drv_status_ok, status);
@@ -159,7 +159,7 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_read_until__InfinityFlagEnabled__Success)
     auto conf = initDevice();
 
     mfrc522_drv_read_until_conf ruConf;
-    ruConf.addr = mfrc522_reg_fifo_data_reg;
+    ruConf.addr = mfrc522_reg_fifo_data;
     ruConf.exp_payload = 0x0E;
     ruConf.mask = 0x0F;
     ruConf.retry_cnt = MFRC522_DRV_RETRY_CNT_INF;
@@ -183,7 +183,7 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_read_until__AnswerOnFirstTry__Success)
     auto conf = initDevice();
 
     mfrc522_drv_read_until_conf ruConf;
-    ruConf.addr = mfrc522_reg_fifo_data_reg;
+    ruConf.addr = mfrc522_reg_fifo_data;
     ruConf.exp_payload = 0xF0;
     ruConf.mask = 0xF0;
     ruConf.retry_cnt = 0;
@@ -204,7 +204,7 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_read_until__AnswerOnThirdTime__Success)
     auto conf = initDevice();
 
     mfrc522_drv_read_until_conf ruConf;
-    ruConf.addr = mfrc522_reg_fifo_data_reg;
+    ruConf.addr = mfrc522_reg_fifo_data;
     ruConf.exp_payload = 0x80;
     ruConf.mask = 0xC0;
     ruConf.retry_cnt = 2; /* One try + two retries */
@@ -228,7 +228,7 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_read_until__NoAnswerAfterAllTries__Failur
     auto conf = initDevice();
 
     mfrc522_drv_read_until_conf ruConf;
-    ruConf.addr = mfrc522_reg_fifo_data_reg;
+    ruConf.addr = mfrc522_reg_fifo_data;
     ruConf.exp_payload = 0xAA;
     ruConf.mask = 0xFF;
     ruConf.retry_cnt = 10;
@@ -335,7 +335,7 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_self_test__TypicalCase__Success)
     MOCK_CALL(mfrc522_drv_soft_reset, &conf)
         .WillOnce(Return(mfrc522_drv_status_ok));
     /* 2. Clear the internal buffer */
-    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_fifo_data_reg, 1, Pointee(0x00))
+    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_fifo_data, 1, Pointee(0x00))
         .WillOnce(Return(mfrc522_ll_status_ok));
     MOCK_CALL(mfrc522_drv_invoke_cmd, &conf, mfrc522_reg_cmd_mem)
         .WillOnce(Return(mfrc522_drv_status_ok));
@@ -343,18 +343,18 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_self_test__TypicalCase__Success)
     MOCK_CALL(mfrc522_ll_send, mfrc522_reg_auto_test, 1, _)
         .WillOnce(Return(mfrc522_ll_status_ok));
     /* 4. Write 00h to the FIFO buffer */
-    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_fifo_data_reg, 1, Pointee(0x00))
+    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_fifo_data, 1, Pointee(0x00))
         .WillOnce(Return(mfrc522_ll_status_ok));
     /* 5. Start the self test with the CalcCRC command */
     MOCK_CALL(mfrc522_drv_invoke_cmd, &conf, mfrc522_reg_cmd_crc)
         .WillOnce(Return(mfrc522_drv_status_ok));
     /* 6 Wait until FIFO buffer contains 64 bytes */
-    MOCK_CALL(mfrc522_ll_recv, mfrc522_reg_fifo_level_reg, _)
+    MOCK_CALL(mfrc522_ll_recv, mfrc522_reg_fifo_level, _)
         .WillOnce(DoAll(SetArgPointee<1>(64), Return(mfrc522_ll_status_ok)));
     /* Read FIFO contents */
     u8 ret[MFRC522_DRV_SELF_TEST_FIFO_SZ] = {MFRC522_CONF_SELF_TEST_FIFO_OUT};
     for (const auto& r : ret) {
-        MOCK_CALL(mfrc522_ll_recv, mfrc522_reg_fifo_data_reg, _)
+        MOCK_CALL(mfrc522_ll_recv, mfrc522_reg_fifo_data, _)
             .WillOnce(DoAll(SetArgPointee<1>(r), Return(mfrc522_ll_status_ok)));
     }
 
@@ -380,7 +380,7 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_self_test__FifoContentsDoNotMatchExpected
     MOCK_CALL(mfrc522_drv_soft_reset, &conf)
             .WillOnce(Return(mfrc522_drv_status_ok));
     /* 2. Clear the internal buffer */
-    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_fifo_data_reg, 1, Pointee(0x00))
+    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_fifo_data, 1, Pointee(0x00))
             .WillOnce(Return(mfrc522_ll_status_ok));
     MOCK_CALL(mfrc522_drv_invoke_cmd, &conf, mfrc522_reg_cmd_mem)
             .WillOnce(Return(mfrc522_drv_status_ok));
@@ -388,18 +388,18 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_self_test__FifoContentsDoNotMatchExpected
     MOCK_CALL(mfrc522_ll_send, mfrc522_reg_auto_test, 1, _)
             .WillOnce(Return(mfrc522_ll_status_ok));
     /* 4. Write 00h to the FIFO buffer */
-    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_fifo_data_reg, 1, Pointee(0x00))
+    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_fifo_data, 1, Pointee(0x00))
             .WillOnce(Return(mfrc522_ll_status_ok));
     /* 5. Start the self test with the CalcCRC command */
     MOCK_CALL(mfrc522_drv_invoke_cmd, &conf, mfrc522_reg_cmd_crc)
             .WillOnce(Return(mfrc522_drv_status_ok));
     /* 6 Wait until FIFO buffer contains 64 bytes */
-    MOCK_CALL(mfrc522_ll_recv, mfrc522_reg_fifo_level_reg, _)
+    MOCK_CALL(mfrc522_ll_recv, mfrc522_reg_fifo_level, _)
             .WillOnce(DoAll(SetArgPointee<1>(64), Return(mfrc522_ll_status_ok)));
     /* Read FIFO contents */
     u8 ret[MFRC522_DRV_SELF_TEST_FIFO_SZ] = {0x00}; /* Only zeros returned */
     for (const auto& r : ret) {
-        MOCK_CALL(mfrc522_ll_recv, mfrc522_reg_fifo_data_reg, _)
+        MOCK_CALL(mfrc522_ll_recv, mfrc522_reg_fifo_data, _)
                 .WillOnce(DoAll(SetArgPointee<1>(r), Return(mfrc522_ll_status_ok)));
     }
 
@@ -496,7 +496,7 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_crc_compute__TypicalCase__CrcComputed)
     /* Phase 1: CRC command should be invoked */
     MOCK_CALL(mfrc522_drv_invoke_cmd, &device, mfrc522_reg_cmd_crc).WillOnce(Return(mfrc522_drv_status_ok));
     /* Phase 2: CRC coprocessor has computed the value */
-    MOCK_CALL(mfrc522_ll_recv, mfrc522_reg_status1_reg, _)
+    MOCK_CALL(mfrc522_ll_recv, mfrc522_reg_status1, _)
         .WillOnce(DoAll(SetArgPointee<1>(1 << 5), Return(mfrc522_ll_status_ok)));
     /* Phase 3: Activate Idle command back */
     MOCK_CALL(mfrc522_drv_invoke_cmd, &device, mfrc522_reg_cmd_idle).WillOnce(Return(mfrc522_drv_status_ok));
@@ -544,7 +544,7 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_generate_rand__TypicalCase__Success) {
     MOCK_CALL(mfrc522_drv_invoke_cmd, &device, mfrc522_reg_cmd_mem).WillOnce(Return(mfrc522_drv_status_ok));
     /* 25 bytes are read from the FIFO buffer */
     for (const auto& i: returnedBytes) {
-        MOCK_CALL(mfrc522_ll_recv, mfrc522_reg_fifo_data_reg, _)
+        MOCK_CALL(mfrc522_ll_recv, mfrc522_reg_fifo_data, _)
             .WillOnce(DoAll(SetArgPointee<1>(i), Return(mfrc522_ll_status_ok)));
     }
 
@@ -586,7 +586,7 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_generate_rand__MoreThanTenBytesRequested_
     MOCK_CALL(mfrc522_drv_invoke_cmd, &device, mfrc522_reg_cmd_mem).WillOnce(Return(mfrc522_drv_status_ok));
     /* 25 bytes are read from the FIFO buffer */
     for (const auto& i: returnedBytes) {
-        MOCK_CALL(mfrc522_ll_recv, mfrc522_reg_fifo_data_reg, _)
+        MOCK_CALL(mfrc522_ll_recv, mfrc522_reg_fifo_data, _)
                 .WillOnce(DoAll(SetArgPointee<1>(i), Return(mfrc522_ll_status_ok)));
     }
 

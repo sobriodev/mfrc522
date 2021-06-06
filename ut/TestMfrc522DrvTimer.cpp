@@ -96,7 +96,7 @@ TEST(TestMfrc522DrvTimer, mfrc522_drv_tim_start__TypicalCase__TimerStarted)
     MOCK_CALL(mfrc522_ll_send, mfrc522_reg_tim_reload_hi, 1, Pointee(0x0C))
         .WillOnce(Return(mfrc522_ll_status_ok));
     MOCK_CALL(mfrc522_ll_send, mfrc522_reg_tim_mode, 1, _).WillOnce(Return(mfrc522_ll_status_ok));
-    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_control_reg, 1, _).WillOnce(Return(mfrc522_ll_status_ok));
+    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_control, 1, _).WillOnce(Return(mfrc522_ll_status_ok));
 
     auto status = mfrc522_drv_tim_start(&conf, &timerConf);
     ASSERT_EQ(mfrc522_drv_status_ok, status);
@@ -114,7 +114,7 @@ TEST(TestMfrc522DrvTimer, mfrc522_drv_tim_stop__TimerStopped)
 
     /* Set expectations */
     MOCK(mfrc522_ll_send);
-    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_control_reg, 1, _).WillOnce(Return(mfrc522_ll_status_ok));;
+    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_control, 1, _).WillOnce(Return(mfrc522_ll_status_ok));;
 
     auto status = mfrc522_drv_tim_stop(&conf);
     ASSERT_EQ(mfrc522_drv_status_ok, status);

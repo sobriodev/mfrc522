@@ -264,7 +264,7 @@ static inline mfrc522_ll_status mfrc522_drv_read(const mfrc522_drv_conf* conf, m
  */
 static inline mfrc522_drv_status mfrc522_drv_fifo_store(const mfrc522_drv_conf* conf, u8 byte)
 {
-    return (mfrc522_ll_status_ok == mfrc522_drv_write_byte(conf, mfrc522_reg_fifo_data_reg, byte))
+    return (mfrc522_ll_status_ok == mfrc522_drv_write_byte(conf, mfrc522_reg_fifo_data, byte))
             ? mfrc522_drv_status_ok : mfrc522_drv_status_ll_err;
 }
 
@@ -278,7 +278,7 @@ static inline mfrc522_drv_status mfrc522_drv_fifo_store(const mfrc522_drv_conf* 
  */
 static inline mfrc522_drv_status mfrc522_drv_fifo_store_mul(const mfrc522_drv_conf* conf, u8* bytes, size sz)
 {
-    return (mfrc522_ll_status_ok == mfrc522_drv_write(conf, mfrc522_reg_fifo_data_reg, sz, bytes))
+    return (mfrc522_ll_status_ok == mfrc522_drv_write(conf, mfrc522_reg_fifo_data, sz, bytes))
             ? mfrc522_drv_status_ok : mfrc522_drv_status_ll_err;
 }
 
@@ -294,7 +294,7 @@ static inline mfrc522_drv_status mfrc522_drv_fifo_store_mul(const mfrc522_drv_co
  */
 static inline mfrc522_drv_status mfrc522_drv_fifo_read(const mfrc522_drv_conf* conf, u8* out)
 {
-    return (mfrc522_ll_status_ok == mfrc522_drv_read(conf, mfrc522_reg_fifo_data_reg, out))
+    return (mfrc522_ll_status_ok == mfrc522_drv_read(conf, mfrc522_reg_fifo_data, out))
             ? mfrc522_drv_status_ok : mfrc522_drv_status_ll_err;
 }
 
@@ -306,7 +306,7 @@ static inline mfrc522_drv_status mfrc522_drv_fifo_read(const mfrc522_drv_conf* c
  */
 static inline mfrc522_drv_status mfrc522_drv_fifo_flush(const mfrc522_drv_conf* conf)
 {
-    return (mfrc522_ll_status_ok == mfrc522_drv_write_masked(conf, mfrc522_reg_fifo_level_reg, 1,
+    return (mfrc522_ll_status_ok == mfrc522_drv_write_masked(conf, mfrc522_reg_fifo_level, 1,
                                                              MFRC522_REG_FIELD(FIFOLEVEL_FLUSH)))
             ? mfrc522_drv_status_ok : mfrc522_drv_status_ll_err;
 }

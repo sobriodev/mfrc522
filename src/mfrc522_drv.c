@@ -219,7 +219,7 @@ mfrc522_drv_status mfrc522_drv_tim_start(const mfrc522_drv_conf* conf, const mfr
     TRY_WRITE_MASKED(conf, mfrc522_reg_tim_mode, tim_conf->periodic, MFRC522_REG_FIELD(TMODE_TAUTO_RESTART));
 
     /* Immediately start timer */
-    TRY_WRITE_MASKED(conf, mfrc522_reg_control_reg, 1, MFRC522_REG_FIELD(CONTROL_TSTART));
+    TRY_WRITE_MASKED(conf, mfrc522_reg_control, 1, MFRC522_REG_FIELD(CONTROL_TSTART));
 
     return mfrc522_drv_status_ok;
 }
@@ -228,7 +228,7 @@ mfrc522_drv_status mfrc522_drv_tim_stop(const mfrc522_drv_conf* conf)
 {
     ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
 
-    TRY_WRITE_MASKED(conf, mfrc522_reg_control_reg, 1, MFRC522_REG_FIELD(CONTROL_TSTOP));
+    TRY_WRITE_MASKED(conf, mfrc522_reg_control, 1, MFRC522_REG_FIELD(CONTROL_TSTOP));
 
     return mfrc522_drv_status_ok;
 }
@@ -318,7 +318,7 @@ mfrc522_drv_status mfrc522_drv_self_test(mfrc522_drv_conf* conf)
 
     /* Step 6 - Wait until FIFO buffer contains 64 bytes */
     mfrc522_drv_read_until_conf rc;
-    rc.addr = mfrc522_reg_fifo_level_reg;
+    rc.addr = mfrc522_reg_fifo_level;
     rc.mask = 0xFF;
     rc.exp_payload = 0x40; /* 64 bytes */
     rc.delay = 100;
@@ -398,7 +398,7 @@ mfrc522_drv_status mfrc522_drv_crc_compute(const mfrc522_drv_conf* conf, u16* ou
 
     /* Wait until ready bit is set */
     mfrc522_drv_read_until_conf ru_conf;
-    ru_conf.addr = mfrc522_reg_status1_reg;
+    ru_conf.addr = mfrc522_reg_status1;
     ru_conf.exp_payload = 1 << MFRC522_REG_FIELD_POS(STATUS1_CRC_READY);
     ru_conf.mask = MFRC522_REG_FIELD_MSK_REAL(STATUS1_CRC_READY);
     ru_conf.retry_cnt = MFRC522_DRV_DEF_RETRY_CNT;

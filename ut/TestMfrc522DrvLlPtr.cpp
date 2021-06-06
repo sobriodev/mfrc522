@@ -61,7 +61,7 @@ TEST(TestMfrc522DrvLlPtr, mfrc522_drv_write__Success)
     conf.ll_delay = dummyDelay;
 
     u8 dummyByte = 0xAB;
-    auto status = mfrc522_drv_write(&conf, mfrc522_reg_fifo_data_reg, 1, &dummyByte);
+    auto status = mfrc522_drv_write(&conf, mfrc522_reg_fifo_data, 1, &dummyByte);
     ASSERT_EQ(mfrc522_ll_status_ok, status);
 }
 
@@ -74,6 +74,6 @@ TEST(TestMfrc522DrvLlPtr, mfrc522_drv_read__Success)
     conf.ll_delay = dummyDelay;
 
     u8 buffer;
-    auto status = mfrc522_drv_read(&conf, mfrc522_reg_fifo_data_reg, &buffer);
+    auto status = mfrc522_drv_read(&conf, mfrc522_reg_fifo_data, &buffer);
     ASSERT_EQ(mfrc522_ll_status_ok, status);
 }
