@@ -496,6 +496,17 @@ mfrc522_drv_status mfrc522_drv_crc_compute(const mfrc522_drv_conf* conf, u16* ou
  */
 mfrc522_drv_status mfrc522_drv_generate_rand(const mfrc522_drv_conf* conf, u8* out, size num_rand);
 
+/**
+ * Check if a certain error is present in Error Register.
+ *
+ * In a case, when presence of any error bit is desired, 'mfrc522_reg_err_any' may be passed.
+ *
+ * @param error_reg A byte read from Error Register.
+ * @param err An error to be checked.
+ * @return True if error is active, false otherwise.
+ */
+bool mfrc522_drv_check_error(u8 error_reg, mfrc522_reg_err err);
+
 #ifdef __cplusplus
 }
 #endif

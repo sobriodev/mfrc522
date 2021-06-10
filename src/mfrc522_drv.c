@@ -456,3 +456,11 @@ mfrc522_drv_status mfrc522_drv_generate_rand(const mfrc522_drv_conf* conf, u8* o
 
     return mfrc522_drv_status_ok;
 }
+
+bool mfrc522_drv_check_error(u8 error_reg, mfrc522_reg_err err)
+{
+    if (mfrc522_reg_err_any == err) {
+        return (0 != error_reg);
+    }
+    return (error_reg & (1 << err)) ? true : false;
+}

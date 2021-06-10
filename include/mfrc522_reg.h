@@ -205,7 +205,7 @@ typedef enum mfrc522_reg_cmd_
 } mfrc522_reg_cmd;
 
 /**
- * MFRC522 interrupt sources.
+ * MFRC522 interrupt sources
  */
 typedef enum mfrc522_reg_irq_
 {
@@ -220,6 +220,21 @@ typedef enum mfrc522_reg_irq_
     mfrc522_reg_irq_crc = MFRC522_REG_IRQ_DIV | 0x02, /**< CRC interrupt source */
     mfrc522_reg_irq_all = 0xFF /**< Special flag to handle all available interrupt sources */
 } mfrc522_reg_irq;
+
+/**
+ * MFRC522 error bits
+ */
+typedef enum mfrc522_reg_err_
+{
+    mfrc522_reg_err_protocol = 0x00, /**< SOF is incorrect */
+    mfrc522_reg_err_parity = 0x01, /**< Parity check failed */
+    mfrc522_reg_err_crc = 0x02, /**< CRC calculation failed */
+    mfrc522_reg_err_coll = 0x03, /**< A bit-collision detected */
+    mfrc522_reg_err_buffer_ovfl = 0x04, /**< FIFO buffer is full */
+    mfrc522_reg_err_temp = 0x06, /**< Internal temperature sensor detected overheating */
+    mfrc522_reg_err_wr = 0x07, /**< Data is written into the FIFO buffer at a bad time */
+    mfrc522_reg_err_any = 0xFF /**< Special flag to handle any of the above errors */
+} mfrc522_reg_err;
 
 #ifdef __cplusplus
 }
