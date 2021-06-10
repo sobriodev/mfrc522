@@ -172,3 +172,71 @@ TEST(TestMfrc522DrvIrq, mfrc522_drv_irq_en__EnableIrqInDivReg__Success)
     auto status = mfrc522_drv_irq_en(&conf, mfrc522_reg_irq_crc, true);
     ASSERT_EQ(mfrc522_drv_status_ok, status);
 }
+
+TEST(TestMfrc522DrvIrq, mfrc522_irq_states__NullCases)
+{
+    auto device = initDevice();
+    u16 out;
+
+    auto status = mfrc522_irq_states(&device, nullptr);
+    ASSERT_EQ(mfrc522_drv_status_nullptr, status);
+
+    status = mfrc522_irq_states(nullptr, &out);
+    ASSERT_EQ(mfrc522_drv_status_nullptr, status);
+}
+
+TEST(TestMfrc522DrvIrq, mfrc522_irq_states__TypicalCase__Success)
+{
+    auto device = initDevice();
+    u16 states = 0x00;
+
+    /* Set expectations */
+    MOCK(mfrc522_ll_recv);
+    MOCK_CALL(mfrc522_ll_recv, mfrc522_reg_com_irq, _)
+        .WillOnce(DoAll(SetArgPointee<1>(0xCD), Return(mfrc522_ll_status_ok)));
+    MOCK_CALL(mfrc522_ll_recv, mfrc522_reg_div_irq, _)
+            .WillOnce(DoAll(SetArgPointee<1>(0xAB), Return(mfrc522_ll_status_ok)));
+
+    auto status = mfrc522_irq_states(&device, &states);
+    ASSERT_EQ(mfrc522_drv_status_ok, status);
+    ASSERT_EQ(0xABCD, states);
+}
+
+TEST(TestMfrc522DrvIrq, mfrc522_drv_irq_pending__IrqAllFlagWasPassed__False)
+{
+    u16 states = 0xFFFF;
+    auto status = mfrc522_drv_irq_pending(states, mfrc522_reg_irq_all);
+    ASSERT_FALSE(status);
+}
+
+TEST(TestMfrc522DrvIrq, mfrc522_drv_irq_pending__IrqPendingInComReg__True)
+{
+    u16 states = 1 << mfrc522_reg_irq_timer;
+    auto status = mfrc522_drv_irq_pending(states, mfrc522_reg_irq_timer);
+    ASSERT_TRUE(status);
+}
+
+TEST(TestMfrc522DrvIrq, mfrc522_drv_irq_pending__IrqPendingInDivReg__True)
+{
+    u16 states = 1 << 10; /* CRC IRQ is pending */
+    auto status = mfrc522_drv_irq_pending(states, mfrc522_reg_irq_crc);
+    ASSERT_TRUE(status);
+}
+
+TEST(TestMfrc522DrvIrq, mfrc522_drv_irq_pending__IrqNotPending__False)
+{
+    u16 states = 0x0000;
+    auto status = mfrc522_drv_irq_pending(states, mfrc522_reg_irq_crc);
+    ASSERT_FALSE(status);
+    status = mfrc522_drv_irq_pending(states, mfrc522_reg_irq_idle);
+    ASSERT_FALSE(status);
+}
+
+TEST(TestMfrc522DrvIrq, mfrc522_drv_irq_pending__IrqsPendingInBothRegisters__DoubleTrueReturned)
+{
+    u16 states = 0xFFFF;
+    auto status = mfrc522_drv_irq_pending(states, mfrc522_reg_irq_mfin_act);
+    ASSERT_TRUE(status);
+    status = mfrc522_drv_irq_pending(states, mfrc522_reg_irq_hi_alert);
+    ASSERT_TRUE(status);
+}

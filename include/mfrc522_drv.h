@@ -427,6 +427,32 @@ mfrc522_drv_status mfrc522_drv_irq_clr(const mfrc522_drv_conf* conf, mfrc522_reg
 mfrc522_drv_status mfrc522_drv_irq_en(const mfrc522_drv_conf* conf, mfrc522_reg_irq irq, bool enable);
 
 /**
+ * Get states of all interrupts.
+ *
+ * The function read states of IRQs in Com and Div registers. As an output 2 bytes are returned.
+ * The LSB contains states of Com register and MSB contains states of Div register respectively.
+ * The output is valid only when 'ok' status is returned.
+ * The function returns error when NUll was passed instead of a valid pointer.
+ *
+ * @param conf Pointer to a device configuration structure.
+ * @param out Pointer of a buffer where the states are stored.
+ * @return Status of the operation. On success mfrc522_drv_status_ok is returned.
+ */
+mfrc522_drv_status mfrc522_irq_states(const mfrc522_drv_conf* conf, u16* out);
+
+/**
+ * Check if a certain IRQ is pending.
+ *
+ * For performance reasons this function does not read interrupt states from the registers.
+ * To get the IRQ states, call 'mfrc522_irq_states()'.
+ *
+ * @param irq_states States of all IRQs
+ * @param irq IRQ number.
+ * @return True if IRQ is pending, false otherwise.
+ */
+bool mfrc522_drv_irq_pending(u16 irq_states, mfrc522_reg_irq irq);
+
+/**
  * Perform device self-test procedure.
  *
  * The function returns 'mfrc522_drv_status_self_test_err' if received test data differs from expected

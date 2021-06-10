@@ -216,7 +216,7 @@ typedef enum mfrc522_reg_irq_
     mfrc522_reg_irq_lo_alert = 0x02, /**< Low alert interrupt source */
     mfrc522_reg_irq_err = 0x01, /**< Error interrupt source */
     mfrc522_reg_irq_timer = 0x00, /**< Timer interrupt source */
-    mfrc522_reg_irq_mfin_act = MFRC522_REG_IRQ_DIV | 0xF4, /**< MFIN active interrupt source */
+    mfrc522_reg_irq_mfin_act = MFRC522_REG_IRQ_DIV | 0x04, /**< MFIN active interrupt source */
     mfrc522_reg_irq_crc = MFRC522_REG_IRQ_DIV | 0x02, /**< CRC interrupt source */
     mfrc522_reg_irq_all = 0xFF /**< Special flag to handle all available interrupt sources */
 } mfrc522_reg_irq;

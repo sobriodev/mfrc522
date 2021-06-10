@@ -603,14 +603,14 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_check_error__NoErrors__CheckForAnyError__
 {
     u8 errors = 0x00;
     auto status = mfrc522_drv_check_error(errors, mfrc522_reg_err_any);
-    ASSERT_EQ(false, status);
+    ASSERT_FALSE(status);
 }
 
 TEST(TestMfrc522DrvCommon, mfrc522_drv_check_error__TwoErrors__CheckForAnyError__False)
 {
     u8 errors = 0x11;
     auto status = mfrc522_drv_check_error(errors, mfrc522_reg_err_any);
-    ASSERT_EQ(true, status);
+    ASSERT_TRUE(status);
 }
 
 TEST(TestMfrc522DrvCommon, mfrc522_drv_check_error__MiscCases)
@@ -618,15 +618,15 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_check_error__MiscCases)
     /* Case 1 - search for error that is not present */
     u8 errors = 1 << mfrc522_reg_err_coll;
     auto status = mfrc522_drv_check_error(errors, mfrc522_reg_err_crc);
-    ASSERT_EQ(false, status);
+    ASSERT_FALSE(status);
 
     /* Case 2 - search for error that is present */
     errors = 1 << mfrc522_reg_err_temp;
     status = mfrc522_drv_check_error(errors, mfrc522_reg_err_temp);
-    ASSERT_EQ(true, status);
+    ASSERT_TRUE(status);
 
     /* Case 3 - no errors active */
     errors = 0x00;
     status = mfrc522_drv_check_error(errors, mfrc522_reg_err_protocol);
-    ASSERT_EQ(false, status);
+    ASSERT_FALSE(status);
 }

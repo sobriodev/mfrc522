@@ -289,6 +289,32 @@ mfrc522_drv_status mfrc522_drv_irq_en(const mfrc522_drv_conf* conf, mfrc522_reg_
     return mfrc522_drv_status_ok;
 }
 
+mfrc522_drv_status mfrc522_irq_states(const mfrc522_drv_conf* conf, u16* out)
+{
+    ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
+    ERROR_IF_EQ(out, NULL, mfrc522_drv_status_nullptr);
+
+    u8 com_irq;
+    u8 div_irq;
+    TRY_READ(conf, mfrc522_reg_com_irq, &com_irq);
+    TRY_READ(conf, mfrc522_reg_div_irq, &div_irq);
+    *out = com_irq | (div_irq << 8);
+
+    return mfrc522_drv_status_ok;
+}
+
+bool mfrc522_drv_irq_pending(u16 irq_states, mfrc522_reg_irq irq)
+{
+    /* If 'mfrc522_reg_irq_all' was passed return an error and exit */
+    ERROR_IF_EQ(irq, mfrc522_reg_irq_all, false);
+
+    if (irq & MFRC522_REG_IRQ_DIV) {
+        irq &= ~MFRC522_REG_IRQ_DIV;
+        irq += 8;
+    }
+    return (irq_states & (1 << irq)) ? true : false;
+}
+
 mfrc522_drv_status mfrc522_drv_self_test(mfrc522_drv_conf* conf)
 {
     ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
