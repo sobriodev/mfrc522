@@ -65,7 +65,15 @@ typedef enum mfrc522_drv_status_
     mfrc522_drv_status_dev_rtr_err, /**< Maximum number of read retries reached */
 
     /* Timer related */
-    mfrc522_drv_status_tim_prd_err /**< Given timer period is too long */
+    mfrc522_drv_status_tim_prd_err, /**< Given timer period is too long */
+
+    /* TX/RX */
+    mfrc522_drv_status_transceive_timeout, /**< Timeout during transceive command */
+    mfrc522_drv_status_transceive_err, /**< At least one error present after transceive command */
+    mfrc522_drv_status_transceive_rx_mism, /**< A mismatch between expected and actual RX data size */
+
+    /* PICC related */
+    mfrc522_drv_status_picc_vrf_err /**< Unknown ATQA returned after REQA command */
 } mfrc522_drv_status;
 
 /**
@@ -80,6 +88,7 @@ typedef struct mfrc522_drv_conf_
     mfrc522_ll_delay ll_delay; /**< Low-level delay function pointer */
 #endif
 #endif
+    mfrc522_picc_atqa_verify_fn atqa_verify_fn; /**< Pointer to optional ATQA verification function. Can be NULL */
     /* Read-only fields. Do not modify manually */
     u8 chip_version; /**< Chip version number */
     u8 self_test_out[MFRC522_DRV_SELF_TEST_FIFO_SZ]; /**< Self test bytes */
@@ -146,6 +155,26 @@ typedef struct mfrc522_drv_crc_conf_
     mfrc522_drv_crc_preset preset; /**< Preset value */
     bool msb_first; /**< If true, the CRC unit computes CRC with MSB first */
 } mfrc522_drv_crc_conf;
+
+/**
+ * Configuration of contactless UART/analog interface
+ */
+typedef struct mfrc522_drv_ext_itf_conf_
+{
+    u8 dummy; /**< Dummy byte. Nothing to put here at the moment */
+} mfrc522_drv_ext_itf_conf;
+
+/**
+ * Configuration used with transceive command
+ */
+typedef struct mfrc522_drv_transceive_conf_
+{
+    u8* tx_data; /**< TX data */
+    size tx_data_sz; /**< Size of TX data in bytes */
+    u8* rx_data; /**< Pointer where RX data will be stored.
+                      Must be large enough to contain the number of 'rx_data_sz' bytes */
+    size rx_data_sz; /**< Expected number of RX bytes */
+} mfrc522_drv_transceive_conf;
 
 /* ------------------------------------------------------------ */
 /* ----------------------- Public functions ------------------- */
@@ -254,6 +283,21 @@ static inline mfrc522_ll_status mfrc522_drv_read(const mfrc522_drv_conf* conf, m
     return mfrc522_ll_recv(addr, payload);
 #endif
 }
+
+/**
+ * Perform masked read from a PCD's register.
+ *
+ * The function read from a register and extracts only desired set of bits.
+ * It may be useful when only one field from a register needs to be read.
+ *
+ * @param conf Device's configuration.
+ * @param addr Address to read from.
+ * @param out Pointer to a buffer to store the result in.
+ * @param mask Field mask.
+ * @param pos Position of the field.
+ * @return An instance of mfrc522_ll_status.
+ */
+mfrc522_ll_status mfrc522_drv_read_masked(const mfrc522_drv_conf* conf, mfrc522_reg addr, u8* out, u8 mask, u8 pos);
 
 /**
  * Store single byte in the FIFO buffer.
@@ -532,6 +576,49 @@ mfrc522_drv_status mfrc522_drv_generate_rand(const mfrc522_drv_conf* conf, u8* o
  * @return True if error is active, false otherwise.
  */
 bool mfrc522_drv_check_error(u8 error_reg, mfrc522_reg_err err);
+
+/**
+ * Transceive data between PCD and PICC.
+ *
+ * The function performs the transmission of data from the FIFO buffer and the reception of data from the RF field.
+ * It is recommended to not use this function directly. Call higher level APIs instead.
+ *
+ * @param conf Pointer to a device configuration struct.
+ * @param tr_conf Pointer to a transceive configuration struct.
+ * @return Status of the operation. On success 'mfrc522_drv_status_ok' is returned.
+ */
+mfrc522_drv_status mfrc522_drv_transceive(const mfrc522_drv_conf* conf, mfrc522_drv_transceive_conf* tr_conf);
+
+/**
+ * Initialize contactless external interfaces (contactless UART, analog interface).
+ *
+ * The function has to be called before using any of APIs that communicate with the RF field.
+ * Nothing is done, when NULL was passed instead of a valid pointer.
+ *
+ * @param conf Pointer to a device configuration struct.
+ * @param itf_conf Configuration of external interfaces.
+ * @return Status of the operation. On success 'mfrc522_drv_status_ok' is returned.
+ */
+mfrc522_drv_status mfrc522_drv_ext_itf_init(const mfrc522_drv_conf* conf, const mfrc522_drv_ext_itf_conf* itf_conf);
+
+/**
+ * Perform Request (REQA) command.
+ *
+ * The function sends REQA into the aether. If a PICC is present in the RF field it will respond with 2-byte ATQA code.
+ *
+ * If 'ok' status code is returned, the data inside 'atqa' buffer is valid and can be used by other APIs.
+ * In case, when an error occurred during data transmission/reception, 'atqa' buffer is populated with
+ * MFRC522_PICC_ATQA_INV constant.
+ * It is possible to narrow down the set of valid ATQA responses by setting 'atqa_verify_fn' pointer in device's
+ * configuration structure. 'mfrc522_drv_status_picc_vrf_err' is returned if ATQA is blacklisted then.
+ *
+ * The function does nothing, in case NULL was passed instead of a valid pointer.
+ *
+ * @param conf Device's configuration.
+ * @param atqa 2-byte output buffer to store ATQA response
+ * @return Status of the operation. On success 'mfrc522_drv_status_ok' is returned.
+ */
+mfrc522_drv_status mfrc522_drv_reqa(const mfrc522_drv_conf* conf, u16* atqa);
 
 #ifdef __cplusplus
 }

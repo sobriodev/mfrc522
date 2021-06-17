@@ -24,7 +24,9 @@ CMOCK_MOCK_FUNCTION(FUNC##__MOCK, RET, FUNC, ARGS) static_assert(true, "Semicolo
 #define STUB(FUNC) NiceMock<FUNC##__MOCK> FUNC##__mocked
 #define MOCK_CALL(FUNC, ...) EXPECT_CALL(FUNC##__mocked, FUNC(__VA_ARGS__))
 #define STUB_CALL(FUNC, ...) ON_CALL(FUNC##__mocked, FUNC(__VA_ARGS__))
-#define IGNORE_REDUNDANT_LL_RECV_CALLS() MOCK_CALL(mfrc522_ll_recv, _, _).Times(AnyNumber())
+#define IGNORE_REDUNDANT_LL_RECV_CALLS() \
+MOCK_CALL(mfrc522_ll_recv, _, _).Times(AnyNumber()) \
+    .WillRepeatedly(DoAll(SetArgPointee<1>(0x00), Return(mfrc522_ll_status_ok)))
 
 /* ------------------------------------------------------------ */
 /* -------------------------- Data types ---------------------- */
@@ -37,6 +39,8 @@ DECLARE_MOCKABLE(void, mfrc522_ll_delay, (u32));
 DECLARE_MOCKABLE(mfrc522_drv_status, mfrc522_drv_init, (mfrc522_drv_conf*));
 DECLARE_MOCKABLE(mfrc522_drv_status, mfrc522_drv_soft_reset, (const mfrc522_drv_conf*));
 DECLARE_MOCKABLE(mfrc522_drv_status, mfrc522_drv_invoke_cmd, (const mfrc522_drv_conf*, mfrc522_reg_cmd));
+DECLARE_MOCKABLE(mfrc522_drv_status, mfrc522_irq_states, (const mfrc522_drv_conf*, u16*));
+DECLARE_MOCKABLE(mfrc522_drv_status, mfrc522_drv_transceive, (const mfrc522_drv_conf*, mfrc522_drv_transceive_conf*));
 
 /* ------------------------------------------------------------ */
 /* ----------------------- Public functions ------------------- */

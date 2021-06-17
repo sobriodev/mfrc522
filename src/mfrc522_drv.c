@@ -42,7 +42,7 @@ do { \
 /* ----------------------- Private functions ------------------ */
 /* ------------------------------------------------------------ */
 
-/* Private delay implementation */
+/* Private implementation of delay function */
 static inline void delay(const mfrc522_drv_conf* conf, u32 period)
 {
 #if MFRC522_LL_PTR
@@ -72,6 +72,42 @@ static inline u32 get_real_retry_count(u32 rc)
     rc *= MFRC522_CONF_RETRY_CNT_MUL;
 #endif
     return rc;
+}
+
+/* Function to read valid number of RX bytes during transceive command */
+static mfrc522_drv_status get_valid_rx_bytes(const mfrc522_drv_conf* conf, u8* rx_bytes)
+{
+    u8 valid_bits;
+    mfrc522_ll_status status;
+    status = mfrc522_drv_read_masked(conf, mfrc522_reg_control, &valid_bits, MFRC522_REG_FIELD(CONTROL_RX_LASTBITS));
+    if (UNLIKELY(mfrc522_ll_status_ok != status)) {
+        return mfrc522_drv_status_ll_err;
+    }
+
+    /* In current use cases the whole byte shall be valid. Thus return zero by now */
+    if (UNLIKELY(valid_bits)) {
+        *rx_bytes = 0;
+        return mfrc522_drv_status_ok;
+    }
+
+    /* Read FIFO level */
+    status = mfrc522_drv_read(conf, mfrc522_reg_fifo_level, rx_bytes);
+    if (UNLIKELY(mfrc522_ll_status_ok != status)) {
+        return mfrc522_drv_status_ll_err;
+    }
+    return mfrc522_drv_status_ok;
+}
+
+/* Handle getting ATQA */
+static inline mfrc522_drv_status verify_atqa(const mfrc522_drv_conf* conf, const u8* rx_data, u16* atqa)
+{
+    *atqa = rx_data[0] | (rx_data[1] << 8);
+
+    /* Verify ATQA if enabled */
+    if (NULL != conf->atqa_verify_fn) {
+        return (conf->atqa_verify_fn(*atqa)) ? mfrc522_drv_status_ok : mfrc522_drv_status_picc_vrf_err;
+    }
+    return mfrc522_drv_status_ok;
 }
 
 /* ------------------------------------------------------------ */
@@ -118,6 +154,22 @@ mfrc522_ll_status mfrc522_drv_write_masked(const mfrc522_drv_conf* conf, mfrc522
 
     status = mfrc522_drv_write_byte(conf, addr, buff);
     ERROR_IF_NEQ(status, mfrc522_ll_status_ok);
+
+    return mfrc522_ll_status_ok;
+}
+
+mfrc522_ll_status mfrc522_drv_read_masked(const mfrc522_drv_conf* conf, mfrc522_reg addr, u8* out, u8 mask, u8 pos)
+{
+    ERROR_IF_EQ(conf, NULL, mfrc522_ll_status_recv_err);
+    ERROR_IF_EQ(out, NULL, mfrc522_ll_status_recv_err);
+
+    u8 buff;
+    mfrc522_ll_status status = mfrc522_drv_read(conf, addr, &buff);
+    ERROR_IF_NEQ(status, mfrc522_ll_status_ok);
+
+    buff &= (mask << pos);
+    buff >>= pos;
+    *out = buff;
 
     return mfrc522_ll_status_ok;
 }
@@ -486,3 +538,127 @@ bool mfrc522_drv_check_error(u8 error_reg, mfrc522_reg_err err)
     }
     return (error_reg & (1 << err)) ? true : false;
 }
+mfrc522_drv_status mfrc522_drv_ext_itf_init(const mfrc522_drv_conf* conf, const mfrc522_drv_ext_itf_conf* itf_conf)
+{
+    ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
+    ERROR_IF_EQ(itf_conf, NULL, mfrc522_drv_status_nullptr);
+
+    /* Force a 100% ASK modulation */
+    TRY_WRITE_MASKED(conf, mfrc522_reg_tx_ask, 1, MFRC522_REG_FIELD(TXASK_FORCE_ASK));
+
+    /* Configure TX RF */
+    TRY_WRITE_MASKED(conf, mfrc522_reg_tx_control, 1, MFRC522_REG_FIELD(TXCONTROL_TX1RFEN));
+    TRY_WRITE_MASKED(conf, mfrc522_reg_tx_control, 1, MFRC522_REG_FIELD(TXCONTROL_TX2RFEN));
+
+    /* Switch on analog part of the receiver */
+    TRY_WRITE_MASKED(conf, mfrc522_reg_command, 0, MFRC522_REG_FIELD(COMMAND_RCVOFF));
+
+    return mfrc522_drv_status_ok;
+}
+
+mfrc522_drv_status mfrc522_drv_transceive(const mfrc522_drv_conf* conf, mfrc522_drv_transceive_conf* tr_conf)
+{
+    ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
+    ERROR_IF_EQ(tr_conf, NULL, mfrc522_drv_status_nullptr);
+
+    /* Flush the FIFO buffer and store actual data */
+    mfrc522_drv_status status = mfrc522_drv_fifo_flush(conf);
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
+    status = mfrc522_drv_fifo_store_mul(conf, tr_conf->tx_data, tr_conf->tx_data_sz);
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
+
+    /* Invoke transceive command */
+    status = mfrc522_drv_invoke_cmd(conf, mfrc522_reg_cmd_transceive);
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
+
+    /* Start transmission of the data */
+    TRY_WRITE_MASKED(conf, mfrc522_reg_bit_framing, 1, MFRC522_REG_FIELD(BITFRAMING_START));
+
+    u16 irq_states;
+    bool recv_irq;
+    bool error;
+    size retries;
+    for (retries = 0; retries < get_real_retry_count(MFRC522_DRV_DEF_RETRY_CNT); ++retries) {
+        status = mfrc522_irq_states(conf, &irq_states);
+        ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
+
+        recv_irq = mfrc522_drv_irq_pending(irq_states, mfrc522_reg_irq_rx);
+        error = mfrc522_drv_irq_pending(irq_states, mfrc522_reg_irq_err);
+        if (recv_irq || error) {
+            break;
+        }
+        delay(conf, 1); /* Make some delay */
+    }
+
+    /* End transmission of the data */
+    TRY_WRITE_MASKED(conf, mfrc522_reg_bit_framing, 0, MFRC522_REG_FIELD(BITFRAMING_START));
+
+    /* Enter Idle state */
+    status = mfrc522_drv_invoke_cmd(conf, mfrc522_reg_cmd_idle);
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
+
+    /* In case when response is missing */
+    if (UNLIKELY(MFRC522_DRV_DEF_RETRY_CNT == retries)) {
+        return mfrc522_drv_status_transceive_timeout;
+    }
+
+    /* In case when at least one error bit is present */
+    if (UNLIKELY(error)) {
+        return mfrc522_drv_status_transceive_err;
+    }
+
+    /* Get RX data size */
+    u8 valid_rx_bytes;
+    status = get_valid_rx_bytes(conf, &valid_rx_bytes);
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
+
+    /* RX data size error */
+    if (UNLIKELY(valid_rx_bytes != tr_conf->rx_data_sz)) {
+        return mfrc522_drv_status_transceive_rx_mism;
+    }
+
+    /* Get FIFO contents */
+    for (size i = 0; i < tr_conf->rx_data_sz; ++i) {
+        status = mfrc522_drv_fifo_read(conf, &tr_conf->rx_data[i]);
+        ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
+    }
+
+    return mfrc522_drv_status_ok;
+}
+
+mfrc522_drv_status mfrc522_drv_reqa(const mfrc522_drv_conf* conf, u16* atqa)
+{
+    ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
+    ERROR_IF_EQ(atqa, NULL, mfrc522_drv_status_nullptr);
+
+    /* REQA is a bit oriented frame (7-bit), thus set proper register */
+    TRY_WRITE_MASKED(conf, mfrc522_reg_bit_framing, 0x07, MFRC522_REG_FIELD(BITFRAMING_TX_LASTBITS));
+
+    /* Handle transmission/reception of the data */
+    u8 reqa = mfrc522_picc_cmd_reqa;
+    u8 response[2];
+
+    mfrc522_drv_transceive_conf tr_conf;
+    tr_conf.tx_data = &reqa;
+    tr_conf.tx_data_sz = 1;
+    tr_conf.rx_data = &response[0];
+    tr_conf.rx_data_sz = 2;
+    mfrc522_drv_status status = mfrc522_drv_transceive(conf, &tr_conf);
+
+    switch (status) {
+        case mfrc522_drv_status_transceive_timeout:
+        case mfrc522_drv_status_transceive_err:
+        case mfrc522_drv_status_transceive_rx_mism:
+            *atqa = MFRC522_PICC_ATQA_INV;
+            break;
+        case mfrc522_drv_status_ok:
+            status = verify_atqa(conf, &response[0], atqa);
+            ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
+            break;
+        default: /* Low-level error, etc. */
+            return status;
+    }
+
+    return status;
+}
+
