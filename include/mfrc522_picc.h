@@ -8,6 +8,13 @@ extern "C" {
 #endif
 
 /* ------------------------------------------------------------ */
+/* ---------------------------- Macros ------------------------ */
+/* ------------------------------------------------------------ */
+
+/* Invalid ATQA response */
+#define MFRC522_PICC_ATQA_INV 0xFFFF
+
+/* ------------------------------------------------------------ */
 /* -------------------------- Data types ---------------------- */
 /* ------------------------------------------------------------ */
 
@@ -74,7 +81,7 @@ typedef enum mfrc522_picc_acc_type_
 } mfrc522_picc_acc_type;
 
 /**
- * Access conditions for the sector trailer.
+ * Access conditions for the sector trailer
  */
 typedef struct mfrc522_picc_trailer_acc_
 {
@@ -86,7 +93,7 @@ typedef struct mfrc522_picc_trailer_acc_
 } mfrc522_picc_trailer_acc;
 
 /**
- * Access conditions for the block.
+ * Access conditions for the block
  */
 typedef struct mfrc522_picc_block_acc_
 {
@@ -95,6 +102,38 @@ typedef struct mfrc522_picc_block_acc_
     mfrc522_picc_acc_type increment; /**< Key used to increment value in a block */
     mfrc522_picc_acc_type dtr; /**< Key used to decrement, transfer or restore value in a block */
 } mfrc522_picc_block_acc;
+
+/**
+ * Available PICC commands
+ */
+typedef enum mfrc522_picc_cmd_
+{
+    mfrc522_picc_cmd_reqa = 0x26, /**< Request (7-bit) */
+    mfrc522_picc_cmd_wupa = 0x52, /**< Wake-up (7-bit) */
+    mfrc522_picc_cmd_anticoll_cl1 = 0x9320, /**< Anticollision CL1 */
+    mfrc522_picc_cmd_select_cl1 = 0x9370, /**< Select CL1 */
+    mfrc522_picc_cmd_anticoll_cl2 = 0x9520, /**< Anticollision CL2 */
+    mfrc522_picc_cmd_select_cl2 = 0x9570, /**< Select CL2 */
+    mfrc522_picc_cmd_halt = 0x5000, /**< Halt */
+    mfrc522_picc_cmd_auth_key_a = 0x60, /**< Authenticate with Key A */
+    mfrc522_picc_cmd_auth_key_b = 0x61, /** Authenticate with Key B */
+    mfrc522_picc_cmd_pers_uid = 0x40, /**< Personalize UID usage */
+    mfrc522_picc_cmd_set_mod_type = 0x43, /**< SET_MOD_TYPE */
+    mfrc522_picc_cmd_read = 0x30, /**< MIFARE read */
+    mfrc522_picc_cmd_write = 0xA0, /**< MIFARE write */
+    mfrc522_picc_cmd_decrement = 0xC0, /**< MIFARE decrement */
+    mfrc522_picc_cmd_increment = 0xC1, /**< MIFARE increment */
+    mfrc522_picc_cmd_restore = 0xC2, /**< MIFARE restore */
+    mfrc522_picc_cmd_transfer = 0xB0 /**< MIFARE transfer */
+} mfrc522_picc_cmd;
+
+/**
+ * Function type to verify if ATQA response meets requirements.
+ *
+ * @param atqa ATQA response received from a PICC.
+ * @return True if response is valid, false otherwise.
+ */
+typedef bool (*mfrc522_picc_atqa_verify_fn)(u16 atqa);
 
 /* ------------------------------------------------------------ */
 /* ----------------------- Public functions ------------------- */

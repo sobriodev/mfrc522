@@ -55,6 +55,7 @@ MFRC522_REG_FIELD_CREATE(VERSION_CHIPTYPE, 0x0F, 4);
  * Bit fields for Command register
  */
 MFRC522_REG_FIELD_CREATE(COMMAND_CMD, 0x0F, 0);
+MFRC522_REG_FIELD_CREATE(COMMAND_RCVOFF, 0x01, 5);
 
 /**
  * Bit fields for TMode register
@@ -72,6 +73,7 @@ MFRC522_REG_FIELD_CREATE(DEMOD_TPE, 0x01, 4);
  */
 MFRC522_REG_FIELD_CREATE(CONTROL_TSTART, 0x01, 6);
 MFRC522_REG_FIELD_CREATE(CONTROL_TSTOP, 0x01, 7);
+MFRC522_REG_FIELD_CREATE(CONTROL_RX_LASTBITS, 0x07, 0);
 
 /**
  * Bit fields for ComIEn register
@@ -103,6 +105,23 @@ MFRC522_REG_FIELD_CREATE(MODE_CRC_PRESET, 0x03, 0);
  * Bit fields for Status1 register
  */
 MFRC522_REG_FIELD_CREATE(STATUS1_CRC_READY, 0x01, 5);
+
+/**
+ * Bit fields for TxASK register
+ */
+MFRC522_REG_FIELD_CREATE(TXASK_FORCE_ASK, 0x01, 6);
+
+/**
+ * Bit fields for TxControl register
+ */
+MFRC522_REG_FIELD_CREATE(TXCONTROL_TX1RFEN, 0x01, 0);
+MFRC522_REG_FIELD_CREATE(TXCONTROL_TX2RFEN, 0x01, 1);
+
+/**
+ * Bit fields for BitFraming register
+ */
+MFRC522_REG_FIELD_CREATE(BITFRAMING_START, 0x01, 7);
+MFRC522_REG_FIELD_CREATE(BITFRAMING_TX_LASTBITS, 0x07, 0);
 
 /* ------------------------------------------------------------ */
 /* ------------------------ Data types ------------------------ */
