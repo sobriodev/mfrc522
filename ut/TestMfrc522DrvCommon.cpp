@@ -259,16 +259,12 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_soft_reset__TypicalCase__Success)
     /* Create expectations */
     MOCK(mfrc522_ll_recv);
     InSequence seq;
-    MOCK_CALL(mfrc522_ll_recv, mfrc522_reg_command, _)
-        /* Phase 0: Some command is running */
-        .WillOnce(DoAll(SetArgPointee<1>(mfrc522_reg_cmd_mem), Return(mfrc522_ll_status_ok)))
-        /* Phase 1: Idle command is active */
-        .WillOnce(DoAll(SetArgPointee<1>(mfrc522_reg_cmd_idle), Return(mfrc522_ll_status_ok)))
-        /* Phase 2: Perform soft reset */
+    MOCK_CALL(mfrc522_ll_recv, mfrc522_reg_command, NotNull())
+        /* Phase 1: Perform soft reset */
         .WillOnce(DoAll(SetArgPointee<1>(mfrc522_reg_cmd_soft_reset), Return(mfrc522_ll_status_ok)))
-        /* Phase 3: Soft reset has not been done yet */
+        /* Phase 2: Soft reset has not been done yet */
         .WillOnce(DoAll(SetArgPointee<1>(mfrc522_reg_cmd_soft_reset), Return(mfrc522_ll_status_ok)))
-        /* Phase 4: Idle command is active back */
+        /* Phase 3: Idle command is active back */
         .WillOnce(DoAll(SetArgPointee<1>(mfrc522_reg_cmd_idle), Return(mfrc522_ll_status_ok)));
 
     auto status = mfrc522_drv_soft_reset(&conf);

@@ -335,7 +335,7 @@ mfrc522_drv_status mfrc522_drv_read_until(const mfrc522_drv_conf* conf, mfrc522_
 /**
  * Perform soft reset on a PCD.
  *
- * The function waits until no command is executed.
+ * Note that the function does not wait until currently active command terminates.
  * An error code is returned when NULL was passed instead of a valid 'conf' pointer.
  *
  * @param conf Pointer to a configuration structure.

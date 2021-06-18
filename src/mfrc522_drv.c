@@ -159,15 +159,11 @@ mfrc522_drv_status mfrc522_drv_soft_reset(const mfrc522_drv_conf* conf)
     ruc.delay = 100; /* Give 100us delay */
     ruc.retry_cnt = MFRC522_DRV_DEF_RETRY_CNT;
 
-    /* Wait for current command to finish */
-    mfrc522_drv_status res = mfrc522_drv_read_until(conf, &ruc);
-    ERROR_IF_NEQ(res, mfrc522_drv_status_ok);
-
     /* Send SoftReset command. Do not care of other bits - they will be set to defaults afterwards */
     TRY_WRITE_BYTE(conf, mfrc522_reg_command, mfrc522_reg_cmd_soft_reset);
 
     /* Wait until Idle command is active back */
-    res = mfrc522_drv_read_until(conf, &ruc);
+    mfrc522_drv_status res = mfrc522_drv_read_until(conf, &ruc);
     ERROR_IF_NEQ(res, mfrc522_drv_status_ok);
 
     return mfrc522_drv_status_ok;
