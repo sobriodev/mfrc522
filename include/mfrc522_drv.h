@@ -73,7 +73,8 @@ typedef enum mfrc522_drv_status_
     mfrc522_drv_status_transceive_rx_mism, /**< A mismatch between expected and actual RX data size */
 
     /* PICC related */
-    mfrc522_drv_status_picc_vrf_err /**< Unknown ATQA returned after REQA command */
+    mfrc522_drv_status_picc_vrf_err, /**< Unknown ATQA returned after REQA command */
+    mfrc522_drv_status_anticoll_chksum_err /**< Checksum error during anticollision */
 } mfrc522_drv_status;
 
 /**
@@ -619,6 +620,23 @@ mfrc522_drv_status mfrc522_drv_ext_itf_init(const mfrc522_drv_conf* conf, const 
  * @return Status of the operation. On success 'mfrc522_drv_status_ok' is returned.
  */
 mfrc522_drv_status mfrc522_drv_reqa(const mfrc522_drv_conf* conf, u16* atqa);
+
+/**
+ * Perform anticollision procedure.
+ *
+ * The anticollision procedure allows to select only single PICC, in a case when more than one card is present in the
+ * RF field. As a result a vector of 5 bytes is returned (called serial output).
+ * Serial data consist of 5 bytes: NUID (4 bytes) + checksum (1 byte) and is used in further API calls.
+ * The output is valid only when 'ok' status was returned.
+ *
+ * The function has to be called after ATQA response was collected during REQA command.
+ * The function does nothing, when NULL was passed instead of a valid pointer.
+ *
+ * @param conf Device configuration structure.
+ * @param serial Output buffer where serial data will be stored.
+ * @return Status of the operation. On success 'mfrc522_drv_status_ok' is returned.
+ */
+mfrc522_drv_status mfrc522_drv_anticollision(const mfrc522_drv_conf* conf, u8* serial);
 
 #ifdef __cplusplus
 }

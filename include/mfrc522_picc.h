@@ -104,17 +104,17 @@ typedef struct mfrc522_picc_block_acc_
 } mfrc522_picc_block_acc;
 
 /**
- * Available PICC commands
+ * Available PICC commands.
  */
 typedef enum mfrc522_picc_cmd_
 {
     mfrc522_picc_cmd_reqa = 0x26, /**< Request (7-bit) */
     mfrc522_picc_cmd_wupa = 0x52, /**< Wake-up (7-bit) */
-    mfrc522_picc_cmd_anticoll_cl1 = 0x9320, /**< Anticollision CL1 */
-    mfrc522_picc_cmd_select_cl1 = 0x9370, /**< Select CL1 */
-    mfrc522_picc_cmd_anticoll_cl2 = 0x9520, /**< Anticollision CL2 */
-    mfrc522_picc_cmd_select_cl2 = 0x9570, /**< Select CL2 */
-    mfrc522_picc_cmd_halt = 0x5000, /**< Halt */
+    mfrc522_picc_cmd_anticoll_cl1 = 0x2093, /**< Anticollision CL1 */
+    mfrc522_picc_cmd_select_cl1 = 0x7093, /**< Select CL1 */
+    mfrc522_picc_cmd_anticoll_cl2 = 0x2095, /**< Anticollision CL2 */
+    mfrc522_picc_cmd_select_cl2 = 0x7095, /**< Select CL2 */
+    mfrc522_picc_cmd_halt = 0x0050, /**< Halt */
     mfrc522_picc_cmd_auth_key_a = 0x60, /**< Authenticate with Key A */
     mfrc522_picc_cmd_auth_key_b = 0x61, /** Authenticate with Key B */
     mfrc522_picc_cmd_pers_uid = 0x40, /**< Personalize UID usage */

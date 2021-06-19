@@ -1027,3 +1027,89 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_reqa__BlacklistedAtqaReturned__Error)
     ASSERT_EQ(mfrc522_drv_status_picc_vrf_err, status);
     ASSERT_EQ(0xAAFF, atqa);
 }
+
+TEST(TestMfrc522DrvCommon, mfrc522_drv_anticollision__NullCases)
+{
+    auto device = initDevice();
+    u8 serial[5];
+
+    auto status = mfrc522_drv_anticollision(nullptr, &serial[0]);
+    ASSERT_EQ(mfrc522_drv_status_nullptr, status);
+    status = mfrc522_drv_anticollision(&device, nullptr);
+    ASSERT_EQ(mfrc522_drv_status_nullptr, status);
+}
+
+TEST(TestMfrc522DrvCommon, mfrc522_drv_anticollision__ErrorDuringTransceiveCommand__Error)
+{
+    auto device = initDevice();
+    u8 serial[5] = {0x00};
+
+    /* Set expectations */
+    MOCK(mfrc522_ll_send);
+    MOCK(mfrc522_drv_transceive);
+    /* TX last bits = 0x00 (whole byte valid) */
+    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_bit_framing, 1, Pointee(0x00)).WillOnce(Return(mfrc522_ll_status_ok));
+    /* Simulate an error during transmission/reception of the data */
+    MOCK_CALL(mfrc522_drv_transceive, &device, NotNull()).WillOnce(Return(mfrc522_drv_status_transceive_rx_mism));
+
+    auto status = mfrc522_drv_anticollision(&device, &serial[0]);
+    ASSERT_EQ(mfrc522_drv_status_transceive_rx_mism, status); /* The error should be forwarded as an output */
+    for (const auto& byte : serial) {
+        ASSERT_EQ(0x00, byte); /* Serial data shall not be touched */
+    }
+}
+
+TEST(TestMfrc522DrvCommon, mfrc522_drv_anticollision__InvalidChecksum__Error)
+{
+    auto device = initDevice();
+    u8 serial[5] = {0x00};
+
+    /* Set expectations */
+    MOCK(mfrc522_ll_send);
+    MOCK(mfrc522_drv_transceive);
+    u8 txData[2] = {0x93, 0x20};
+    u8 rxData[5] = {0x73, 0xEF, 0xD7, 0x18, 0xAB}; /* 0xAB is invalid in this case */
+    mfrc522_drv_transceive_conf transceiveConf;
+    transceiveConf.tx_data = &txData[0];
+    transceiveConf.tx_data_sz = 2;
+    transceiveConf.rx_data = &rxData[0];
+    transceiveConf.rx_data_sz = 5;
+    /* TX last bits = 0x00 (whole byte valid) */
+    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_bit_framing, 1, Pointee(0x00)).WillOnce(Return(mfrc522_ll_status_ok));
+    MOCK_CALL(mfrc522_drv_transceive, &device, TransceiveStructInputMatcher(&transceiveConf))
+            .WillOnce(DoAll(TransceiveAction(&transceiveConf), Return(mfrc522_drv_status_ok)));
+
+    auto status = mfrc522_drv_anticollision(&device, &serial[0]);
+    ASSERT_EQ(mfrc522_drv_status_anticoll_chksum_err, status);
+}
+
+TEST(TestMfrc522DrvCommon, mfrc522_drv_anticollision__ValidNUIDAndChecksumReturned__Success)
+{
+    /*
+     * Example valid serial outputs after anticollision command:
+     * 1) 0x73 0xef 0xd7 0x18 0x53
+     * 2) 0x83 0x35 0x19 0x16 0xb9
+     */
+
+    auto device = initDevice();
+    u8 serial[5] = {0x00};
+
+    /* Set expectations */
+    MOCK(mfrc522_ll_send);
+    MOCK(mfrc522_drv_transceive);
+    u8 txData[2] = {0x93, 0x20};
+    u8 rxData[5] = {0x73, 0xEF, 0xD7, 0x18, 0x53};
+    mfrc522_drv_transceive_conf transceiveConf;
+    transceiveConf.tx_data = &txData[0];
+    transceiveConf.tx_data_sz = 2;
+    transceiveConf.rx_data = &rxData[0];
+    transceiveConf.rx_data_sz = 5;
+    /* TX last bits = 0x00 (whole byte valid) */
+    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_bit_framing, 1, Pointee(0x00)).WillOnce(Return(mfrc522_ll_status_ok));
+    MOCK_CALL(mfrc522_drv_transceive, &device, TransceiveStructInputMatcher(&transceiveConf))
+            .WillOnce(DoAll(TransceiveAction(&transceiveConf), Return(mfrc522_drv_status_ok)));
+
+    auto status = mfrc522_drv_anticollision(&device, &serial[0]);
+    ASSERT_EQ(mfrc522_drv_status_ok, status);
+    ASSERT_EQ(0, memcmp(&serial[0], &rxData[0], 5)); /* Compare output serial with expected one */
+}
