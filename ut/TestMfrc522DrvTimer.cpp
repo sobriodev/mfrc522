@@ -5,7 +5,7 @@
 #include "Mockable.h" /* Provide mocks */
 
 /* Required by C Mock library */
-DEFINE_MOCKABLE(mfrc522_ll_status, mfrc522_ll_send, (u8, size, u8*));
+DEFINE_MOCKABLE(mfrc522_ll_status, mfrc522_ll_send, (u8, size, const u8*));
 
 using namespace testing;
 

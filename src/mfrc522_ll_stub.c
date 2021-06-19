@@ -10,11 +10,11 @@
 
 #include "mfrc522_ll.h"
 
-mfrc522_ll_status mfrc522_ll_send(u8 addr, size bytes, u8* payload)
+mfrc522_ll_status mfrc522_ll_send(u8 addr, size bytes, const u8* payload)
 {
     (void)addr;
     (void)bytes;
-    *payload = 0x00;
+    (void)payload;
     return mfrc522_ll_status_ok;
 }
 

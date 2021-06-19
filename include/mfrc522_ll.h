@@ -47,7 +47,7 @@ typedef enum mfrc522_ll_status_
  *         - mfrc522_ll_status_send_err on error
  *         - mfrc522_ll_status_ok on success
  */
-typedef mfrc522_ll_status (*mfrc522_ll_send)(u8 addr, size bytes, u8* payload);
+typedef mfrc522_ll_status (*mfrc522_ll_send)(u8 addr, size bytes, const u8* payload);
 
 /**
  * Low-level receive function type. From high-level point of view the library does not assume which digital interface is
@@ -92,7 +92,7 @@ typedef void (*mfrc522_ll_delay)(u32 period);
  *         - mfrc522_ll_status_send_err on error
  *         - mfrc522_ll_status_ok on success
  */
-mfrc522_ll_status mfrc522_ll_send(u8 addr, size bytes, u8* payload);
+mfrc522_ll_status mfrc522_ll_send(u8 addr, size bytes, const u8* payload);
 
 /**
  * Low-level function to receive data from a device. From high-level point of view the library does not assume which

@@ -678,7 +678,7 @@ mfrc522_drv_status mfrc522_drv_anticollision(const mfrc522_drv_conf* conf, u8* s
     /* Transceive the data */
     mfrc522_drv_transceive_conf tr_conf;
     tr_conf.tx_data = &tx[0];
-    tr_conf.tx_data_sz = 2;
+    tr_conf.tx_data_sz = SIZE_ARRAY(tx);
     tr_conf.rx_data = serial;
     tr_conf.rx_data_sz = 5;
     mfrc522_drv_status status = mfrc522_drv_transceive(conf, &tr_conf);
@@ -695,4 +695,49 @@ mfrc522_drv_status mfrc522_drv_anticollision(const mfrc522_drv_conf* conf, u8* s
     }
 
     return status;
+}
+
+mfrc522_drv_status mfrc522_drv_select(const mfrc522_drv_conf* conf, const u8* serial, u8* sak)
+{
+    ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
+    ERROR_IF_EQ(serial, NULL, mfrc522_drv_status_nullptr);
+    ERROR_IF_EQ(sak, NULL, mfrc522_drv_status_nullptr);
+
+    /* Build TX data */
+    u16 crc;
+    u8 tx[9];
+    tx[0] = mfrc522_picc_cmd_select_cl1 & 0xFF;
+    tx[1] = (mfrc522_picc_cmd_select_cl1 & 0xFF00) >> 8;
+    memcpy(&tx[2], serial, 5);
+    /* Compute and append CRC */
+    mfrc522_drv_status status = mfrc522_drv_fifo_store_mul(conf, &tx[0], 7);
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
+    status = mfrc522_drv_crc_compute(conf, &crc);
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
+    tx[7] = crc & 0xFF;
+    tx[8] = (crc & 0xFF00) >> 8;
+
+    /* Transceive the data */
+    u8 rx[3];
+    mfrc522_drv_transceive_conf tr_conf;
+    tr_conf.tx_data = &tx[0];
+    tr_conf.tx_data_sz = SIZE_ARRAY(tx);
+    tr_conf.rx_data = &rx[0];
+    tr_conf.rx_data_sz = SIZE_ARRAY(rx);
+    status = mfrc522_drv_transceive(conf, &tr_conf);
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
+
+    /* Calculate CRC of SAK response */
+    status = mfrc522_drv_fifo_store(conf, rx[0]);
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
+    status = mfrc522_drv_crc_compute(conf, &crc);
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
+
+    u16 crc_from_picc = rx[1] | (rx[2] << 8);
+    if (UNLIKELY(crc_from_picc != crc)) {
+        return mfrc522_drv_status_crc_err;
+    }
+
+    *sak = rx[0];
+    return mfrc522_drv_status_ok;
 }
