@@ -662,3 +662,37 @@ mfrc522_drv_status mfrc522_drv_reqa(const mfrc522_drv_conf* conf, u16* atqa)
     return status;
 }
 
+mfrc522_drv_status mfrc522_drv_anticollision(const mfrc522_drv_conf* conf, u8* serial)
+{
+    ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
+    ERROR_IF_EQ(serial, NULL, mfrc522_drv_status_nullptr);
+
+    /* Whole last TX byte is valid */
+    TRY_WRITE_MASKED(conf, mfrc522_reg_bit_framing, 0x00, MFRC522_REG_FIELD(BITFRAMING_TX_LASTBITS));
+
+    /* TX data consist of two bytes */
+    u8 tx[2];
+    tx[0] = mfrc522_picc_cmd_anticoll_cl1 & 0xFF;
+    tx[1] = (mfrc522_picc_cmd_anticoll_cl1 & 0xFF00) >> 8;
+
+    /* Transceive the data */
+    mfrc522_drv_transceive_conf tr_conf;
+    tr_conf.tx_data = &tx[0];
+    tr_conf.tx_data_sz = 2;
+    tr_conf.rx_data = serial;
+    tr_conf.rx_data_sz = 5;
+    mfrc522_drv_status status = mfrc522_drv_transceive(conf, &tr_conf);
+
+    /* Compute checksum */
+    if (mfrc522_drv_status_ok == status) {
+        u8 checksum = 0;
+        for (size i = 0; i < 4; ++i) {
+            checksum ^= serial[i];
+        }
+        if (UNLIKELY(serial[4] != checksum)) {
+            return mfrc522_drv_status_anticoll_chksum_err;
+        }
+    }
+
+    return status;
+}
