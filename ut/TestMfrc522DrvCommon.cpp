@@ -6,7 +6,7 @@
 #include "Mockable.h" /* Provide mocks */
 
 /* Required by C Mock library */
-DEFINE_MOCKABLE(mfrc522_ll_status, mfrc522_ll_send, (u8, size, u8*));
+DEFINE_MOCKABLE(mfrc522_ll_status, mfrc522_ll_send, (u8, size, const u8*));
 DEFINE_MOCKABLE(mfrc522_ll_status, mfrc522_ll_recv, (u8, u8*));
 DEFINE_MOCKABLE(void, mfrc522_ll_delay, (u32));
 DEFINE_MOCKABLE(mfrc522_drv_status, mfrc522_drv_init, (mfrc522_drv_conf*));
@@ -14,6 +14,7 @@ DEFINE_MOCKABLE(mfrc522_drv_status, mfrc522_drv_soft_reset, (const mfrc522_drv_c
 DEFINE_MOCKABLE(mfrc522_drv_status, mfrc522_drv_invoke_cmd, (const mfrc522_drv_conf*, mfrc522_reg_cmd));
 DEFINE_MOCKABLE(mfrc522_drv_status, mfrc522_irq_states, (const mfrc522_drv_conf*, u16*));
 DEFINE_MOCKABLE(mfrc522_drv_status, mfrc522_drv_transceive, (const mfrc522_drv_conf*, mfrc522_drv_transceive_conf*));
+DEFINE_MOCKABLE(mfrc522_drv_status, mfrc522_drv_crc_compute, (const mfrc522_drv_conf*, u16*));
 
 using namespace testing;
 
@@ -1112,4 +1113,99 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_anticollision__ValidNUIDAndChecksumReturn
     auto status = mfrc522_drv_anticollision(&device, &serial[0]);
     ASSERT_EQ(mfrc522_drv_status_ok, status);
     ASSERT_EQ(0, memcmp(&serial[0], &rxData[0], 5)); /* Compare output serial with expected one */
+}
+
+TEST(TestMfrc522DrvCommon, mfrc522_drv_select__NullCases)
+{
+    auto device = initDevice();
+    u8 serial[5] = {0x00};
+    u8 sak;
+
+    auto status = mfrc522_drv_select(nullptr, &serial[0], &sak);
+    ASSERT_EQ(mfrc522_drv_status_nullptr, status);
+    status = mfrc522_drv_select(&device, nullptr, &sak);
+    ASSERT_EQ(mfrc522_drv_status_nullptr, status);
+    status = mfrc522_drv_select(&device, &serial[0], nullptr);
+    ASSERT_EQ(mfrc522_drv_status_nullptr, status);
+}
+
+TEST(TestMfrc522DrvCommon, mfrc522_drv_select__CRCDoesNotMatchUp__Error)
+{
+    auto device = initDevice();
+    u8 serial[5] = {0x73, 0xEF, 0xD7, 0x18, 0x53}; /* Got from PICC */
+    u8 sak;
+
+    /* Set expectations */
+    MOCK(mfrc522_drv_transceive);
+    MOCK(mfrc522_drv_crc_compute);
+    u8 tx[9] =
+    {
+        0x93, 0x70, /* General command */
+        0x73, 0xEF, 0xD7, 0x18, 0x53, /* Serial data */
+        0x95, 0xEF /* CRC */
+    };
+    u8 rx[3] =
+    {
+        0x08, /* SAK */
+        0xB6, 0xDD /* CRC */
+    };
+    mfrc522_drv_transceive_conf transceiveConf;
+    transceiveConf.tx_data = &tx[0];
+    transceiveConf.tx_data_sz = SIZE_ARRAY(tx);
+    transceiveConf.rx_data = &rx[0];
+    transceiveConf.rx_data_sz = SIZE_ARRAY(rx);
+    InSequence s;
+    /* Compute CRC of TX data */
+    MOCK_CALL(mfrc522_drv_crc_compute, &device, NotNull())
+        .WillOnce(DoAll(SetArgPointee<1>(0xEF95), Return(mfrc522_drv_status_ok)));
+    /* Transceive the data */
+    MOCK_CALL(mfrc522_drv_transceive, &device, TransceiveStructInputMatcher(&transceiveConf))
+            .WillOnce(DoAll(TransceiveAction(&transceiveConf), Return(mfrc522_drv_status_ok)));
+    /* Compute CRC of RX data */
+    MOCK_CALL(mfrc522_drv_crc_compute, &device, NotNull())
+            .WillOnce(DoAll(SetArgPointee<1>(0xFFFF), Return(mfrc522_drv_status_ok))); /* Return wrong value */
+
+    auto status = mfrc522_drv_select(&device, &serial[0], &sak);
+    ASSERT_EQ(mfrc522_drv_status_crc_err, status);
+}
+
+TEST(TestMfrc522DrvCommon, mfrc522_drv_select__TypicalCase__Success)
+{
+    auto device = initDevice();
+    u8 serial[5] = {0x73, 0xEF, 0xD7, 0x18, 0x53}; /* Got from PICC */
+    u8 sak;
+
+    /* Set expectations */
+    MOCK(mfrc522_drv_transceive);
+    MOCK(mfrc522_drv_crc_compute);
+    u8 tx[9] =
+    {
+        0x93, 0x70, /* General command */
+        0x73, 0xEF, 0xD7, 0x18, 0x53, /* Serial data */
+        0x95, 0xEF /* CRC */
+    };
+    u8 rx[3] =
+    {
+        0x08, /* SAK */
+        0xB6, 0xDD /* CRC */
+    };
+    mfrc522_drv_transceive_conf transceiveConf;
+    transceiveConf.tx_data = &tx[0];
+    transceiveConf.tx_data_sz = SIZE_ARRAY(tx);
+    transceiveConf.rx_data = &rx[0];
+    transceiveConf.rx_data_sz = SIZE_ARRAY(rx);
+    InSequence s;
+    /* Compute CRC of TX data */
+    MOCK_CALL(mfrc522_drv_crc_compute, &device, NotNull())
+            .WillOnce(DoAll(SetArgPointee<1>(0xEF95), Return(mfrc522_drv_status_ok)));
+    /* Transceive the data */
+    MOCK_CALL(mfrc522_drv_transceive, &device, TransceiveStructInputMatcher(&transceiveConf))
+            .WillOnce(DoAll(TransceiveAction(&transceiveConf), Return(mfrc522_drv_status_ok)));
+    /* Compute CRC of RX data */
+    MOCK_CALL(mfrc522_drv_crc_compute, &device, NotNull())
+            .WillOnce(DoAll(SetArgPointee<1>(0xDDB6), Return(mfrc522_drv_status_ok))); /* Return wrong value */
+
+    auto status = mfrc522_drv_select(&device, &serial[0], &sak);
+    ASSERT_EQ(mfrc522_drv_status_ok, status);
+    ASSERT_EQ(0x08, sak);
 }

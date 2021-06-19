@@ -74,7 +74,8 @@ typedef enum mfrc522_drv_status_
 
     /* PICC related */
     mfrc522_drv_status_picc_vrf_err, /**< Unknown ATQA returned after REQA command */
-    mfrc522_drv_status_anticoll_chksum_err /**< Checksum error during anticollision */
+    mfrc522_drv_status_anticoll_chksum_err, /**< Checksum error during anticollision */
+    mfrc522_drv_status_crc_err /**< Computed CRC does not match up with expected one */
 } mfrc522_drv_status;
 
 /**
@@ -217,7 +218,7 @@ mfrc522_drv_status mfrc522_drv_init(mfrc522_drv_conf* conf);
  * @param payload Payload bytes.
  * @return An instance of mfrc522_ll_status.
  */
-static inline mfrc522_ll_status mfrc522_drv_write(const mfrc522_drv_conf* conf, mfrc522_reg addr, size sz, u8* payload)
+static inline mfrc522_ll_status mfrc522_drv_write(const mfrc522_drv_conf* conf, mfrc522_reg addr, size sz, const u8* payload)
 {
     ERROR_IF_EQ(conf, NULL, mfrc522_ll_status_send_err);
 #if MFRC522_LL_PTR
@@ -637,6 +638,24 @@ mfrc522_drv_status mfrc522_drv_reqa(const mfrc522_drv_conf* conf, u16* atqa);
  * @return Status of the operation. On success 'mfrc522_drv_status_ok' is returned.
  */
 mfrc522_drv_status mfrc522_drv_anticollision(const mfrc522_drv_conf* conf, u8* serial);
+
+/**
+ * Select a PICC to communicate with.
+ *
+ * The function selects a PICC for further actions. As an input serial data returned from the anticollision sequence
+ * shall be passed. Thus this function has to be called directly after anticollision procedure.
+ * The PICC answers with SAK response (1 byte of exact SAK + 2 bytes of CRC).
+ * The function assumes that 'serial' vector contains exactly 5 bytes. In other case undefined behaviour is guaranteed.
+ * The CRC coprocessor has to be initialized prior to calling this function.
+ *
+ * The function does nothing when NULL was passed instead of a valid pointer.
+ *
+ * @param conf Device configuration struct.
+ * @param serial Serial data of a PICC.
+ * @param sak Buffer to store SAK response in.
+ * @return Status of the operation. On success 'mfrc522_drv_status_ok' is returned.
+ */
+mfrc522_drv_status mfrc522_drv_select(const mfrc522_drv_conf* conf, const u8* serial, u8* sak);
 
 #ifdef __cplusplus
 }
