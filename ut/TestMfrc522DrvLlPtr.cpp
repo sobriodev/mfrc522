@@ -6,7 +6,7 @@
 /* ------------------------------------------------------------ */
 
 /* Dummy implementation of low-level functions */
-static mfrc522_ll_status dummySend(u8 addr, size bytes, u8* payload) // NOLINT(readability-non-const-parameter)
+static mfrc522_ll_status dummySend(u8 addr, size bytes, const u8* payload) // NOLINT(readability-non-const-parameter)
 {
     static_cast<void>(addr);
     static_cast<void>(bytes);
