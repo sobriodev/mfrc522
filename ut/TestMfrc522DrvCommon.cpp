@@ -15,6 +15,7 @@ DEFINE_MOCKABLE(mfrc522_drv_status, mfrc522_drv_invoke_cmd, (const mfrc522_drv_c
 DEFINE_MOCKABLE(mfrc522_drv_status, mfrc522_irq_states, (const mfrc522_drv_conf*, u16*));
 DEFINE_MOCKABLE(mfrc522_drv_status, mfrc522_drv_transceive, (const mfrc522_drv_conf*, mfrc522_drv_transceive_conf*));
 DEFINE_MOCKABLE(mfrc522_drv_status, mfrc522_drv_crc_compute, (const mfrc522_drv_conf*, u16*));
+DEFINE_MOCKABLE(mfrc522_drv_status, mfrc522_drv_irq_clr, (const mfrc522_drv_conf*, mfrc522_reg_irq));
 
 using namespace testing;
 
@@ -27,7 +28,8 @@ MATCHER_P(TransceiveStructInputMatcher, expected, "Transceive struct input match
 {
     return (arg->tx_data_sz == expected->tx_data_sz) && /* Compare TX sizes */
            (arg->rx_data_sz == expected->rx_data_sz) &&  /* Compare RX sizes */
-           !memcmp(arg->tx_data, expected->tx_data, expected->tx_data_sz); /* Compare TX data */
+           !memcmp(arg->tx_data, expected->tx_data, expected->tx_data_sz) && /* Compare TX data */
+           (arg->command == expected->command); /* Compare IRQ numbers */
 }
 
 /* ------------------------------------------------------------ */
@@ -719,6 +721,17 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_transceive__NullCases)
     ASSERT_EQ(mfrc522_drv_status_nullptr, status);
 }
 
+TEST(TestMfrc522DrvCommon, mfrc522_drv_transceive__InvalidCommand)
+{
+    auto device = initDevice();
+    /* Do not fill any other fields - needless in this test */
+    mfrc522_drv_transceive_conf transceiveConf;
+    transceiveConf.command = mfrc522_reg_cmd_idle;
+
+    auto status = mfrc522_drv_transceive(&device, &transceiveConf);
+    ASSERT_EQ(mfrc522_drv_status_nok, status);
+}
+
 TEST(TestMfrc522DrvCommon, mfrc522_drv_transceive__NoIrqAfterAllRetries__TimeoutError)
 {
     auto device = initDevice();
@@ -731,14 +744,18 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_transceive__NoIrqAfterAllRetries__Timeout
     transceiveConf.tx_data_sz = 1;
     transceiveConf.rx_data = &rx;
     transceiveConf.rx_data_sz = 1;
+    transceiveConf.command = mfrc522_reg_cmd_transceive;
 
     /* Set expectations */
     MOCK(mfrc522_ll_send);
     MOCK(mfrc522_ll_recv);
     MOCK(mfrc522_irq_states);
     MOCK(mfrc522_drv_invoke_cmd);
+    MOCK(mfrc522_drv_irq_clr);
     IGNORE_REDUNDANT_LL_RECV_CALLS();
     InSequence s;
+    /* All IRQs shall be cleared */
+    MOCK_CALL(mfrc522_drv_irq_clr, &device, mfrc522_reg_irq_all).WillOnce(Return(mfrc522_drv_status_ok));
     /* FIFO buffer should be flushed and populated with new data */
     MOCK_CALL(mfrc522_ll_send, mfrc522_reg_fifo_level, 1, NotNull()).WillOnce(Return(mfrc522_ll_status_ok));
     MOCK_CALL(mfrc522_ll_send, mfrc522_reg_fifo_data, 1, Pointee(tx)).WillOnce(Return(mfrc522_ll_status_ok));
@@ -770,14 +787,18 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_transceive__ErrorBitIsSet__ErrorReturned)
     transceiveConf.tx_data_sz = 1;
     transceiveConf.rx_data = &rx;
     transceiveConf.rx_data_sz = 1;
+    transceiveConf.command = mfrc522_reg_cmd_transceive;
 
     /* Set expectations */
     MOCK(mfrc522_ll_send);
     MOCK(mfrc522_ll_recv);
     MOCK(mfrc522_irq_states);
     MOCK(mfrc522_drv_invoke_cmd);
+    MOCK(mfrc522_drv_irq_clr);
     IGNORE_REDUNDANT_LL_RECV_CALLS();
     InSequence s;
+    /* All IRQs shall be cleared */
+    MOCK_CALL(mfrc522_drv_irq_clr, &device, mfrc522_reg_irq_all).WillOnce(Return(mfrc522_drv_status_ok));
     /* FIFO buffer should be flushed and populated with new data */
     MOCK_CALL(mfrc522_ll_send, mfrc522_reg_fifo_level, 1, NotNull()).WillOnce(Return(mfrc522_ll_status_ok));
     MOCK_CALL(mfrc522_ll_send, mfrc522_reg_fifo_data, 1, Pointee(tx)).WillOnce(Return(mfrc522_ll_status_ok));
@@ -809,14 +830,18 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_transceive__InvalidNumberOfRxValidBits__E
     transceiveConf.tx_data_sz = 1;
     transceiveConf.rx_data = &rx;
     transceiveConf.rx_data_sz = 1;
+    transceiveConf.command = mfrc522_reg_cmd_transceive;
 
     /* Set expectations */
     MOCK(mfrc522_ll_send);
     MOCK(mfrc522_ll_recv);
     MOCK(mfrc522_irq_states);
     MOCK(mfrc522_drv_invoke_cmd);
+    MOCK(mfrc522_drv_irq_clr);
     IGNORE_REDUNDANT_LL_RECV_CALLS();
     InSequence s;
+    /* All IRQs shall be cleared */
+    MOCK_CALL(mfrc522_drv_irq_clr, &device, mfrc522_reg_irq_all).WillOnce(Return(mfrc522_drv_status_ok));
     /* FIFO buffer should be flushed and populated with new data */
     MOCK_CALL(mfrc522_ll_send, mfrc522_reg_fifo_level, 1, NotNull()).WillOnce(Return(mfrc522_ll_status_ok));
     MOCK_CALL(mfrc522_ll_send, mfrc522_reg_fifo_data, 1, Pointee(tx)).WillOnce(Return(mfrc522_ll_status_ok));
@@ -850,14 +875,18 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_transceive__NoDataOnRxSide__Error)
     transceiveConf.tx_data_sz = 1;
     transceiveConf.rx_data = &rx;
     transceiveConf.rx_data_sz = 1;
+    transceiveConf.command = mfrc522_reg_cmd_transceive;
 
     /* Set expectations */
     MOCK(mfrc522_ll_send);
     MOCK(mfrc522_ll_recv);
     MOCK(mfrc522_irq_states);
     MOCK(mfrc522_drv_invoke_cmd);
+    MOCK(mfrc522_drv_irq_clr);
     IGNORE_REDUNDANT_LL_RECV_CALLS();
     InSequence s;
+    /* All IRQs shall be cleared */
+    MOCK_CALL(mfrc522_drv_irq_clr, &device, mfrc522_reg_irq_all).WillOnce(Return(mfrc522_drv_status_ok));
     /* FIFO buffer should be flushed and populated with new data */
     MOCK_CALL(mfrc522_ll_send, mfrc522_reg_fifo_level, 1, NotNull()).WillOnce(Return(mfrc522_ll_status_ok));
     MOCK_CALL(mfrc522_ll_send, mfrc522_reg_fifo_data, 1, Pointee(tx)).WillOnce(Return(mfrc522_ll_status_ok));
@@ -893,14 +922,18 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_transceive__TypicalCase__Success)
     transceiveConf.tx_data_sz = 1;
     transceiveConf.rx_data = &rx[0];
     transceiveConf.rx_data_sz = 2;
+    transceiveConf.command = mfrc522_reg_cmd_transceive;
 
     /* Set expectations */
     MOCK(mfrc522_ll_send);
     MOCK(mfrc522_ll_recv);
     MOCK(mfrc522_irq_states);
     MOCK(mfrc522_drv_invoke_cmd);
+    MOCK(mfrc522_drv_irq_clr);
     IGNORE_REDUNDANT_LL_RECV_CALLS();
     InSequence s;
+    /* All IRQs shall be cleared */
+    MOCK_CALL(mfrc522_drv_irq_clr, &device, mfrc522_reg_irq_all).WillOnce(Return(mfrc522_drv_status_ok));
     /* FIFO buffer should be flushed and populated with new data */
     MOCK_CALL(mfrc522_ll_send, mfrc522_reg_fifo_level, 1, NotNull()).WillOnce(Return(mfrc522_ll_status_ok));
     MOCK_CALL(mfrc522_ll_send, mfrc522_reg_fifo_data, 1, Pointee(tx)).WillOnce(Return(mfrc522_ll_status_ok));
@@ -992,6 +1025,7 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_reqa__TypicalCase__Success)
     transceiveConf.tx_data_sz = 1;
     transceiveConf.rx_data = &rxData[0];
     transceiveConf.rx_data_sz = 2;
+    transceiveConf.command = mfrc522_reg_cmd_transceive;
     /* TX last bits should be set to 0x07 */
     MOCK_CALL(mfrc522_ll_send, mfrc522_reg_bit_framing, 1, Pointee(0x07)).WillOnce(Return(mfrc522_ll_status_ok));
     MOCK_CALL(mfrc522_drv_transceive, &device, TransceiveStructInputMatcher(&transceiveConf))
@@ -1019,6 +1053,7 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_reqa__BlacklistedAtqaReturned__Error)
     transceiveConf.tx_data_sz = 1;
     transceiveConf.rx_data = &rxData[0];
     transceiveConf.rx_data_sz = 2;
+    transceiveConf.command = mfrc522_reg_cmd_transceive;
     /* TX last bits should be set to 0x07 */
     MOCK_CALL(mfrc522_ll_send, mfrc522_reg_bit_framing, 1, Pointee(0x07)).WillOnce(Return(mfrc522_ll_status_ok));
     MOCK_CALL(mfrc522_drv_transceive, &device, TransceiveStructInputMatcher(&transceiveConf))
@@ -1075,6 +1110,7 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_anticollision__InvalidChecksum__Error)
     transceiveConf.tx_data_sz = 2;
     transceiveConf.rx_data = &rxData[0];
     transceiveConf.rx_data_sz = 5;
+    transceiveConf.command = mfrc522_reg_cmd_transceive;
     /* TX last bits = 0x00 (whole byte valid) */
     MOCK_CALL(mfrc522_ll_send, mfrc522_reg_bit_framing, 1, Pointee(0x00)).WillOnce(Return(mfrc522_ll_status_ok));
     MOCK_CALL(mfrc522_drv_transceive, &device, TransceiveStructInputMatcher(&transceiveConf))
@@ -1105,6 +1141,7 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_anticollision__ValidNUIDAndChecksumReturn
     transceiveConf.tx_data_sz = 2;
     transceiveConf.rx_data = &rxData[0];
     transceiveConf.rx_data_sz = 5;
+    transceiveConf.command = mfrc522_reg_cmd_transceive;
     /* TX last bits = 0x00 (whole byte valid) */
     MOCK_CALL(mfrc522_ll_send, mfrc522_reg_bit_framing, 1, Pointee(0x00)).WillOnce(Return(mfrc522_ll_status_ok));
     MOCK_CALL(mfrc522_drv_transceive, &device, TransceiveStructInputMatcher(&transceiveConf))
@@ -1154,6 +1191,7 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_select__CRCDoesNotMatchUp__Error)
     transceiveConf.tx_data_sz = SIZE_ARRAY(tx);
     transceiveConf.rx_data = &rx[0];
     transceiveConf.rx_data_sz = SIZE_ARRAY(rx);
+    transceiveConf.command = mfrc522_reg_cmd_transceive;
     InSequence s;
     /* Compute CRC of TX data */
     MOCK_CALL(mfrc522_drv_crc_compute, &device, NotNull())
@@ -1194,6 +1232,7 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_select__TypicalCase__Success)
     transceiveConf.tx_data_sz = SIZE_ARRAY(tx);
     transceiveConf.rx_data = &rx[0];
     transceiveConf.rx_data_sz = SIZE_ARRAY(rx);
+    transceiveConf.command = mfrc522_reg_cmd_transceive;
     InSequence s;
     /* Compute CRC of TX data */
     MOCK_CALL(mfrc522_drv_crc_compute, &device, NotNull())
@@ -1208,4 +1247,213 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_select__TypicalCase__Success)
     auto status = mfrc522_drv_select(&device, &serial[0], &sak);
     ASSERT_EQ(mfrc522_drv_status_ok, status);
     ASSERT_EQ(0x08, sak);
+}
+
+TEST(TestMfrc522DrvCommon, mfrc522_drv_authenticate__NullCases)
+{
+    auto device = initDevice();
+    mfrc522_drv_auth_conf authConf;
+
+    auto status = mfrc522_drv_authenticate(&device, nullptr);
+    ASSERT_EQ(mfrc522_drv_status_nullptr, status);
+    status = mfrc522_drv_authenticate(nullptr, &authConf);
+    ASSERT_EQ(mfrc522_drv_status_nullptr, status);
+}
+
+TEST(TestMfrc522DrvCommon, mfrc522_drv_authenticate__TypicalCase__Success)
+{
+    auto device = initDevice();
+
+    /* Provided as the input */
+    mfrc522_drv_auth_conf authConf;
+    u8 key[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+    u8 serial[5] = {0x73, 0xEF, 0xD7, 0x18, 0x53}; /* Got from PICC */
+    authConf.key = &key[0];
+    authConf.block = mfrc522_picc_block0;
+    authConf.sector = mfrc522_picc_sector0;
+    authConf.key_type = mfrc522_picc_key_a;
+    authConf.serial = &serial[0];
+
+    /* Expected parameters passed to transceive command */
+    u8 tx[12] =
+    {
+        mfrc522_picc_key_a, /* Key type */
+        0, /* Block number */
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, /* Secret key */
+        0x73, 0xEF, 0xD7, 0x18, /* Serial number without checksum */
+    };
+    mfrc522_drv_transceive_conf transceiveConf;
+    transceiveConf.tx_data = &tx[0];
+    transceiveConf.tx_data_sz = SIZE_ARRAY(tx);
+    transceiveConf.rx_data = nullptr;
+    transceiveConf.rx_data_sz = 0;
+    transceiveConf.command = mfrc522_reg_cmd_authent;
+
+    /* Set expectations */
+    MOCK(mfrc522_drv_transceive);
+    MOCK(mfrc522_ll_recv);
+    InSequence s;
+    /* Transceive the data */
+    MOCK_CALL(mfrc522_drv_transceive, &device, TransceiveStructInputMatcher(&transceiveConf))
+            .WillOnce(DoAll(TransceiveAction(&transceiveConf), Return(mfrc522_drv_status_ok)));
+    /* Check is crypto was enabled */
+    MOCK_CALL(mfrc522_ll_recv, mfrc522_reg_status2, NotNull())
+        .WillOnce(DoAll(SetArgPointee<1>(1 << 3), Return(mfrc522_ll_status_ok)));
+
+    auto status = mfrc522_drv_authenticate(&device, &authConf);
+    ASSERT_EQ(mfrc522_drv_status_ok, status);
+}
+
+TEST(TestMfrc522DrvCommon, mfrc522_drv_authenticate__CryptoNotEnabled__Error)
+{
+    auto device = initDevice();
+
+    /* Provided as the input */
+    mfrc522_drv_auth_conf authConf;
+    u8 key[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+    u8 serial[5] = {0x73, 0xEF, 0xD7, 0x18, 0x53}; /* Got from PICC */
+    authConf.key = &key[0];
+    authConf.block = mfrc522_picc_block0;
+    authConf.sector = mfrc522_picc_sector0;
+    authConf.key_type = mfrc522_picc_key_a;
+    authConf.serial = &serial[0];
+
+    /* Expected parameters passed to transceive command */
+    u8 tx[12] =
+    {
+        mfrc522_picc_key_a, /* Key type */
+        0, /* Block number */
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, /* Secret key */
+        0x73, 0xEF, 0xD7, 0x18, /* Serial number without checksum */
+    };
+    mfrc522_drv_transceive_conf transceiveConf;
+    transceiveConf.tx_data = &tx[0];
+    transceiveConf.tx_data_sz = SIZE_ARRAY(tx);
+    transceiveConf.rx_data = nullptr;
+    transceiveConf.rx_data_sz = 0;
+    transceiveConf.command = mfrc522_reg_cmd_authent;
+
+    /* Set expectations */
+    MOCK(mfrc522_drv_transceive);
+    MOCK(mfrc522_ll_recv);
+    InSequence s;
+    /* Transceive the data */
+    MOCK_CALL(mfrc522_drv_transceive, &device, TransceiveStructInputMatcher(&transceiveConf))
+            .WillOnce(DoAll(TransceiveAction(&transceiveConf), Return(mfrc522_drv_status_ok)));
+    /* Simulate that crypto was not enabled even if the previous step returned 'ok' status code */
+    MOCK_CALL(mfrc522_ll_recv, mfrc522_reg_status2, NotNull())
+            .WillOnce(DoAll(SetArgPointee<1>(0x00), Return(mfrc522_ll_status_ok)));
+
+    auto status = mfrc522_drv_authenticate(&device, &authConf);
+    ASSERT_EQ(mfrc522_drv_status_crypto_err, status);
+}
+
+TEST(TestMfrc522DrvCommon, mfrc522_drv_halt__NullCases)
+{
+    auto status = mfrc522_drv_halt(nullptr);
+    ASSERT_EQ(mfrc522_drv_status_nullptr, status);
+}
+
+TEST(TestMfrc522DrvCommon, mfrc522_drv_halt__TypicalCase__Success)
+{
+    auto device = initDevice();
+
+    /* Expected parameters */
+    u8 tx[4] =
+    {
+        0x50, 0x00, /* Halt command */
+        0x57, 0xCD /* CRC */
+    };
+    mfrc522_drv_transceive_conf transceiveConf;
+    transceiveConf.tx_data = &tx[0];
+    transceiveConf.tx_data_sz = SIZE_ARRAY(tx);
+    transceiveConf.rx_data = nullptr;
+    transceiveConf.rx_data_sz = 0;
+    transceiveConf.command = mfrc522_reg_cmd_transceive;
+
+    /* Set expectations */
+    MOCK(mfrc522_drv_transceive);
+    MOCK(mfrc522_ll_send);
+    MOCK(mfrc522_drv_crc_compute);
+    IGNORE_REDUNDANT_LL_SEND_CALLS();
+    InSequence s;
+    /* Calculate CRC */
+    MOCK_CALL(mfrc522_drv_crc_compute, &device, NotNull())
+        .WillOnce(DoAll(SetArgPointee<1>(0xCD57), Return(mfrc522_drv_status_ok)));
+    /* Transceive the data (mfrc522_drv_status_transceive_timeout = success in this case) */
+    MOCK_CALL(mfrc522_drv_transceive, &device, TransceiveStructInputMatcher(&transceiveConf))
+            .WillOnce(DoAll(TransceiveAction(&transceiveConf), Return(mfrc522_drv_status_transceive_timeout)));
+    /* Disable the crypto unit */
+    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_status2, 1, Pointee(0x00)).WillOnce(Return(mfrc522_ll_status_ok));
+
+    auto status = mfrc522_drv_halt(&device);
+    ASSERT_EQ(mfrc522_drv_status_ok, status);
+}
+
+TEST(TestMfrc522DrvCommon, mfrc522_drv_halt__OkStatusAfterTransceiveCommand__Error)
+{
+    auto device = initDevice();
+
+    /* Expected parameters */
+    u8 tx[4] =
+    {
+        0x50, 0x00, /* Halt command */
+        0x57, 0xCD /* CRC */
+    };
+    mfrc522_drv_transceive_conf transceiveConf;
+    transceiveConf.tx_data = &tx[0];
+    transceiveConf.tx_data_sz = SIZE_ARRAY(tx);
+    transceiveConf.rx_data = nullptr;
+    transceiveConf.rx_data_sz = 0;
+    transceiveConf.command = mfrc522_reg_cmd_transceive;
+
+    /* Set expectations */
+    MOCK(mfrc522_drv_transceive);
+    MOCK(mfrc522_ll_send);
+    MOCK(mfrc522_drv_crc_compute);
+    IGNORE_REDUNDANT_LL_SEND_CALLS();
+    InSequence s;
+    /* Calculate CRC */
+    MOCK_CALL(mfrc522_drv_crc_compute, &device, NotNull())
+            .WillOnce(DoAll(SetArgPointee<1>(0xCD57), Return(mfrc522_drv_status_ok)));
+    /* Transceive the data (mfrc522_drv_status_transceive_timeout = success in this case) */
+    MOCK_CALL(mfrc522_drv_transceive, &device, TransceiveStructInputMatcher(&transceiveConf))
+            .WillOnce(DoAll(TransceiveAction(&transceiveConf), Return(mfrc522_drv_status_ok)));
+
+    auto status = mfrc522_drv_halt(&device);
+    ASSERT_EQ(mfrc522_drv_status_halt_err, status);
+}
+
+TEST(TestMfrc522DrvCommon, mfrc522_drv_halt__ErrorPresentAfterTransceiveCommand__ErrorForwardedAsOutput)
+{
+    auto device = initDevice();
+
+    /* Expected parameters */
+    u8 tx[4] =
+    {
+        0x50, 0x00, /* Halt command */
+        0x57, 0xCD /* CRC */
+    };
+    mfrc522_drv_transceive_conf transceiveConf;
+    transceiveConf.tx_data = &tx[0];
+    transceiveConf.tx_data_sz = SIZE_ARRAY(tx);
+    transceiveConf.rx_data = nullptr;
+    transceiveConf.rx_data_sz = 0;
+    transceiveConf.command = mfrc522_reg_cmd_transceive;
+
+    /* Set expectations */
+    MOCK(mfrc522_drv_transceive);
+    MOCK(mfrc522_ll_send);
+    MOCK(mfrc522_drv_crc_compute);
+    IGNORE_REDUNDANT_LL_SEND_CALLS();
+    InSequence s;
+    /* Calculate CRC */
+    MOCK_CALL(mfrc522_drv_crc_compute, &device, NotNull())
+            .WillOnce(DoAll(SetArgPointee<1>(0xCD57), Return(mfrc522_drv_status_ok)));
+    /* Transceive the data (mfrc522_drv_status_transceive_timeout = success in this case) */
+    MOCK_CALL(mfrc522_drv_transceive, &device, TransceiveStructInputMatcher(&transceiveConf))
+            .WillOnce(DoAll(TransceiveAction(&transceiveConf), Return(mfrc522_drv_status_transceive_err)));
+
+    auto status = mfrc522_drv_halt(&device);
+    ASSERT_EQ(mfrc522_drv_status_transceive_err, status);
 }

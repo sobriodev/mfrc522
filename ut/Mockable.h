@@ -27,6 +27,9 @@ CMOCK_MOCK_FUNCTION(FUNC##__MOCK, RET, FUNC, ARGS) static_assert(true, "Semicolo
 #define IGNORE_REDUNDANT_LL_RECV_CALLS() \
 MOCK_CALL(mfrc522_ll_recv, _, _).Times(AnyNumber()) \
     .WillRepeatedly(DoAll(SetArgPointee<1>(0x00), Return(mfrc522_ll_status_ok)))
+#define IGNORE_REDUNDANT_LL_SEND_CALLS() \
+MOCK_CALL(mfrc522_ll_send, _, _, _).Times(AnyNumber()) \
+    .WillRepeatedly(Return(mfrc522_ll_status_ok))
 
 /* ------------------------------------------------------------ */
 /* -------------------------- Data types ---------------------- */
@@ -42,6 +45,7 @@ DECLARE_MOCKABLE(mfrc522_drv_status, mfrc522_drv_invoke_cmd, (const mfrc522_drv_
 DECLARE_MOCKABLE(mfrc522_drv_status, mfrc522_irq_states, (const mfrc522_drv_conf*, u16*));
 DECLARE_MOCKABLE(mfrc522_drv_status, mfrc522_drv_transceive, (const mfrc522_drv_conf*, mfrc522_drv_transceive_conf*));
 DECLARE_MOCKABLE(mfrc522_drv_status, mfrc522_drv_crc_compute, (const mfrc522_drv_conf*, u16*));
+DECLARE_MOCKABLE(mfrc522_drv_status, mfrc522_drv_irq_clr, (const mfrc522_drv_conf*, mfrc522_reg_irq));
 
 /* ------------------------------------------------------------ */
 /* ----------------------- Public functions ------------------- */

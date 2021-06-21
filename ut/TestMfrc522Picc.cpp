@@ -182,3 +182,21 @@ TEST(TestMfrc522Picc, mfrc522_picc_get_block_transport_accb__000ConfReturned)
     auto accb = mfrc522_picc_get_block_transport_accb();
     ASSERT_EQ(mfrc522_picc_accb_000, accb);
 }
+
+TEST(TestMfrc522Picc, mfrc522_picc_block_descriptor__MiscCases)
+{
+    auto desc = mfrc522_picc_block_descriptor(mfrc522_picc_sector0, mfrc522_picc_block0);
+    ASSERT_EQ(0, desc);
+
+    desc = mfrc522_picc_block_descriptor(mfrc522_picc_sector0, mfrc522_picc_block3);
+    ASSERT_EQ(3, desc);
+
+    desc = mfrc522_picc_block_descriptor(mfrc522_picc_sector1, mfrc522_picc_block3);
+    ASSERT_EQ(7, desc);
+
+    desc = mfrc522_picc_block_descriptor(mfrc522_picc_sector3, mfrc522_picc_block0);
+    ASSERT_EQ(12, desc);
+
+    desc = mfrc522_picc_block_descriptor(mfrc522_picc_sector15, mfrc522_picc_block3);
+    ASSERT_EQ(63, desc);
+}

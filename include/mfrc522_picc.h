@@ -104,7 +104,7 @@ typedef struct mfrc522_picc_block_acc_
 } mfrc522_picc_block_acc;
 
 /**
- * Available PICC commands.
+ * Available PICC commands
  */
 typedef enum mfrc522_picc_cmd_
 {
@@ -126,6 +126,15 @@ typedef enum mfrc522_picc_cmd_
     mfrc522_picc_cmd_restore = 0xC2, /**< MIFARE restore */
     mfrc522_picc_cmd_transfer = 0xB0 /**< MIFARE transfer */
 } mfrc522_picc_cmd;
+
+/**
+ * Key types
+ */
+typedef enum mfrc522_picc_key_
+{
+    mfrc522_picc_key_a = mfrc522_picc_cmd_auth_key_a, /**< Key A */
+    mfrc522_picc_key_b = mfrc522_picc_cmd_auth_key_b /**< Key B */
+} mfrc522_picc_key;
 
 /**
  * Function type to verify if ATQA response meets requirements.
@@ -205,6 +214,18 @@ static inline mfrc522_picc_accb mfrc522_picc_get_trailer_transport_accb(void)
 static inline mfrc522_picc_accb mfrc522_picc_get_block_transport_accb(void)
 {
     return mfrc522_picc_accb_000;
+}
+
+/**
+ * Get unique id (descriptor) for a block within a sector.
+ *
+ * @param sector PICC sector.
+ * @param block PICC block.
+ * @return Unique number describing the block.
+ */
+static inline u8 mfrc522_picc_block_descriptor(mfrc522_picc_sector sector, mfrc522_picc_block block)
+{
+    return (sector * 4) + block;
 }
 
 #ifdef __cplusplus
