@@ -110,6 +110,12 @@ static inline mfrc522_drv_status verify_atqa(const mfrc522_drv_conf* conf, const
     return mfrc522_drv_status_ok;
 }
 
+/* Helper function to get IRQ number used as the exit criterion during transceive command */
+static inline mfrc522_reg_irq get_awaited_irq_num(mfrc522_reg_cmd cmd)
+{
+    return (mfrc522_reg_cmd_transceive == cmd) ? mfrc522_reg_irq_rx : mfrc522_reg_irq_idle;
+}
+
 /* ------------------------------------------------------------ */
 /* ----------------------- Public functions ------------------- */
 /* ------------------------------------------------------------ */
@@ -560,31 +566,41 @@ mfrc522_drv_status mfrc522_drv_transceive(const mfrc522_drv_conf* conf, mfrc522_
 {
     ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
     ERROR_IF_EQ(tr_conf, NULL, mfrc522_drv_status_nullptr);
+    bool cmd_error = (mfrc522_reg_cmd_transceive != tr_conf->command) &&
+                     (mfrc522_reg_cmd_authent != tr_conf->command);
+    if (UNLIKELY(cmd_error)) {
+        return mfrc522_drv_status_nok;
+    }
+
+    /* Clear all IRQs */
+    mfrc522_drv_status status = mfrc522_drv_irq_clr(conf, mfrc522_reg_irq_all);
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
 
     /* Flush the FIFO buffer and store actual data */
-    mfrc522_drv_status status = mfrc522_drv_fifo_flush(conf);
+    status = mfrc522_drv_fifo_flush(conf);
     ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
     status = mfrc522_drv_fifo_store_mul(conf, tr_conf->tx_data, tr_conf->tx_data_sz);
     ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
 
     /* Invoke transceive command */
-    status = mfrc522_drv_invoke_cmd(conf, mfrc522_reg_cmd_transceive);
+    status = mfrc522_drv_invoke_cmd(conf, tr_conf->command);
     ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
 
     /* Start transmission of the data */
     TRY_WRITE_MASKED(conf, mfrc522_reg_bit_framing, 1, MFRC522_REG_FIELD(BITFRAMING_START));
 
     u16 irq_states;
-    bool recv_irq;
+    bool exit_irq;
     bool error;
+    size retry_total_num = get_real_retry_count(MFRC522_DRV_DEF_RETRY_CNT);
     size retries;
-    for (retries = 0; retries < get_real_retry_count(MFRC522_DRV_DEF_RETRY_CNT); ++retries) {
+    for (retries = 0; retries < retry_total_num; ++retries) {
         status = mfrc522_irq_states(conf, &irq_states);
         ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
 
-        recv_irq = mfrc522_drv_irq_pending(irq_states, mfrc522_reg_irq_rx);
+        exit_irq = mfrc522_drv_irq_pending(irq_states, get_awaited_irq_num(tr_conf->command));
         error = mfrc522_drv_irq_pending(irq_states, mfrc522_reg_irq_err);
-        if (recv_irq || error) {
+        if (exit_irq || error) {
             break;
         }
         delay(conf, 1); /* Make some delay */
@@ -598,7 +614,7 @@ mfrc522_drv_status mfrc522_drv_transceive(const mfrc522_drv_conf* conf, mfrc522_
     ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
 
     /* In case when response is missing */
-    if (UNLIKELY(MFRC522_DRV_DEF_RETRY_CNT == retries)) {
+    if (UNLIKELY(retry_total_num == retries)) {
         return mfrc522_drv_status_transceive_timeout;
     }
 
@@ -607,20 +623,23 @@ mfrc522_drv_status mfrc522_drv_transceive(const mfrc522_drv_conf* conf, mfrc522_
         return mfrc522_drv_status_transceive_err;
     }
 
-    /* Get RX data size */
-    u8 valid_rx_bytes;
-    status = get_valid_rx_bytes(conf, &valid_rx_bytes);
-    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
-
-    /* RX data size error */
-    if (UNLIKELY(valid_rx_bytes != tr_conf->rx_data_sz)) {
-        return mfrc522_drv_status_transceive_rx_mism;
-    }
-
-    /* Get FIFO contents */
-    for (size i = 0; i < tr_conf->rx_data_sz; ++i) {
-        status = mfrc522_drv_fifo_read(conf, &tr_conf->rx_data[i]);
+    /* Get RX data if desired */
+    if (0 != tr_conf->rx_data_sz) {
+        /* Get RX data size */
+        u8 valid_rx_bytes;
+        status = get_valid_rx_bytes(conf, &valid_rx_bytes);
         ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
+
+        /* RX data size error */
+        if (UNLIKELY(valid_rx_bytes != tr_conf->rx_data_sz)) {
+            return mfrc522_drv_status_transceive_rx_mism;
+        }
+
+        /* Get FIFO contents */
+        for (size i = 0; i < tr_conf->rx_data_sz; ++i) {
+            status = mfrc522_drv_fifo_read(conf, &tr_conf->rx_data[i]);
+            ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
+        }
     }
 
     return mfrc522_drv_status_ok;
@@ -643,6 +662,7 @@ mfrc522_drv_status mfrc522_drv_reqa(const mfrc522_drv_conf* conf, u16* atqa)
     tr_conf.tx_data_sz = 1;
     tr_conf.rx_data = &response[0];
     tr_conf.rx_data_sz = 2;
+    tr_conf.command = mfrc522_reg_cmd_transceive;
     mfrc522_drv_status status = mfrc522_drv_transceive(conf, &tr_conf);
 
     switch (status) {
@@ -681,6 +701,7 @@ mfrc522_drv_status mfrc522_drv_anticollision(const mfrc522_drv_conf* conf, u8* s
     tr_conf.tx_data_sz = SIZE_ARRAY(tx);
     tr_conf.rx_data = serial;
     tr_conf.rx_data_sz = 5;
+    tr_conf.command = mfrc522_reg_cmd_transceive;
     mfrc522_drv_status status = mfrc522_drv_transceive(conf, &tr_conf);
 
     /* Compute checksum */
@@ -724,6 +745,7 @@ mfrc522_drv_status mfrc522_drv_select(const mfrc522_drv_conf* conf, const u8* se
     tr_conf.tx_data_sz = SIZE_ARRAY(tx);
     tr_conf.rx_data = &rx[0];
     tr_conf.rx_data_sz = SIZE_ARRAY(rx);
+    tr_conf.command = mfrc522_reg_cmd_transceive;
     status = mfrc522_drv_transceive(conf, &tr_conf);
     ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
 
@@ -739,5 +761,78 @@ mfrc522_drv_status mfrc522_drv_select(const mfrc522_drv_conf* conf, const u8* se
     }
 
     *sak = rx[0];
+    return mfrc522_drv_status_ok;
+}
+
+mfrc522_drv_status mfrc522_drv_authenticate(const mfrc522_drv_conf* conf, const mfrc522_drv_auth_conf* auth_conf)
+{
+    ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
+    ERROR_IF_EQ(auth_conf, NULL, mfrc522_drv_status_nullptr);
+
+    /* Build TX data */
+    u8 tx[12];
+    tx[0] = auth_conf->key_type;
+    tx[1] = mfrc522_picc_block_descriptor(auth_conf->sector, auth_conf->block);
+    memcpy(&tx[2], auth_conf->key, 6);
+    memcpy(&tx[8], auth_conf->serial, 4);
+
+    /* Transceive the data */
+    mfrc522_drv_transceive_conf tr_conf;
+    tr_conf.tx_data = &tx[0];
+    tr_conf.tx_data_sz = SIZE_ARRAY(tx);
+    tr_conf.rx_data = NULL;
+    tr_conf.rx_data_sz = 0; /* No data is expected on RX side */
+    tr_conf.command = mfrc522_reg_cmd_authent;
+    mfrc522_drv_status status = mfrc522_drv_transceive(conf, &tr_conf);
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
+
+    /* Check if crypto is enabled */
+    u8 crypto;
+    mfrc522_ll_status ll_status;
+    ll_status = mfrc522_drv_read_masked(conf, mfrc522_reg_status2, &crypto, MFRC522_REG_FIELD(STATUS2_CRYPTO_ON));
+    if (UNLIKELY(mfrc522_ll_status_ok != ll_status)) {
+        return mfrc522_drv_status_ll_err;
+    }
+
+    return (!crypto) ? mfrc522_drv_status_crypto_err : mfrc522_drv_status_ok;
+}
+
+mfrc522_drv_status mfrc522_drv_halt(const mfrc522_drv_conf* conf)
+{
+    ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
+
+    /* TX data */
+    u8 tx[4];
+    tx[0] = mfrc522_picc_cmd_halt & 0xFF;
+    tx[1] = (mfrc522_picc_cmd_halt & 0xFF00) >> 8;
+    mfrc522_drv_status status = mfrc522_drv_fifo_store_mul(conf, &tx[0], 2);
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
+    u16 crc;
+    status = mfrc522_drv_crc_compute(conf, &crc);
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
+    tx[2] = crc & 0xFF;
+    tx[3] = (crc & 0xFF00) >> 8;
+
+    /* Transceive the data */
+    mfrc522_drv_transceive_conf tr_conf;
+    tr_conf.tx_data = &tx[0];
+    tr_conf.tx_data_sz = SIZE_ARRAY(tx);
+    tr_conf.rx_data = NULL;
+    tr_conf.rx_data_sz = 0;
+    tr_conf.command = mfrc522_reg_cmd_transceive;
+    status = mfrc522_drv_transceive(conf, &tr_conf);
+    /* This is intentional! Halt command succeeded when timeout occurs during reception of the data */
+    if (UNLIKELY(mfrc522_drv_status_ok == status)) {
+        return mfrc522_drv_status_halt_err;
+    } else if (mfrc522_drv_status_transceive_timeout != status) {
+        return status; /* Just forward the error */
+    }
+
+    /* Turn off the crypto unit */
+    mfrc522_ll_status ll_status;
+    ll_status = mfrc522_drv_write_masked(conf, mfrc522_reg_status2, 0, MFRC522_REG_FIELD(STATUS2_CRYPTO_ON));
+    if (UNLIKELY(mfrc522_ll_status_ok != ll_status)) {
+        return mfrc522_drv_status_ll_err;
+    }
     return mfrc522_drv_status_ok;
 }

@@ -123,6 +123,11 @@ MFRC522_REG_FIELD_CREATE(TXCONTROL_TX2RFEN, 0x01, 1);
 MFRC522_REG_FIELD_CREATE(BITFRAMING_START, 0x01, 7);
 MFRC522_REG_FIELD_CREATE(BITFRAMING_TX_LASTBITS, 0x07, 0);
 
+/**
+ * Bit fields for Status2 register
+ */
+MFRC522_REG_FIELD_CREATE(STATUS2_CRYPTO_ON, 0x01, 3);
+
 /* ------------------------------------------------------------ */
 /* ------------------------ Data types ------------------------ */
 /* ------------------------------------------------------------ */

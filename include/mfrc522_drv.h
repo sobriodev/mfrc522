@@ -75,7 +75,9 @@ typedef enum mfrc522_drv_status_
     /* PICC related */
     mfrc522_drv_status_picc_vrf_err, /**< Unknown ATQA returned after REQA command */
     mfrc522_drv_status_anticoll_chksum_err, /**< Checksum error during anticollision */
-    mfrc522_drv_status_crc_err /**< Computed CRC does not match up with expected one */
+    mfrc522_drv_status_crc_err, /**< Computed CRC does not match up with expected one */
+    mfrc522_drv_status_crypto_err, /**< Invalid state of the crypto unit */
+    mfrc522_drv_status_halt_err /**< An error when halting a PICC */
 } mfrc522_drv_status;
 
 /**
@@ -173,10 +175,24 @@ typedef struct mfrc522_drv_transceive_conf_
 {
     u8* tx_data; /**< TX data */
     size tx_data_sz; /**< Size of TX data in bytes */
-    u8* rx_data; /**< Pointer where RX data will be stored.
-                      Must be large enough to contain the number of 'rx_data_sz' bytes */
-    size rx_data_sz; /**< Expected number of RX bytes */
+    u8* rx_data; /**< Pointer where RX data will be stored. vMust be large enough to contain the number of 'rx_data_sz'
+                      bytes. Can be NULL when 'rx_data_sz' equals to zero */
+    size rx_data_sz; /**< Expected number of RX bytes. Can be zero (no data is expected on RX side) */
+    mfrc522_reg_cmd command; /**< Command used to transceive the data.
+                                  Valid ones are 'mfrc522_reg_cmd_transceive' and 'mfrc522_reg_cmd_authent' */
 } mfrc522_drv_transceive_conf;
+
+/**
+ * Authentication parameters
+ */
+typedef struct mfrc522_drv_auth_conf_
+{
+    u8* serial; /**< Serial number got during anticollision procedure */
+    mfrc522_picc_sector sector; /**< Sector number */
+    mfrc522_picc_block block; /**< Block number */
+    mfrc522_picc_key key_type; /**< Key type */
+    u8* key; /**< Either Key A or Key B depending on 'key_type' setting */
+} mfrc522_drv_auth_conf;
 
 /* ------------------------------------------------------------ */
 /* ----------------------- Public functions ------------------- */
@@ -583,7 +599,9 @@ bool mfrc522_drv_check_error(u8 error_reg, mfrc522_reg_err err);
  * Transceive data between PCD and PICC.
  *
  * The function performs the transmission of data from the FIFO buffer and the reception of data from the RF field.
- * It is recommended to not use this function directly. Call higher level APIs instead.
+ * It is recommended to not use this function directly, since different configuration ought to be used depending on
+ * actual demands. Call higher level APIs instead that populates the fields of 'mfrc522_drv_transceive_conf' struct
+ * in the right way.
  *
  * @param conf Pointer to a device configuration struct.
  * @param tr_conf Pointer to a transceive configuration struct.
@@ -656,6 +674,33 @@ mfrc522_drv_status mfrc522_drv_anticollision(const mfrc522_drv_conf* conf, u8* s
  * @return Status of the operation. On success 'mfrc522_drv_status_ok' is returned.
  */
 mfrc522_drv_status mfrc522_drv_select(const mfrc522_drv_conf* conf, const u8* serial, u8* sak);
+
+/**
+ * Authenticate PICC block.
+ *
+ * This function manages authentication to enable a secure communication to any card by using either secret key A or B.
+ * After successful call to this function, the internal crypto unit goes to the active state.
+ * The function shall be called after certain PICC was selected.
+ *
+ * The function does nothing when NULL was passed instead of a valid pointer.
+ *
+ * @param conf Device configuration struct.
+ * @param auth_conf Authentication parameters.
+ * @return Status of the operation. On success 'mfrc522_drv_status_ok' is returned.
+ */
+mfrc522_drv_status mfrc522_drv_authenticate(const mfrc522_drv_conf* conf, const mfrc522_drv_auth_conf* auth_conf);
+
+/**
+ * Halt a PICC.
+ *
+ * After successful call to this function, the internal crypto unit is turned off and the PCD is ready to perform REQA
+ * again, thus polling for another PICC is possible at this stage.
+ * The function does nothing when NULL was passed instead of a valid pointer.
+ *
+ * @param conf Device configuration.
+ * @return Status of the operation. On success 'mfrc522_drv_status_ok' is returned.
+ */
+mfrc522_drv_status mfrc522_drv_halt(const mfrc522_drv_conf* conf);
 
 #ifdef __cplusplus
 }
