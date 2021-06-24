@@ -92,7 +92,8 @@ typedef void (*mfrc522_ll_delay)(u32 period);
  *         - mfrc522_ll_status_send_err on error
  *         - mfrc522_ll_status_ok on success
  */
-mfrc522_ll_status mfrc522_ll_send(u8 addr, size bytes, const u8* payload);
+mfrc522_ll_status
+mfrc522_ll_send(u8 addr, size bytes, const u8* payload);
 
 /**
  * Low-level function to receive data from a device. From high-level point of view the library does not assume which
@@ -105,7 +106,8 @@ mfrc522_ll_status mfrc522_ll_send(u8 addr, size bytes, const u8* payload);
  *         - mfrc522_ll_status_recv_err on error
  *         - mfrc522_ll_status_ok on success
  */
-mfrc522_ll_status mfrc522_ll_recv(u8 addr, u8* payload);
+mfrc522_ll_status
+mfrc522_ll_recv(u8 addr, u8* payload);
 
 #if MFRC522_LL_DELAY
 /**
@@ -115,7 +117,8 @@ mfrc522_ll_status mfrc522_ll_recv(u8 addr, u8* payload);
  *
  * @param period Number of microseconds to sleep.
  */
-void mfrc522_ll_delay(u32 period);
+void
+mfrc522_ll_delay(u32 period);
 #endif
 
 #endif

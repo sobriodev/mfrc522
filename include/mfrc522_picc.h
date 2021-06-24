@@ -166,7 +166,8 @@ typedef bool (*mfrc522_picc_atqa_verify_fn)(u16 atqa);
  * @param encoded : Pointer to a buffer, where calculated output is stored
  * @param user_data : User data byte
  */
-void mfrc522_picc_encode_accb(const mfrc522_picc_accb* accb, u8* encoded, u8 user_data);
+void
+mfrc522_picc_encode_accb(const mfrc522_picc_accb* accb, u8* encoded, u8 user_data);
 
 /**
  * Calculate access bits for sector trailer block.
@@ -180,7 +181,8 @@ void mfrc522_picc_encode_accb(const mfrc522_picc_accb* accb, u8* encoded, u8 use
  * @param out Pointer to a buffer where the result is stored
  * @return True on success, false on failure
  */
-bool mfrc522_picc_get_trailer_accb(const mfrc522_picc_trailer_acc* acc_cond, mfrc522_picc_accb* out);
+bool
+mfrc522_picc_get_trailer_accb(const mfrc522_picc_trailer_acc* acc_cond, mfrc522_picc_accb* out);
 
 /**
  * Calculate access bits for sector block.
@@ -194,14 +196,16 @@ bool mfrc522_picc_get_trailer_accb(const mfrc522_picc_trailer_acc* acc_cond, mfr
  * @param out Pointer to a buffer where the result is stored
  * @return True on success, false on failure
  */
-bool mfrc522_picc_get_block_accb(const mfrc522_picc_block_acc* acc_cond, mfrc522_picc_accb* out);
+bool
+mfrc522_picc_get_block_accb(const mfrc522_picc_block_acc* acc_cond, mfrc522_picc_accb* out);
 
 /**
  * Get transport (default) access bits configuration for section trailer block.
  *
  * @return Transport configuration
  */
-static inline mfrc522_picc_accb mfrc522_picc_get_trailer_transport_accb(void)
+static inline mfrc522_picc_accb
+mfrc522_picc_get_trailer_transport_accb(void)
 {
     return mfrc522_picc_accb_001;
 }
@@ -211,7 +215,8 @@ static inline mfrc522_picc_accb mfrc522_picc_get_trailer_transport_accb(void)
  *
  * @return Transport configuration
  */
-static inline mfrc522_picc_accb mfrc522_picc_get_block_transport_accb(void)
+static inline
+mfrc522_picc_accb mfrc522_picc_get_block_transport_accb(void)
 {
     return mfrc522_picc_accb_000;
 }
@@ -223,7 +228,8 @@ static inline mfrc522_picc_accb mfrc522_picc_get_block_transport_accb(void)
  * @param block PICC block.
  * @return Unique number describing the block.
  */
-static inline u8 mfrc522_picc_block_descriptor(mfrc522_picc_sector sector, mfrc522_picc_block block)
+static inline u8
+mfrc522_picc_block_descriptor(mfrc522_picc_sector sector, mfrc522_picc_block block)
 {
     return (sector * 4) + block;
 }

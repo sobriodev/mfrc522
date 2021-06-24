@@ -217,7 +217,8 @@ typedef struct mfrc522_drv_auth_conf_
  *         - mfrc522_drv_status_dev_err when valid device is not found
  *         - mfrc522_drv_status_ok on success
  */
-mfrc522_drv_status mfrc522_drv_init(mfrc522_drv_conf* conf);
+mfrc522_drv_status
+mfrc522_drv_init(mfrc522_drv_conf* conf);
 
 /**
  * Write multiple bytes to a PCD's register.
@@ -234,7 +235,8 @@ mfrc522_drv_status mfrc522_drv_init(mfrc522_drv_conf* conf);
  * @param payload Payload bytes.
  * @return An instance of mfrc522_ll_status.
  */
-static inline mfrc522_ll_status mfrc522_drv_write(const mfrc522_drv_conf* conf, mfrc522_reg addr, size sz, const u8* payload)
+static inline mfrc522_ll_status
+mfrc522_drv_write(const mfrc522_drv_conf* conf, mfrc522_reg addr, size sz, const u8* payload)
 {
     ERROR_IF_EQ(conf, NULL, mfrc522_ll_status_send_err);
 #if MFRC522_LL_PTR
@@ -255,7 +257,8 @@ static inline mfrc522_ll_status mfrc522_drv_write(const mfrc522_drv_conf* conf, 
  * @param payload Payload byte.
  * @return An instance of mfrc522_ll_status. Refer to 'mfrc522_drv_write()' function for more details.
  */
-static inline mfrc522_ll_status mfrc522_drv_write_byte(const mfrc522_drv_conf* conf, mfrc522_reg addr, u8 payload)
+static inline mfrc522_ll_status
+mfrc522_drv_write_byte(const mfrc522_drv_conf* conf, mfrc522_reg addr, u8 payload)
 {
     return mfrc522_drv_write(conf, addr, 1, &payload);
 }
@@ -274,7 +277,8 @@ static inline mfrc522_ll_status mfrc522_drv_write_byte(const mfrc522_drv_conf* c
  * @param pos Field position in a register.
  * @return An instance of mfrc522_ll_status.
  */
-mfrc522_ll_status mfrc522_drv_write_masked(const mfrc522_drv_conf* conf, mfrc522_reg addr, u8 val, u8 mask, u8 pos);
+mfrc522_ll_status
+mfrc522_drv_write_masked(const mfrc522_drv_conf* conf, mfrc522_reg addr, u8 val, u8 mask, u8 pos);
 
 /**
  * Read from a PCD.
@@ -290,7 +294,8 @@ mfrc522_ll_status mfrc522_drv_write_masked(const mfrc522_drv_conf* conf, mfrc522
  * @param payload Pointer to a buffer where incoming bytes are written. Must be big enough to store all data.
  * @return An instance of mfrc522_ll_status.
  */
-static inline mfrc522_ll_status mfrc522_drv_read(const mfrc522_drv_conf* conf, mfrc522_reg addr, u8* payload)
+static inline mfrc522_ll_status
+mfrc522_drv_read(const mfrc522_drv_conf* conf, mfrc522_reg addr, u8* payload)
 {
     ERROR_IF_EQ(conf, NULL, mfrc522_ll_status_recv_err);
     ERROR_IF_EQ(payload, NULL, mfrc522_ll_status_recv_err);
@@ -315,7 +320,8 @@ static inline mfrc522_ll_status mfrc522_drv_read(const mfrc522_drv_conf* conf, m
  * @param pos Position of the field.
  * @return An instance of mfrc522_ll_status.
  */
-mfrc522_ll_status mfrc522_drv_read_masked(const mfrc522_drv_conf* conf, mfrc522_reg addr, u8* out, u8 mask, u8 pos);
+mfrc522_ll_status
+mfrc522_drv_read_masked(const mfrc522_drv_conf* conf, mfrc522_reg addr, u8* out, u8 mask, u8 pos);
 
 /**
  * Store single byte in the FIFO buffer.
@@ -324,7 +330,8 @@ mfrc522_ll_status mfrc522_drv_read_masked(const mfrc522_drv_conf* conf, mfrc522_
  * @param byte Byte to be written.
  * @return 'mfrc522_drv_status_ok' on success, 'mfrc522_drv_status_ll_err' on failure.
  */
-static inline mfrc522_drv_status mfrc522_drv_fifo_store(const mfrc522_drv_conf* conf, u8 byte)
+static inline mfrc522_drv_status
+mfrc522_drv_fifo_store(const mfrc522_drv_conf* conf, u8 byte)
 {
     return (mfrc522_ll_status_ok == mfrc522_drv_write_byte(conf, mfrc522_reg_fifo_data, byte))
             ? mfrc522_drv_status_ok : mfrc522_drv_status_ll_err;
@@ -338,7 +345,8 @@ static inline mfrc522_drv_status mfrc522_drv_fifo_store(const mfrc522_drv_conf* 
  * @param sz The number of bytes to be written
  * @return 'mfrc522_drv_status_ok' on success, 'mfrc522_drv_status_ll_err' on failure.
  */
-static inline mfrc522_drv_status mfrc522_drv_fifo_store_mul(const mfrc522_drv_conf* conf, u8* bytes, size sz)
+static inline mfrc522_drv_status
+mfrc522_drv_fifo_store_mul(const mfrc522_drv_conf* conf, u8* bytes, size sz)
 {
     return (mfrc522_ll_status_ok == mfrc522_drv_write(conf, mfrc522_reg_fifo_data, sz, bytes))
             ? mfrc522_drv_status_ok : mfrc522_drv_status_ll_err;
@@ -354,7 +362,8 @@ static inline mfrc522_drv_status mfrc522_drv_fifo_store_mul(const mfrc522_drv_co
  * @param out Buffer to write output byte to.
  * @return 'mfrc522_drv_status_ok' on success, 'mfrc522_drv_status_ll_err' on failure.
  */
-static inline mfrc522_drv_status mfrc522_drv_fifo_read(const mfrc522_drv_conf* conf, u8* out)
+static inline mfrc522_drv_status
+mfrc522_drv_fifo_read(const mfrc522_drv_conf* conf, u8* out)
 {
     return (mfrc522_ll_status_ok == mfrc522_drv_read(conf, mfrc522_reg_fifo_data, out))
             ? mfrc522_drv_status_ok : mfrc522_drv_status_ll_err;
@@ -366,7 +375,8 @@ static inline mfrc522_drv_status mfrc522_drv_fifo_read(const mfrc522_drv_conf* c
  * @param conf Pointer to a device configuration structure.
  * @return 'mfrc522_drv_status_ok' on success, 'mfrc522_drv_status_ll_err' on failure.
  */
-static inline mfrc522_drv_status mfrc522_drv_fifo_flush(const mfrc522_drv_conf* conf)
+static inline mfrc522_drv_status
+mfrc522_drv_fifo_flush(const mfrc522_drv_conf* conf)
 {
     return (mfrc522_ll_status_ok == mfrc522_drv_write_masked(conf, mfrc522_reg_fifo_level, 1,
                                                              MFRC522_REG_FIELD(FIFOLEVEL_FLUSH)))
@@ -392,7 +402,8 @@ static inline mfrc522_drv_status mfrc522_drv_fifo_flush(const mfrc522_drv_conf* 
  *         - mfrc522_drv_status_dev_rtr_err when maximum number of retries was reached
  *         - mfrc522_drv_status_ok on success
  */
-mfrc522_drv_status mfrc522_drv_read_until(const mfrc522_drv_conf* conf, mfrc522_drv_read_until_conf* ru_conf);
+mfrc522_drv_status
+mfrc522_drv_read_until(const mfrc522_drv_conf* conf, mfrc522_drv_read_until_conf* ru_conf);
 
 /**
  * Perform soft reset on a PCD.
@@ -403,7 +414,8 @@ mfrc522_drv_status mfrc522_drv_read_until(const mfrc522_drv_conf* conf, mfrc522_
  * @param conf Pointer to a configuration structure.
  * @return An instance of 'mfrc522_drv_status'. On success, mfrc522_drv_status_ok is returned.
  */
-mfrc522_drv_status mfrc522_drv_soft_reset(const mfrc522_drv_conf* conf);
+mfrc522_drv_status
+mfrc522_drv_soft_reset(const mfrc522_drv_conf* conf);
 
 /**
  * Initialize MFRC522 timer.
@@ -422,7 +434,8 @@ mfrc522_drv_status mfrc522_drv_soft_reset(const mfrc522_drv_conf* conf);
  *         - mfrc522_drv_status_tim_prd_err when timer period was incorrect
  *         - mfrc522_drv_status_ok on success
  */
-mfrc522_drv_status mfrc522_drv_tim_set(mfrc522_drv_tim_conf* tim_conf, u16 period);
+mfrc522_drv_status
+mfrc522_drv_tim_set(mfrc522_drv_tim_conf* tim_conf, u16 period);
 
 /**
  * Start MFRC522 timer.
@@ -434,7 +447,8 @@ mfrc522_drv_status mfrc522_drv_tim_set(mfrc522_drv_tim_conf* tim_conf, u16 perio
  * @param tim_conf Pointer to a timer configuration structure.
  * @return Status of the operation. On success mfrc522_drv_status_ok is returned.
  */
-mfrc522_drv_status mfrc522_drv_tim_start(const mfrc522_drv_conf* conf, const mfrc522_drv_tim_conf* tim_conf);
+mfrc522_drv_status
+mfrc522_drv_tim_start(const mfrc522_drv_conf* conf, const mfrc522_drv_tim_conf* tim_conf);
 
 /**
  * Stop MFRC522 timer.
@@ -445,7 +459,8 @@ mfrc522_drv_status mfrc522_drv_tim_start(const mfrc522_drv_conf* conf, const mfr
  * @param conf Pointer to a configuration structure.
  * @return Status of the operation. On success mfrc522_drv_status_ok is returned.
  */
-mfrc522_drv_status mfrc522_drv_tim_stop(const mfrc522_drv_conf* conf);
+mfrc522_drv_status
+mfrc522_drv_tim_stop(const mfrc522_drv_conf* conf);
 
 /**
  * Initialize interrupt subsystem.
@@ -457,7 +472,8 @@ mfrc522_drv_status mfrc522_drv_tim_stop(const mfrc522_drv_conf* conf);
  * @param irq_conf Pointer to an interrupt configuration structure.
  * @return Status of the operation. On success mfrc522_drv_status_ok is returned.
  */
-mfrc522_drv_status mfrc522_drv_irq_init(const mfrc522_drv_conf* conf, const mfrc522_drv_irq_conf* irq_conf);
+mfrc522_drv_status
+mfrc522_drv_irq_init(const mfrc522_drv_conf* conf, const mfrc522_drv_irq_conf* irq_conf);
 
 /**
  * Clear interrupt request.
@@ -470,7 +486,8 @@ mfrc522_drv_status mfrc522_drv_irq_init(const mfrc522_drv_conf* conf, const mfrc
  * @param irq Interrupt source to be cleared.
  * @return Status of the operation. On success mfrc522_drv_status_ok is returned.
  */
-mfrc522_drv_status mfrc522_drv_irq_clr(const mfrc522_drv_conf* conf, mfrc522_reg_irq irq);
+mfrc522_drv_status
+mfrc522_drv_irq_clr(const mfrc522_drv_conf* conf, mfrc522_reg_irq irq);
 
 /**
  * Enable or disable interrupt.
@@ -486,7 +503,8 @@ mfrc522_drv_status mfrc522_drv_irq_clr(const mfrc522_drv_conf* conf, mfrc522_reg
  * @param enable True if interrupt should be enabled, false if disabled.
  * @return Status of the operation. On success mfrc522_drv_status_ok is returned.
  */
-mfrc522_drv_status mfrc522_drv_irq_en(const mfrc522_drv_conf* conf, mfrc522_reg_irq irq, bool enable);
+mfrc522_drv_status
+mfrc522_drv_irq_en(const mfrc522_drv_conf* conf, mfrc522_reg_irq irq, bool enable);
 
 /**
  * Get states of all interrupts.
@@ -500,7 +518,8 @@ mfrc522_drv_status mfrc522_drv_irq_en(const mfrc522_drv_conf* conf, mfrc522_reg_
  * @param out Pointer of a buffer where the states are stored.
  * @return Status of the operation. On success mfrc522_drv_status_ok is returned.
  */
-mfrc522_drv_status mfrc522_irq_states(const mfrc522_drv_conf* conf, u16* out);
+mfrc522_drv_status
+mfrc522_irq_states(const mfrc522_drv_conf* conf, u16* out);
 
 /**
  * Check if a certain IRQ is pending.
@@ -512,7 +531,8 @@ mfrc522_drv_status mfrc522_irq_states(const mfrc522_drv_conf* conf, u16* out);
  * @param irq IRQ number.
  * @return True if IRQ is pending, false otherwise.
  */
-bool mfrc522_drv_irq_pending(u16 irq_states, mfrc522_reg_irq irq);
+bool
+mfrc522_drv_irq_pending(u16 irq_states, mfrc522_reg_irq irq);
 
 /**
  * Perform device self-test procedure.
@@ -526,7 +546,8 @@ bool mfrc522_drv_irq_pending(u16 irq_states, mfrc522_reg_irq irq);
  * @param conf Pointer to a configuration structure.
  * @return Status of the operation. On success mfrc522_drv_status_ok is returned.
  */
-mfrc522_drv_status mfrc522_drv_self_test(mfrc522_drv_conf* conf);
+mfrc522_drv_status
+mfrc522_drv_self_test(mfrc522_drv_conf* conf);
 
 /**
  * Invoke a MFRC522 command.
@@ -538,7 +559,8 @@ mfrc522_drv_status mfrc522_drv_self_test(mfrc522_drv_conf* conf);
  * @param cmd Command to be invoked.
  * @return Status of the operation. On success mfrc522_drv_status_ok is returned.
  */
-mfrc522_drv_status mfrc522_drv_invoke_cmd(const mfrc522_drv_conf* conf, mfrc522_reg_cmd cmd);
+mfrc522_drv_status
+mfrc522_drv_invoke_cmd(const mfrc522_drv_conf* conf, mfrc522_reg_cmd cmd);
 
 /**
  * Initialize CRC coprocessor.
@@ -550,7 +572,8 @@ mfrc522_drv_status mfrc522_drv_invoke_cmd(const mfrc522_drv_conf* conf, mfrc522_
  * @param crc_conf Pointer to a CRC configuration structure.
  * @return Status of the operation. On success 'mfrc522_drv_status_ok' is returned.
  */
-mfrc522_drv_status mfrc522_drv_crc_init(const mfrc522_drv_conf* conf, const mfrc522_drv_crc_conf* crc_conf);
+mfrc522_drv_status
+mfrc522_drv_crc_init(const mfrc522_drv_conf* conf, const mfrc522_drv_crc_conf* crc_conf);
 
 /**
  * Compute 16-bit CRC.
@@ -563,7 +586,8 @@ mfrc522_drv_status mfrc522_drv_crc_init(const mfrc522_drv_conf* conf, const mfrc
  * @param out Buffer to store the outcome in.
  * @return Status of the operation. On success 'mfrc522_drv_status_ok' is returned.
  */
-mfrc522_drv_status mfrc522_drv_crc_compute(const mfrc522_drv_conf* conf, u16* out);
+mfrc522_drv_status
+mfrc522_drv_crc_compute(const mfrc522_drv_conf* conf, u16* out);
 
 /**
  * Generate random ID.
@@ -582,7 +606,8 @@ mfrc522_drv_status mfrc522_drv_crc_compute(const mfrc522_drv_conf* conf, u16* ou
  * @param num_rand Number of random bytes to be returned.
  * @return Status of the operation. On success 'mfrc522_drv_status_ok' is returned.
  */
-mfrc522_drv_status mfrc522_drv_generate_rand(const mfrc522_drv_conf* conf, u8* out, size num_rand);
+mfrc522_drv_status
+mfrc522_drv_generate_rand(const mfrc522_drv_conf* conf, u8* out, size num_rand);
 
 /**
  * Check if a certain error is present in Error Register.
@@ -593,7 +618,8 @@ mfrc522_drv_status mfrc522_drv_generate_rand(const mfrc522_drv_conf* conf, u8* o
  * @param err An error to be checked.
  * @return True if error is active, false otherwise.
  */
-bool mfrc522_drv_check_error(u8 error_reg, mfrc522_reg_err err);
+bool
+mfrc522_drv_check_error(u8 error_reg, mfrc522_reg_err err);
 
 /**
  * Transceive data between PCD and PICC.
@@ -607,7 +633,8 @@ bool mfrc522_drv_check_error(u8 error_reg, mfrc522_reg_err err);
  * @param tr_conf Pointer to a transceive configuration struct.
  * @return Status of the operation. On success 'mfrc522_drv_status_ok' is returned.
  */
-mfrc522_drv_status mfrc522_drv_transceive(const mfrc522_drv_conf* conf, mfrc522_drv_transceive_conf* tr_conf);
+mfrc522_drv_status
+mfrc522_drv_transceive(const mfrc522_drv_conf* conf, mfrc522_drv_transceive_conf* tr_conf);
 
 /**
  * Initialize contactless external interfaces (contactless UART, analog interface).
@@ -619,7 +646,8 @@ mfrc522_drv_status mfrc522_drv_transceive(const mfrc522_drv_conf* conf, mfrc522_
  * @param itf_conf Configuration of external interfaces.
  * @return Status of the operation. On success 'mfrc522_drv_status_ok' is returned.
  */
-mfrc522_drv_status mfrc522_drv_ext_itf_init(const mfrc522_drv_conf* conf, const mfrc522_drv_ext_itf_conf* itf_conf);
+mfrc522_drv_status
+mfrc522_drv_ext_itf_init(const mfrc522_drv_conf* conf, const mfrc522_drv_ext_itf_conf* itf_conf);
 
 /**
  * Perform Request (REQA) command.
@@ -638,7 +666,8 @@ mfrc522_drv_status mfrc522_drv_ext_itf_init(const mfrc522_drv_conf* conf, const 
  * @param atqa 2-byte output buffer to store ATQA response
  * @return Status of the operation. On success 'mfrc522_drv_status_ok' is returned.
  */
-mfrc522_drv_status mfrc522_drv_reqa(const mfrc522_drv_conf* conf, u16* atqa);
+mfrc522_drv_status
+mfrc522_drv_reqa(const mfrc522_drv_conf* conf, u16* atqa);
 
 /**
  * Perform anticollision procedure.
@@ -655,7 +684,8 @@ mfrc522_drv_status mfrc522_drv_reqa(const mfrc522_drv_conf* conf, u16* atqa);
  * @param serial Output buffer where serial data will be stored.
  * @return Status of the operation. On success 'mfrc522_drv_status_ok' is returned.
  */
-mfrc522_drv_status mfrc522_drv_anticollision(const mfrc522_drv_conf* conf, u8* serial);
+mfrc522_drv_status
+mfrc522_drv_anticollision(const mfrc522_drv_conf* conf, u8* serial);
 
 /**
  * Select a PICC to communicate with.
@@ -673,7 +703,8 @@ mfrc522_drv_status mfrc522_drv_anticollision(const mfrc522_drv_conf* conf, u8* s
  * @param sak Buffer to store SAK response in.
  * @return Status of the operation. On success 'mfrc522_drv_status_ok' is returned.
  */
-mfrc522_drv_status mfrc522_drv_select(const mfrc522_drv_conf* conf, const u8* serial, u8* sak);
+mfrc522_drv_status
+mfrc522_drv_select(const mfrc522_drv_conf* conf, const u8* serial, u8* sak);
 
 /**
  * Authenticate PICC block.
@@ -688,7 +719,8 @@ mfrc522_drv_status mfrc522_drv_select(const mfrc522_drv_conf* conf, const u8* se
  * @param auth_conf Authentication parameters.
  * @return Status of the operation. On success 'mfrc522_drv_status_ok' is returned.
  */
-mfrc522_drv_status mfrc522_drv_authenticate(const mfrc522_drv_conf* conf, const mfrc522_drv_auth_conf* auth_conf);
+mfrc522_drv_status
+mfrc522_drv_authenticate(const mfrc522_drv_conf* conf, const mfrc522_drv_auth_conf* auth_conf);
 
 /**
  * Halt a PICC.
@@ -700,7 +732,8 @@ mfrc522_drv_status mfrc522_drv_authenticate(const mfrc522_drv_conf* conf, const 
  * @param conf Device configuration.
  * @return Status of the operation. On success 'mfrc522_drv_status_ok' is returned.
  */
-mfrc522_drv_status mfrc522_drv_halt(const mfrc522_drv_conf* conf);
+mfrc522_drv_status
+mfrc522_drv_halt(const mfrc522_drv_conf* conf);
 
 #ifdef __cplusplus
 }
