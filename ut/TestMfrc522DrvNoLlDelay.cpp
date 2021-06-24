@@ -2,10 +2,7 @@
 #include "mfrc522_conf.h"
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
-#include "Mockable.h"
-
-/* Required by C Mock library */
-DEFINE_MOCKABLE(mfrc522_ll_status, mfrc522_ll_recv, (u8, u8*));
+#include "common/Mockable.h"
 
 using namespace testing;
 

@@ -1,11 +1,7 @@
 #include "mfrc522_drv.h"
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
-#include "Mockable.h" /* Provide mocks */
-
-/* Required by C Mock library */
-DEFINE_MOCKABLE(mfrc522_ll_status, mfrc522_ll_send, (u8, size, const u8*));
-DEFINE_MOCKABLE(mfrc522_ll_status, mfrc522_ll_recv, (u8, u8*));
+#include "common/Mockable.h" /* Provide mocks */
 
 using namespace testing;
 
