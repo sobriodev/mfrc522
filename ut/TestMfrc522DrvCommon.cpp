@@ -11,6 +11,36 @@ using namespace testing;
 /* ------------------------ Test cases ------------------------ */
 /* ------------------------------------------------------------ */
 
+TEST(TestMfrc522DrvCommon, StatusMacros__MiscCases)
+{
+
+#ifdef SCOPE_MAGIC
+#undef SCOPE_MAGIC
+#endif
+#define SCOPE_MAGIC 0xC0B0
+
+    /* Case 1 - fatal error */
+    u32 sc1 = MAKE_STATUS(0x99, status_severity_fatal);
+    ASSERT_EQ(SCOPE_MAGIC, ((sc1 >> STATUS_SCOPE_POS) & STATUS_SCOPE_MASK));
+    ASSERT_EQ(status_severity_fatal, ((sc1 >> STATUS_SEVERITY_POS) & STATUS_SEVERITY_MASK));
+    ASSERT_EQ(0x99, ((sc1 >> STATUS_SEQ_POS) & STATUS_SEQ_MASK));
+    ASSERT_TRUE(status_fatal(sc1));
+
+    /* Case 2 - critical error */
+    u32 sc2 = MAKE_STATUS(0xB0, status_severity_critical);
+    ASSERT_EQ(SCOPE_MAGIC, ((sc2 >> STATUS_SCOPE_POS) & STATUS_SCOPE_MASK));
+    ASSERT_EQ(status_severity_critical, ((sc2 >> STATUS_SEVERITY_POS) & STATUS_SEVERITY_MASK));
+    ASSERT_EQ(0xB0, ((sc2 >> STATUS_SEQ_POS) & STATUS_SEQ_MASK));
+    ASSERT_FALSE(status_fatal(sc2));
+
+    /* Case 3 - non-critical error */
+    u32 sc3 = MAKE_STATUS(0x07, status_severity_non_critical);
+    ASSERT_EQ(SCOPE_MAGIC, ((sc3 >> STATUS_SCOPE_POS) & STATUS_SCOPE_MASK));
+    ASSERT_EQ(status_severity_non_critical, ((sc3 >> STATUS_SEVERITY_POS) & STATUS_SEVERITY_MASK));
+    ASSERT_EQ(0x07, ((sc3 >> STATUS_SEQ_POS) & STATUS_SEQ_MASK));
+    ASSERT_FALSE(status_fatal(sc3));
+}
+
 TEST(TestMfrc522DrvCommon, mfrc522_drv_init__NullCases)
 {
     auto status = mfrc522_drv_init(nullptr);
@@ -74,10 +104,10 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_read__NullCases)
     u8 pl;
 
     auto status = mfrc522_drv_read(&conf, mfrc522_reg_fifo_data, nullptr);
-    ASSERT_EQ(mfrc522_ll_status_recv_err, status);
+    ASSERT_EQ(mfrc522_drv_status_nullptr, status);
 
     status = mfrc522_drv_read(nullptr, mfrc522_reg_fifo_data, &pl);
-    ASSERT_EQ(mfrc522_ll_status_recv_err, status);
+    ASSERT_EQ(mfrc522_drv_status_nullptr, status);
 }
 
 TEST(TestMfrc522DrvCommon, mfrc522_drv_fifo_store__ValidLowLevelCallIsMade)
@@ -300,7 +330,7 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_write_masked__MaskedWritePerformed)
         .WillOnce(Return(mfrc522_ll_status_ok));
 
     auto status = mfrc522_drv_write_masked(&conf, mfrc522_reg_gs_n, 13, msk, pos);
-    ASSERT_EQ(mfrc522_ll_status_ok, status);
+    ASSERT_EQ(mfrc522_drv_status_ok, status);
 }
 
 TEST(TestMfrc522DrvCommon, mfrc522_drv_read_masked__NullCases)
@@ -326,7 +356,7 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_read_masked__MaskedReadPerformed)
 
     /* Call FUT */
     auto status = mfrc522_drv_read_masked(&device, mfrc522_reg_fifo_data, &out, 0x0F, 4);
-    ASSERT_EQ(mfrc522_ll_status_ok, status);
+    ASSERT_EQ(mfrc522_drv_status_ok, status);
     ASSERT_EQ(0x0C, out);
 }
 

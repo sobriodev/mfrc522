@@ -16,6 +16,14 @@ extern "C" {
 /* ------------------------------------------------------------ */
 
 /**
+ * Magic number regarded as an unique scope number that identifies this module
+ */
+#ifdef SCOPE_MAGIC
+#undef SCOPE_MAGIC
+#endif
+#define SCOPE_MAGIC 0xC0B0
+
+/**
  * Infinity flag recognized by 'mfrc522_drv_read_until_conf'
  */
 #define MFRC522_DRV_RETRY_CNT_INF 0xFFFFFFFF
@@ -54,30 +62,70 @@ extern "C" {
  */
 typedef enum mfrc522_drv_status_
 {
-    mfrc522_drv_status_ok = 0, /**< Success */
-    mfrc522_drv_status_nok, /**< Generic error code */
-    mfrc522_drv_status_nullptr, /**< Unexpected NULL pointer */
-    mfrc522_drv_status_ll_err, /**< An error occurred during low-level call */
-    mfrc522_drv_status_self_test_err, /**< Mismatch between expected and actual FIFO output during device self-test */
-
-    /* Device errors */
-    mfrc522_drv_status_dev_err, /**< Device not found */
-    mfrc522_drv_status_dev_rtr_err, /**< Maximum number of read retries reached */
-
-    /* Timer related */
-    mfrc522_drv_status_tim_prd_err, /**< Given timer period is too long */
-
-    /* TX/RX */
-    mfrc522_drv_status_transceive_timeout, /**< Timeout during transceive command */
-    mfrc522_drv_status_transceive_err, /**< At least one error present after transceive command */
-    mfrc522_drv_status_transceive_rx_mism, /**< A mismatch between expected and actual RX data size */
-
-    /* PICC related */
-    mfrc522_drv_status_picc_vrf_err, /**< Unknown ATQA returned after REQA command */
-    mfrc522_drv_status_anticoll_chksum_err, /**< Checksum error during anticollision */
-    mfrc522_drv_status_crc_err, /**< Computed CRC does not match up with expected one */
-    mfrc522_drv_status_crypto_err, /**< Invalid state of the crypto unit */
-    mfrc522_drv_status_halt_err /**< An error when halting a PICC */
+    /**<
+     * Status code returned when operation succeeded
+     */
+    mfrc522_drv_status_ok = MAKE_STATUS(0x00, status_severity_none),
+    /**<
+     * Generic status regarded as non-critical error
+     */
+    mfrc522_drv_status_nok = MAKE_STATUS(0x01, status_severity_non_critical),
+    /**<
+     * Unexpected NULL pointer
+     */
+    mfrc522_drv_status_nullptr = MAKE_STATUS(0x02, status_severity_fatal),
+    /**<
+     * An error occurred during low-level call.
+     */
+    mfrc522_drv_status_ll_err = MAKE_STATUS(0x03, status_severity_fatal),
+    /**<
+     * Mismatch between expected and actual FIFO output during device self-test
+     */
+    mfrc522_drv_status_self_test_err = MAKE_STATUS(0x04, status_severity_critical),
+    /**<
+     * Device not found
+     */
+    mfrc522_drv_status_dev_err = MAKE_STATUS(0x05, status_severity_critical),
+    /**
+     * Maximum number of read retries reached
+     */
+    mfrc522_drv_status_dev_rtr_err = MAKE_STATUS(0x06, status_severity_critical),
+    /**<
+     * Given timer period is too long
+     */
+    mfrc522_drv_status_tim_prd_err = MAKE_STATUS(0x07, status_severity_non_critical),
+    /**<
+     * Timeout during transceive command
+     */
+    mfrc522_drv_status_transceive_timeout = MAKE_STATUS(0x08, status_severity_critical),
+    /**<
+     * At least one error present after transceive command
+     */
+    mfrc522_drv_status_transceive_err = MAKE_STATUS(0x09, status_severity_critical),
+    /**<
+     * A mismatch between expected and actual RX data size
+     */
+    mfrc522_drv_status_transceive_rx_mism = MAKE_STATUS(0x0A, status_severity_critical),
+    /**<
+     * Unknown ATQA returned after REQA command
+     */
+    mfrc522_drv_status_picc_vrf_err = MAKE_STATUS(0x0B, status_severity_non_critical),
+    /**<
+     * Checksum error during anticollision
+     */
+    mfrc522_drv_status_anticoll_chksum_err = MAKE_STATUS(0x0C, status_severity_critical),
+    /**<
+     * Computed CRC does not match up with expected one
+     */
+    mfrc522_drv_status_crc_err = MAKE_STATUS(0x0D, status_severity_critical),
+    /**<
+     * Invalid state of the crypto unit
+     */
+    mfrc522_drv_status_crypto_err = MAKE_STATUS(0x0E, status_severity_critical),
+    /**<
+     * An error when halting a PICC
+     */
+    mfrc522_drv_status_halt_err = MAKE_STATUS(0x0F, status_severity_critical)
 } mfrc522_drv_status;
 
 /**
