@@ -2,6 +2,7 @@
 #define MFRC522_MFRC522_LL_H
 
 #include "type.h"
+#include "common.h"
 
 /* Ensure that either 'definition' or 'pointer' low-level communication method is used */
 #if MFRC522_LL_DEF
@@ -21,6 +22,18 @@ extern "C" {
 #endif
 
 /* ------------------------------------------------------------ */
+/* ---------------------------- Macros ------------------------ */
+/* ------------------------------------------------------------ */
+
+/**
+* Magic number regarded as an unique scope number that identifies this module
+*/
+#ifdef SCOPE_MAGIC
+#undef SCOPE_MAGIC
+#endif
+#define SCOPE_MAGIC 0xE0AA
+
+/* ------------------------------------------------------------ */
 /* -------------------------- Data types ---------------------- */
 /* ------------------------------------------------------------ */
 
@@ -29,9 +42,18 @@ extern "C" {
  */
 typedef enum mfrc522_ll_status_
 {
-    mfrc522_ll_status_ok = 0, /**< Success */
-    mfrc522_ll_status_send_err, /**< An error while sending data */
-    mfrc522_ll_status_recv_err /**< An error while receiving data */
+    /**<
+     * Success
+     */
+    mfrc522_ll_status_ok = MAKE_STATUS(0x00, status_severity_none),
+    /**<
+     * An error while sending data
+     */
+    mfrc522_ll_status_send_err = MAKE_STATUS(0x01, status_severity_fatal),
+    /**<
+     * An error while receiving data
+     */
+    mfrc522_ll_status_recv_err = MAKE_STATUS(0x02, status_severity_fatal)
 } mfrc522_ll_status;
 
 #if MFRC522_LL_PTR
