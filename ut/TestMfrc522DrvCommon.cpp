@@ -65,7 +65,7 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_write__NullCases)
 {
     u8 payload = 0xAB;
     auto status = mfrc522_drv_write(nullptr, mfrc522_reg_fifo_data, 1, &payload);
-    ASSERT_EQ(mfrc522_ll_status_send_err, status);
+    ASSERT_EQ(mfrc522_drv_status_nullptr, status);
 }
 
 TEST(TestMfrc522DrvCommon, mfrc522_drv_read__NullCases)
@@ -280,7 +280,7 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_soft_reset__IdleCommandNotReached__Failur
 TEST(TestMfrc522DrvCommon, mfrc522_drv_write_masked__NullCases)
 {
     auto status = mfrc522_drv_write_masked(nullptr, mfrc522_reg_demod, 0x0F, 0x0F, 0);
-    ASSERT_EQ(mfrc522_ll_status_send_err, status);
+    ASSERT_EQ(mfrc522_drv_status_nullptr, status);
 }
 
 TEST(TestMfrc522DrvCommon, mfrc522_drv_write_masked__MaskedWritePerformed)

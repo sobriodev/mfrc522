@@ -227,23 +227,26 @@ mfrc522_drv_init(mfrc522_drv_conf* conf);
  * or 'definition' method is used.
  *
  * Note that depending on compiler used, the function may be in fact not inlined.
- * In a case when either 'conf' is NULL, mfrc522_ll_status_send_err is returned.
+ * In a case when either 'conf' or 'payload' is NULL, mfrc522_drv_status_nullptr is returned.
  *
  * @param conf Pointer to a configuration structure.
  * @param addr Register address.
  * @param sz Number of payload bytes.
  * @param payload Payload bytes.
- * @return An instance of mfrc522_ll_status.
+ * @return An instance of mfrc522_drv_status. On success mfrc522_drv_ok is returned.
  */
-static inline mfrc522_ll_status
+static inline mfrc522_drv_status
 mfrc522_drv_write(const mfrc522_drv_conf* conf, mfrc522_reg addr, size sz, const u8* payload)
 {
-    ERROR_IF_EQ(conf, NULL, mfrc522_ll_status_send_err);
+    ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
+    ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
 #if MFRC522_LL_PTR
-    return conf->ll_send(addr, sz, payload);
+    return (mfrc522_ll_status_ok == conf->ll_send(addr, sz, payload)) ? mfrc522_drv_status_ok
+                                                                      : mfrc522_drv_status_ll_err;
 #elif MFRC522_LL_DEF
     (void)conf; /* Make compiler happy */
-    return mfrc522_ll_send(addr, sz, payload);
+    return (mfrc522_ll_status_ok == mfrc522_ll_send(addr, sz, payload)) ? mfrc522_drv_status_ok
+                                                                        : mfrc522_drv_status_ll_err;
 #endif
 }
 
@@ -255,9 +258,9 @@ mfrc522_drv_write(const mfrc522_drv_conf* conf, mfrc522_reg addr, size sz, const
  * @param conf Pointer to a configuration structure.
  * @param addr Register address.
  * @param payload Payload byte.
- * @return An instance of mfrc522_ll_status. Refer to 'mfrc522_drv_write()' function for more details.
+ * @return An instance of mfrc522_drv_status. Refer to 'mfrc522_drv_write()' function for more details.
  */
-static inline mfrc522_ll_status
+static inline mfrc522_drv_status
 mfrc522_drv_write_byte(const mfrc522_drv_conf* conf, mfrc522_reg addr, u8 payload)
 {
     return mfrc522_drv_write(conf, addr, 1, &payload);
@@ -268,16 +271,16 @@ mfrc522_drv_write_byte(const mfrc522_drv_conf* conf, mfrc522_reg addr, u8 payloa
  *
  * The function sets new value of a register regarding value, position and mask. It is useful in cases when a single
  * register contains multiple fields and only one of them should be changed. Only bits selected in mask are affected.
- * In a case when either 'conf' is NULL, mfrc522_ll_status_send_err is returned.
+ * In a case when 'conf' is NULL, mfrc522_drv_status_nullptr is returned.
  *
  * @param conf Pointer to a configuration structure.
  * @param addr Register address.
  * @param val Field bits.
  * @param mask Field mask.
  * @param pos Field position in a register.
- * @return An instance of mfrc522_ll_status.
+ * @return An instance of mfrc522_drv_status. On success mfrc522_drv_status_ok is returned.
  */
-mfrc522_ll_status
+mfrc522_drv_status
 mfrc522_drv_write_masked(const mfrc522_drv_conf* conf, mfrc522_reg addr, u8 val, u8 mask, u8 pos);
 
 /**
@@ -287,23 +290,23 @@ mfrc522_drv_write_masked(const mfrc522_drv_conf* conf, mfrc522_reg addr, u8 val,
  * or 'definition' method is used.
  *
  * Note that depending on compiler used, the function may be in fact not inlined.
- * In a case when either 'conf' or 'payload' is NULL, mfrc522_ll_status_recv_err is returned.
+ * In a case when either 'conf' or 'payload' is NULL, mfrc522_drv_status_nullptr is returned.
  *
  * @param conf Pointer to a configuration structure.
  * @param addr Register address.
  * @param payload Pointer to a buffer where incoming bytes are written. Must be big enough to store all data.
- * @return An instance of mfrc522_ll_status.
+ * @return An instance of mfrc522_drv_status. On success mfrc522_drv_status_ok is returned.
  */
-static inline mfrc522_ll_status
+static inline mfrc522_drv_status
 mfrc522_drv_read(const mfrc522_drv_conf* conf, mfrc522_reg addr, u8* payload)
 {
-    ERROR_IF_EQ(conf, NULL, mfrc522_ll_status_recv_err);
-    ERROR_IF_EQ(payload, NULL, mfrc522_ll_status_recv_err);
+    ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
+    ERROR_IF_EQ(payload, NULL, mfrc522_drv_status_nullptr);
 #if MFRC522_LL_PTR
-    return conf->ll_recv(addr, payload);
+    return (mfrc522_ll_status_ok == conf->ll_recv(addr, payload)) ? mfrc522_drv_status_ok : mfrc522_drv_status_ll_err;
 #elif MFRC522_LL_DEF
     (void)conf; /* Make compiler happy */
-    return mfrc522_ll_recv(addr, payload);
+    return (mfrc522_ll_status_ok == mfrc522_ll_recv(addr, payload)) ? mfrc522_drv_status_ok : mfrc522_drv_status_ll_err;
 #endif
 }
 
@@ -318,9 +321,9 @@ mfrc522_drv_read(const mfrc522_drv_conf* conf, mfrc522_reg addr, u8* payload)
  * @param out Pointer to a buffer to store the result in.
  * @param mask Field mask.
  * @param pos Position of the field.
- * @return An instance of mfrc522_ll_status.
+ * @return An instance of mfrc522_drv_status. On success mfrc522_drv_status_ok is returned.
  */
-mfrc522_ll_status
+mfrc522_drv_status
 mfrc522_drv_read_masked(const mfrc522_drv_conf* conf, mfrc522_reg addr, u8* out, u8 mask, u8 pos);
 
 /**
@@ -333,8 +336,7 @@ mfrc522_drv_read_masked(const mfrc522_drv_conf* conf, mfrc522_reg addr, u8* out,
 static inline mfrc522_drv_status
 mfrc522_drv_fifo_store(const mfrc522_drv_conf* conf, u8 byte)
 {
-    return (mfrc522_ll_status_ok == mfrc522_drv_write_byte(conf, mfrc522_reg_fifo_data, byte))
-            ? mfrc522_drv_status_ok : mfrc522_drv_status_ll_err;
+    return mfrc522_drv_write_byte(conf, mfrc522_reg_fifo_data, byte);
 }
 
 /**
@@ -348,8 +350,7 @@ mfrc522_drv_fifo_store(const mfrc522_drv_conf* conf, u8 byte)
 static inline mfrc522_drv_status
 mfrc522_drv_fifo_store_mul(const mfrc522_drv_conf* conf, u8* bytes, size sz)
 {
-    return (mfrc522_ll_status_ok == mfrc522_drv_write(conf, mfrc522_reg_fifo_data, sz, bytes))
-            ? mfrc522_drv_status_ok : mfrc522_drv_status_ll_err;
+    return mfrc522_drv_write(conf, mfrc522_reg_fifo_data, sz, bytes);
 }
 
 /**
@@ -365,8 +366,7 @@ mfrc522_drv_fifo_store_mul(const mfrc522_drv_conf* conf, u8* bytes, size sz)
 static inline mfrc522_drv_status
 mfrc522_drv_fifo_read(const mfrc522_drv_conf* conf, u8* out)
 {
-    return (mfrc522_ll_status_ok == mfrc522_drv_read(conf, mfrc522_reg_fifo_data, out))
-            ? mfrc522_drv_status_ok : mfrc522_drv_status_ll_err;
+    return mfrc522_drv_read(conf, mfrc522_reg_fifo_data, out);
 }
 
 /**
@@ -378,9 +378,7 @@ mfrc522_drv_fifo_read(const mfrc522_drv_conf* conf, u8* out)
 static inline mfrc522_drv_status
 mfrc522_drv_fifo_flush(const mfrc522_drv_conf* conf)
 {
-    return (mfrc522_ll_status_ok == mfrc522_drv_write_masked(conf, mfrc522_reg_fifo_level, 1,
-                                                             MFRC522_REG_FIELD(FIFOLEVEL_FLUSH)))
-            ? mfrc522_drv_status_ok : mfrc522_drv_status_ll_err;
+    return mfrc522_drv_write_masked(conf, mfrc522_reg_fifo_level, 1, MFRC522_REG_FIELD(FIFOLEVEL_FLUSH));
 }
 
 /**

@@ -7,30 +7,6 @@
 /* ------------------------ Private macros -------------------- */
 /* ------------------------------------------------------------ */
 
-/* Try to send single-byte to device with returning a generic error code if necessary */
-#define TRY_WRITE_BYTE(...)  \
-do { \
-    if (UNLIKELY(mfrc522_ll_status_ok != mfrc522_drv_write_byte(__VA_ARGS__))) return mfrc522_drv_status_ll_err; \
-} while (0)
-
-/* Try to send multiple bytes to device with returning a generic error code if necessary */
-#define TRY_WRITE_MULTI(...)  \
-do { \
-    if (UNLIKELY(mfrc522_ll_status_ok != mfrc522_drv_write(__VA_ARGS__))) return mfrc522_drv_status_ll_err; \
-} while (0)
-
-/* Try to perform masked write with returning a generic error code if necessary */
-#define TRY_WRITE_MASKED(...)  \
-do { \
-    if (UNLIKELY(mfrc522_ll_status_ok != mfrc522_drv_write_masked(__VA_ARGS__))) return mfrc522_drv_status_ll_err; \
-} while (0)
-
-/* Try to receive bytes from device with returning a generic error code if necessary */
-#define TRY_READ(...) \
-do { \
-    if (UNLIKELY(mfrc522_ll_status_ok != mfrc522_drv_read(__VA_ARGS__))) return mfrc522_drv_status_ll_err; \
-} while (0)
-
 /* Timer prescaler when using millisecond as a time unit */
 #define TIMER_PRESCALER 1694
 
@@ -78,11 +54,9 @@ static inline u32 get_real_retry_count(u32 rc)
 static mfrc522_drv_status get_valid_rx_bytes(const mfrc522_drv_conf* conf, u8* rx_bytes)
 {
     u8 valid_bits;
-    mfrc522_ll_status status;
+    mfrc522_drv_status status;
     status = mfrc522_drv_read_masked(conf, mfrc522_reg_control, &valid_bits, MFRC522_REG_FIELD(CONTROL_RX_LASTBITS));
-    if (UNLIKELY(mfrc522_ll_status_ok != status)) {
-        return mfrc522_drv_status_ll_err;
-    }
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
 
     /* In current use cases the whole byte shall be valid. Thus return zero by now */
     if (UNLIKELY(valid_bits)) {
@@ -92,9 +66,8 @@ static mfrc522_drv_status get_valid_rx_bytes(const mfrc522_drv_conf* conf, u8* r
 
     /* Read FIFO level */
     status = mfrc522_drv_read(conf, mfrc522_reg_fifo_level, rx_bytes);
-    if (UNLIKELY(mfrc522_ll_status_ok != status)) {
-        return mfrc522_drv_status_ll_err;
-    }
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
+
     return mfrc522_drv_status_ok;
 }
 
@@ -134,7 +107,7 @@ mfrc522_drv_status mfrc522_drv_init(mfrc522_drv_conf* conf)
 #endif
 
     /* Try to get chip version from a device */
-    if (UNLIKELY(mfrc522_ll_status_ok != mfrc522_drv_read(conf, mfrc522_reg_version, &conf->chip_version))) {
+    if (UNLIKELY(mfrc522_drv_status_ok != mfrc522_drv_read(conf, mfrc522_reg_version, &conf->chip_version))) {
         conf->chip_version = MFRC522_REG_VERSION_INVALID;
         return mfrc522_drv_status_ll_err;
     }
@@ -146,38 +119,38 @@ mfrc522_drv_status mfrc522_drv_init(mfrc522_drv_conf* conf)
     return mfrc522_drv_status_ok;
 }
 
-mfrc522_ll_status mfrc522_drv_write_masked(const mfrc522_drv_conf* conf, mfrc522_reg addr, u8 val, u8 mask, u8 pos)
+mfrc522_drv_status mfrc522_drv_write_masked(const mfrc522_drv_conf* conf, mfrc522_reg addr, u8 val, u8 mask, u8 pos)
 {
-    ERROR_IF_EQ(conf, NULL, mfrc522_ll_status_send_err);
+    ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
 
-    mfrc522_ll_status status;
+    mfrc522_drv_status status;
     u8 buff;
     status = mfrc522_drv_read(conf, addr, &buff);
-    ERROR_IF_NEQ(status, mfrc522_ll_status_ok);
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
 
     buff &= ~(mask << pos);
     buff |= ((val & mask) << pos);
 
     status = mfrc522_drv_write_byte(conf, addr, buff);
-    ERROR_IF_NEQ(status, mfrc522_ll_status_ok);
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
 
-    return mfrc522_ll_status_ok;
+    return mfrc522_drv_status_ok;
 }
 
-mfrc522_ll_status mfrc522_drv_read_masked(const mfrc522_drv_conf* conf, mfrc522_reg addr, u8* out, u8 mask, u8 pos)
+mfrc522_drv_status mfrc522_drv_read_masked(const mfrc522_drv_conf* conf, mfrc522_reg addr, u8* out, u8 mask, u8 pos)
 {
-    ERROR_IF_EQ(conf, NULL, mfrc522_ll_status_recv_err);
-    ERROR_IF_EQ(out, NULL, mfrc522_ll_status_recv_err);
+    ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
+    ERROR_IF_EQ(out, NULL, mfrc522_drv_status_nullptr);
 
     u8 buff;
-    mfrc522_ll_status status = mfrc522_drv_read(conf, addr, &buff);
-    ERROR_IF_NEQ(status, mfrc522_ll_status_ok);
+    mfrc522_drv_status status = mfrc522_drv_read(conf, addr, &buff);
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
 
     buff &= (mask << pos);
     buff >>= pos;
     *out = buff;
 
-    return mfrc522_ll_status_ok;
+    return mfrc522_drv_status_ok;
 }
 
 mfrc522_drv_status mfrc522_drv_read_until(const mfrc522_drv_conf* conf, mfrc522_drv_read_until_conf* ru_conf)
@@ -192,7 +165,8 @@ mfrc522_drv_status mfrc522_drv_read_until(const mfrc522_drv_conf* conf, mfrc522_
     u8 rc_decrement_step = (ru_conf->retry_cnt == MFRC522_DRV_RETRY_CNT_INF) ? 0 : 1;
 
     /* Read register first time */
-    TRY_READ(conf, ru_conf->addr, &ru_conf->payload);
+    mfrc522_drv_status status = mfrc522_drv_read(conf, ru_conf->addr, &ru_conf->payload);
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
 
     while ((ru_conf->exp_payload != (ru_conf->payload & ru_conf->mask))) {
         if (!rc) {
@@ -200,7 +174,9 @@ mfrc522_drv_status mfrc522_drv_read_until(const mfrc522_drv_conf* conf, mfrc522_
         }
         rc -= rc_decrement_step;
         delay(conf, ru_conf->delay); /* Wait for a while and check again */
-        TRY_READ(conf, ru_conf->addr, &ru_conf->payload);
+
+        status = mfrc522_drv_read(conf, ru_conf->addr, &ru_conf->payload);
+        ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
     }
     return mfrc522_drv_status_ok;
 }
@@ -218,10 +194,11 @@ mfrc522_drv_status mfrc522_drv_soft_reset(const mfrc522_drv_conf* conf)
     ruc.retry_cnt = MFRC522_DRV_DEF_RETRY_CNT;
 
     /* Send SoftReset command. Do not care of other bits - they will be set to defaults afterwards */
-    TRY_WRITE_BYTE(conf, mfrc522_reg_command, mfrc522_reg_cmd_soft_reset);
+    mfrc522_drv_status res = mfrc522_drv_write_byte(conf, mfrc522_reg_command, mfrc522_reg_cmd_soft_reset);
+    ERROR_IF_NEQ(res, mfrc522_drv_status_ok);
 
     /* Wait until Idle command is active back */
-    mfrc522_drv_status res = mfrc522_drv_read_until(conf, &ruc);
+    res = mfrc522_drv_read_until(conf, &ruc);
     ERROR_IF_NEQ(res, mfrc522_drv_status_ok);
 
     return mfrc522_drv_status_ok;
@@ -256,24 +233,32 @@ mfrc522_drv_status mfrc522_drv_tim_start(const mfrc522_drv_conf* conf, const mfr
     /* Write to prescaler Lo and Hi registers */
     u8 prescaler_lo = (u8)(tim_conf->prescaler & 0x00FF);
     u8 prescaler_hi = (u8)((tim_conf->prescaler & 0x0F00) >> 8);
-    TRY_WRITE_BYTE(conf, mfrc522_reg_tim_prescaler, prescaler_lo);
-    TRY_WRITE_MASKED(conf, mfrc522_reg_tim_mode, prescaler_hi, MFRC522_REG_FIELD(TMODE_TPHI));
+    mfrc522_drv_status status = mfrc522_drv_write_byte(conf, mfrc522_reg_tim_prescaler, prescaler_lo);
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
+    status = mfrc522_drv_write_masked(conf, mfrc522_reg_tim_mode, prescaler_hi, MFRC522_REG_FIELD(TMODE_TPHI));
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
 
     /* Write to prescaler type register */
     u8 prescaler_type = (tim_conf->prescaler_type == mfrc522_drv_tim_psl_even);
-    TRY_WRITE_MASKED(conf, mfrc522_reg_demod, prescaler_type, MFRC522_REG_FIELD(DEMOD_TPE));
+    status = mfrc522_drv_write_masked(conf, mfrc522_reg_demod, prescaler_type, MFRC522_REG_FIELD(DEMOD_TPE));
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
 
     /* Write to reload Lo and Hi registers */
     u8 reload_lo = (u8)(tim_conf->reload_val & 0x00FF);
     u8 reload_hi = (u8)((tim_conf->reload_val & 0xFF00) >> 8);
-    TRY_WRITE_BYTE(conf, mfrc522_reg_tim_reload_lo, reload_lo);
-    TRY_WRITE_BYTE(conf, mfrc522_reg_tim_reload_hi, reload_hi);
+    status = mfrc522_drv_write_byte(conf, mfrc522_reg_tim_reload_lo, reload_lo);
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
+    status = mfrc522_drv_write_byte(conf, mfrc522_reg_tim_reload_hi, reload_hi);
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
 
     /* Enable/disable periodicity flag */
-    TRY_WRITE_MASKED(conf, mfrc522_reg_tim_mode, tim_conf->periodic, MFRC522_REG_FIELD(TMODE_TAUTO_RESTART));
+    status = mfrc522_drv_write_masked(conf, mfrc522_reg_tim_mode,
+                                      tim_conf->periodic, MFRC522_REG_FIELD(TMODE_TAUTO_RESTART));
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
 
     /* Immediately start timer */
-    TRY_WRITE_MASKED(conf, mfrc522_reg_control, 1, MFRC522_REG_FIELD(CONTROL_TSTART));
+    status = mfrc522_drv_write_masked(conf, mfrc522_reg_control, 1, MFRC522_REG_FIELD(CONTROL_TSTART));
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
 
     return mfrc522_drv_status_ok;
 }
@@ -282,7 +267,9 @@ mfrc522_drv_status mfrc522_drv_tim_stop(const mfrc522_drv_conf* conf)
 {
     ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
 
-    TRY_WRITE_MASKED(conf, mfrc522_reg_control, 1, MFRC522_REG_FIELD(CONTROL_TSTOP));
+    mfrc522_drv_status status = mfrc522_drv_write_masked(conf, mfrc522_reg_control,
+                                                         1, MFRC522_REG_FIELD(CONTROL_TSTOP));
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
 
     return mfrc522_drv_status_ok;
 }
@@ -296,8 +283,12 @@ mfrc522_drv_status mfrc522_drv_irq_init(const mfrc522_drv_conf* conf, const mfrc
     mfrc522_drv_irq_clr(conf, mfrc522_reg_irq_all);
 
     /* Update IRQ flags */
-    TRY_WRITE_MASKED(conf, mfrc522_reg_com_irq_en, irq_conf->irq_signal_inv, MFRC522_REG_FIELD(COMIEN_IRQ_INV));
-    TRY_WRITE_MASKED(conf, mfrc522_reg_div_irq_en, irq_conf->irq_push_pull, MFRC522_REG_FIELD(DIVIEN_IRQ_PUSHPULL));
+    mfrc522_drv_status status = mfrc522_drv_write_masked(conf, mfrc522_reg_com_irq_en,
+                                                         irq_conf->irq_signal_inv, MFRC522_REG_FIELD(COMIEN_IRQ_INV));
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
+    status = mfrc522_drv_write_masked(conf, mfrc522_reg_div_irq_en,
+                                      irq_conf->irq_push_pull, MFRC522_REG_FIELD(DIVIEN_IRQ_PUSHPULL));
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
 
     return mfrc522_drv_status_ok;
 }
@@ -306,10 +297,14 @@ mfrc522_drv_status mfrc522_drv_irq_clr(const mfrc522_drv_conf* conf, mfrc522_reg
 {
     ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
 
+    mfrc522_drv_status status;
+
     /* Clear all interrupts if special flag was passed */
     if (mfrc522_reg_irq_all == irq) {
-        TRY_WRITE_BYTE(conf, mfrc522_reg_com_irq, IRQ_ALL_COM_MASK);
-        TRY_WRITE_BYTE(conf, mfrc522_reg_div_irq, IRQ_ALL_DIV_MASK);
+        status = mfrc522_drv_write_byte(conf, mfrc522_reg_com_irq, IRQ_ALL_COM_MASK);
+        ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
+        status = mfrc522_drv_write_byte(conf, mfrc522_reg_div_irq, IRQ_ALL_DIV_MASK);
+        ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
     } else {
         /* Find correct register to clear interrupt flag in */
         u8 reg;
@@ -319,7 +314,8 @@ mfrc522_drv_status mfrc522_drv_irq_clr(const mfrc522_drv_conf* conf, mfrc522_reg
         } else {
             reg = mfrc522_reg_com_irq;
         }
-        TRY_WRITE_BYTE(conf, reg, 1 << irq);
+        status = mfrc522_drv_write_byte(conf, reg, 1 << irq);
+        ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
     }
 
     return mfrc522_drv_status_ok;
@@ -338,7 +334,8 @@ mfrc522_drv_status mfrc522_drv_irq_en(const mfrc522_drv_conf* conf, mfrc522_reg_
     } else {
         reg = mfrc522_reg_com_irq_en;
     }
-    TRY_WRITE_MASKED(conf, reg, enable, 0x01, irq);
+    mfrc522_drv_status status = mfrc522_drv_write_masked(conf, reg, enable, 0x01, irq);
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
 
     return mfrc522_drv_status_ok;
 }
@@ -350,8 +347,11 @@ mfrc522_drv_status mfrc522_irq_states(const mfrc522_drv_conf* conf, u16* out)
 
     u8 com_irq;
     u8 div_irq;
-    TRY_READ(conf, mfrc522_reg_com_irq, &com_irq);
-    TRY_READ(conf, mfrc522_reg_div_irq, &div_irq);
+    mfrc522_drv_status status = mfrc522_drv_read(conf, mfrc522_reg_com_irq, &com_irq);
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
+    status = mfrc522_drv_read(conf, mfrc522_reg_div_irq, &div_irq);
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
+
     *out = com_irq | (div_irq << 8);
 
     return mfrc522_drv_status_ok;
@@ -386,7 +386,8 @@ mfrc522_drv_status mfrc522_drv_self_test(mfrc522_drv_conf* conf)
     ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
 
     /* Step 3 - Enable the self test by writing 09h to the AutoTestReg register */
-    TRY_WRITE_MASKED(conf, mfrc522_reg_auto_test, 0x09, MFRC522_REG_FIELD(AUTOTEST_SELFTEST));
+    status = mfrc522_drv_write_masked(conf, mfrc522_reg_auto_test, 0x09, MFRC522_REG_FIELD(AUTOTEST_SELFTEST));
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
 
     /* Step 4 - Write 00h to the FIFO buffer */
     status = mfrc522_drv_fifo_store(conf, 0x00);
@@ -429,7 +430,9 @@ mfrc522_drv_status mfrc522_drv_invoke_cmd(const mfrc522_drv_conf* conf, mfrc522_
     ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
 
     /* Write to command register */
-    TRY_WRITE_MASKED(conf, mfrc522_reg_command, cmd, MFRC522_REG_FIELD(COMMAND_CMD));
+    mfrc522_drv_status status = mfrc522_drv_write_masked(conf, mfrc522_reg_command,
+                                                         cmd, MFRC522_REG_FIELD(COMMAND_CMD));
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
 
     mfrc522_drv_read_until_conf ru_conf;
     ru_conf.addr = mfrc522_reg_command;
@@ -438,7 +441,6 @@ mfrc522_drv_status mfrc522_drv_invoke_cmd(const mfrc522_drv_conf* conf, mfrc522_
     ru_conf.delay = 5; /* Give some delay */
     ru_conf.retry_cnt = MFRC522_DRV_DEF_RETRY_CNT;
 
-    mfrc522_drv_status status;
     switch (cmd) {
         /* These commands terminate automatically. Wait until Idle command is active back */
         case mfrc522_reg_cmd_idle:
@@ -460,8 +462,12 @@ mfrc522_drv_status mfrc522_drv_crc_init(const mfrc522_drv_conf* conf, const mfrc
     ERROR_IF_EQ(crc_conf, NULL, mfrc522_drv_status_nullptr);
 
     /* Write to the registers associated with CRC coprocessor */
-    TRY_WRITE_MASKED(conf, mfrc522_reg_mode, crc_conf->preset, MFRC522_REG_FIELD(MODE_CRC_PRESET));
-    TRY_WRITE_MASKED(conf, mfrc522_reg_mode, crc_conf->msb_first, MFRC522_REG_FIELD(MODE_CRC_MSBFIRST));
+    mfrc522_drv_status status = mfrc522_drv_write_masked(conf, mfrc522_reg_mode,
+                                                         crc_conf->preset, MFRC522_REG_FIELD(MODE_CRC_PRESET));
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
+    status = mfrc522_drv_write_masked(conf, mfrc522_reg_mode,
+                                      crc_conf->msb_first, MFRC522_REG_FIELD(MODE_CRC_MSBFIRST));
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
 
     return mfrc522_drv_status_ok;
 }
@@ -493,8 +499,10 @@ mfrc522_drv_status mfrc522_drv_crc_compute(const mfrc522_drv_conf* conf, u16* ou
     /* Read computed value and write into the buffer */
     u8 crc_lo;
     u8 crc_hi;
-    TRY_READ(conf, mfrc522_reg_crc_result_lsb, &crc_lo);
-    TRY_READ(conf, mfrc522_reg_crc_result_msb, &crc_hi);
+    status = mfrc522_drv_read(conf, mfrc522_reg_crc_result_lsb, &crc_lo);
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
+    status = mfrc522_drv_read(conf, mfrc522_reg_crc_result_msb, &crc_hi);
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
     *out = crc_lo | (crc_hi << 8);
 
     return mfrc522_drv_status_ok;
@@ -550,14 +558,19 @@ mfrc522_drv_status mfrc522_drv_ext_itf_init(const mfrc522_drv_conf* conf, const 
     ERROR_IF_EQ(itf_conf, NULL, mfrc522_drv_status_nullptr);
 
     /* Force a 100% ASK modulation */
-    TRY_WRITE_MASKED(conf, mfrc522_reg_tx_ask, 1, MFRC522_REG_FIELD(TXASK_FORCE_ASK));
+    mfrc522_drv_status status = mfrc522_drv_write_masked(conf, mfrc522_reg_tx_ask,
+                                                         1, MFRC522_REG_FIELD(TXASK_FORCE_ASK));
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
 
     /* Configure TX RF */
-    TRY_WRITE_MASKED(conf, mfrc522_reg_tx_control, 1, MFRC522_REG_FIELD(TXCONTROL_TX1RFEN));
-    TRY_WRITE_MASKED(conf, mfrc522_reg_tx_control, 1, MFRC522_REG_FIELD(TXCONTROL_TX2RFEN));
+    status = mfrc522_drv_write_masked(conf, mfrc522_reg_tx_control, 1, MFRC522_REG_FIELD(TXCONTROL_TX1RFEN));
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
+    status = mfrc522_drv_write_masked(conf, mfrc522_reg_tx_control, 1, MFRC522_REG_FIELD(TXCONTROL_TX2RFEN));
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
 
     /* Switch on analog part of the receiver */
-    TRY_WRITE_MASKED(conf, mfrc522_reg_command, 0, MFRC522_REG_FIELD(COMMAND_RCVOFF));
+    status = mfrc522_drv_write_masked(conf, mfrc522_reg_command, 0, MFRC522_REG_FIELD(COMMAND_RCVOFF));
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
 
     return mfrc522_drv_status_ok;
 }
@@ -587,7 +600,8 @@ mfrc522_drv_status mfrc522_drv_transceive(const mfrc522_drv_conf* conf, mfrc522_
     ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
 
     /* Start transmission of the data */
-    TRY_WRITE_MASKED(conf, mfrc522_reg_bit_framing, 1, MFRC522_REG_FIELD(BITFRAMING_START));
+    status = mfrc522_drv_write_masked(conf, mfrc522_reg_bit_framing, 1, MFRC522_REG_FIELD(BITFRAMING_START));
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
 
     u16 irq_states;
     bool exit_irq;
@@ -607,7 +621,8 @@ mfrc522_drv_status mfrc522_drv_transceive(const mfrc522_drv_conf* conf, mfrc522_
     }
 
     /* End transmission of the data */
-    TRY_WRITE_MASKED(conf, mfrc522_reg_bit_framing, 0, MFRC522_REG_FIELD(BITFRAMING_START));
+    status = mfrc522_drv_write_masked(conf, mfrc522_reg_bit_framing, 0, MFRC522_REG_FIELD(BITFRAMING_START));
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
 
     /* Enter Idle state */
     status = mfrc522_drv_invoke_cmd(conf, mfrc522_reg_cmd_idle);
@@ -651,7 +666,9 @@ mfrc522_drv_status mfrc522_drv_reqa(const mfrc522_drv_conf* conf, u16* atqa)
     ERROR_IF_EQ(atqa, NULL, mfrc522_drv_status_nullptr);
 
     /* REQA is a bit oriented frame (7-bit), thus set proper register */
-    TRY_WRITE_MASKED(conf, mfrc522_reg_bit_framing, 0x07, MFRC522_REG_FIELD(BITFRAMING_TX_LASTBITS));
+    mfrc522_drv_status status = mfrc522_drv_write_masked(conf, mfrc522_reg_bit_framing,
+                                                         0x07, MFRC522_REG_FIELD(BITFRAMING_TX_LASTBITS));
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
 
     /* Handle transmission/reception of the data */
     u8 reqa = mfrc522_picc_cmd_reqa;
@@ -663,7 +680,7 @@ mfrc522_drv_status mfrc522_drv_reqa(const mfrc522_drv_conf* conf, u16* atqa)
     tr_conf.rx_data = &response[0];
     tr_conf.rx_data_sz = 2;
     tr_conf.command = mfrc522_reg_cmd_transceive;
-    mfrc522_drv_status status = mfrc522_drv_transceive(conf, &tr_conf);
+    status = mfrc522_drv_transceive(conf, &tr_conf);
 
     switch (status) {
         case mfrc522_drv_status_transceive_timeout:
@@ -688,7 +705,9 @@ mfrc522_drv_status mfrc522_drv_anticollision(const mfrc522_drv_conf* conf, u8* s
     ERROR_IF_EQ(serial, NULL, mfrc522_drv_status_nullptr);
 
     /* Whole last TX byte is valid */
-    TRY_WRITE_MASKED(conf, mfrc522_reg_bit_framing, 0x00, MFRC522_REG_FIELD(BITFRAMING_TX_LASTBITS));
+    mfrc522_drv_status status = mfrc522_drv_write_masked(conf, mfrc522_reg_bit_framing,
+                                                         0x00, MFRC522_REG_FIELD(BITFRAMING_TX_LASTBITS));
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
 
     /* TX data consist of two bytes */
     u8 tx[2];
@@ -702,7 +721,7 @@ mfrc522_drv_status mfrc522_drv_anticollision(const mfrc522_drv_conf* conf, u8* s
     tr_conf.rx_data = serial;
     tr_conf.rx_data_sz = 5;
     tr_conf.command = mfrc522_reg_cmd_transceive;
-    mfrc522_drv_status status = mfrc522_drv_transceive(conf, &tr_conf);
+    status = mfrc522_drv_transceive(conf, &tr_conf);
 
     /* Compute checksum */
     if (mfrc522_drv_status_ok == status) {
@@ -788,11 +807,8 @@ mfrc522_drv_status mfrc522_drv_authenticate(const mfrc522_drv_conf* conf, const 
 
     /* Check if crypto is enabled */
     u8 crypto;
-    mfrc522_ll_status ll_status;
-    ll_status = mfrc522_drv_read_masked(conf, mfrc522_reg_status2, &crypto, MFRC522_REG_FIELD(STATUS2_CRYPTO_ON));
-    if (UNLIKELY(mfrc522_ll_status_ok != ll_status)) {
-        return mfrc522_drv_status_ll_err;
-    }
+    status = mfrc522_drv_read_masked(conf, mfrc522_reg_status2, &crypto, MFRC522_REG_FIELD(STATUS2_CRYPTO_ON));
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
 
     return (!crypto) ? mfrc522_drv_status_crypto_err : mfrc522_drv_status_ok;
 }
@@ -829,10 +845,8 @@ mfrc522_drv_status mfrc522_drv_halt(const mfrc522_drv_conf* conf)
     }
 
     /* Turn off the crypto unit */
-    mfrc522_ll_status ll_status;
-    ll_status = mfrc522_drv_write_masked(conf, mfrc522_reg_status2, 0, MFRC522_REG_FIELD(STATUS2_CRYPTO_ON));
-    if (UNLIKELY(mfrc522_ll_status_ok != ll_status)) {
-        return mfrc522_drv_status_ll_err;
-    }
+    status = mfrc522_drv_write_masked(conf, mfrc522_reg_status2, 0, MFRC522_REG_FIELD(STATUS2_CRYPTO_ON));
+    ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
+
     return mfrc522_drv_status_ok;
 }
