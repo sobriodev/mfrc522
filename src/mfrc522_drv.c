@@ -19,7 +19,8 @@
 /* ------------------------------------------------------------ */
 
 /* Private implementation of delay function */
-static inline void delay(const mfrc522_drv_conf* conf, u32 period)
+static inline void
+delay(const mfrc522_drv_conf* conf, u32 period)
 {
 #if MFRC522_LL_PTR
 #if MFRC522_LL_DELAY
@@ -42,7 +43,8 @@ static inline void delay(const mfrc522_drv_conf* conf, u32 period)
 }
 
 /* Calculate real number of retry count */
-static inline u32 get_real_retry_count(u32 rc)
+static inline u32
+get_real_retry_count(u32 rc)
 {
 #if !MFRC522_LL_DELAY
     rc *= MFRC522_CONF_RETRY_CNT_MUL;
@@ -51,7 +53,8 @@ static inline u32 get_real_retry_count(u32 rc)
 }
 
 /* Function to read valid number of RX bytes during transceive command */
-static mfrc522_drv_status get_valid_rx_bytes(const mfrc522_drv_conf* conf, u8* rx_bytes)
+static mfrc522_drv_status
+get_valid_rx_bytes(const mfrc522_drv_conf* conf, u8* rx_bytes)
 {
     u8 valid_bits;
     mfrc522_drv_status status;
@@ -72,7 +75,8 @@ static mfrc522_drv_status get_valid_rx_bytes(const mfrc522_drv_conf* conf, u8* r
 }
 
 /* Handle getting ATQA */
-static inline mfrc522_drv_status verify_atqa(const mfrc522_drv_conf* conf, const u8* rx_data, u16* atqa)
+static inline mfrc522_drv_status
+verify_atqa(const mfrc522_drv_conf* conf, const u8* rx_data, u16* atqa)
 {
     *atqa = rx_data[0] | (rx_data[1] << 8);
 
@@ -84,7 +88,8 @@ static inline mfrc522_drv_status verify_atqa(const mfrc522_drv_conf* conf, const
 }
 
 /* Helper function to get IRQ number used as the exit criterion during transceive command */
-static inline mfrc522_reg_irq get_awaited_irq_num(mfrc522_reg_cmd cmd)
+static inline mfrc522_reg_irq
+get_awaited_irq_num(mfrc522_reg_cmd cmd)
 {
     return (mfrc522_reg_cmd_transceive == cmd) ? mfrc522_reg_irq_rx : mfrc522_reg_irq_idle;
 }
@@ -93,7 +98,8 @@ static inline mfrc522_reg_irq get_awaited_irq_num(mfrc522_reg_cmd cmd)
 /* ----------------------- Public functions ------------------- */
 /* ------------------------------------------------------------ */
 
-mfrc522_drv_status mfrc522_drv_init(mfrc522_drv_conf* conf)
+mfrc522_drv_status
+mfrc522_drv_init(mfrc522_drv_conf* conf)
 {
     ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
 
@@ -119,7 +125,8 @@ mfrc522_drv_status mfrc522_drv_init(mfrc522_drv_conf* conf)
     return mfrc522_drv_status_ok;
 }
 
-mfrc522_drv_status mfrc522_drv_write_masked(const mfrc522_drv_conf* conf, mfrc522_reg addr, u8 val, u8 mask, u8 pos)
+mfrc522_drv_status
+mfrc522_drv_write_masked(const mfrc522_drv_conf* conf, mfrc522_reg addr, u8 val, u8 mask, u8 pos)
 {
     ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
 
@@ -137,7 +144,8 @@ mfrc522_drv_status mfrc522_drv_write_masked(const mfrc522_drv_conf* conf, mfrc52
     return mfrc522_drv_status_ok;
 }
 
-mfrc522_drv_status mfrc522_drv_read_masked(const mfrc522_drv_conf* conf, mfrc522_reg addr, u8* out, u8 mask, u8 pos)
+mfrc522_drv_status
+mfrc522_drv_read_masked(const mfrc522_drv_conf* conf, mfrc522_reg addr, u8* out, u8 mask, u8 pos)
 {
     ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
     ERROR_IF_EQ(out, NULL, mfrc522_drv_status_nullptr);
@@ -153,7 +161,8 @@ mfrc522_drv_status mfrc522_drv_read_masked(const mfrc522_drv_conf* conf, mfrc522
     return mfrc522_drv_status_ok;
 }
 
-mfrc522_drv_status mfrc522_drv_read_until(const mfrc522_drv_conf* conf, mfrc522_drv_read_until_conf* ru_conf)
+mfrc522_drv_status
+mfrc522_drv_read_until(const mfrc522_drv_conf* conf, mfrc522_drv_read_until_conf* ru_conf)
 {
     ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
     ERROR_IF_EQ(ru_conf, NULL, mfrc522_drv_status_nullptr);
@@ -181,7 +190,8 @@ mfrc522_drv_status mfrc522_drv_read_until(const mfrc522_drv_conf* conf, mfrc522_
     return mfrc522_drv_status_ok;
 }
 
-mfrc522_drv_status mfrc522_drv_soft_reset(const mfrc522_drv_conf* conf)
+mfrc522_drv_status
+mfrc522_drv_soft_reset(const mfrc522_drv_conf* conf)
 {
     ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
 
@@ -204,7 +214,8 @@ mfrc522_drv_status mfrc522_drv_soft_reset(const mfrc522_drv_conf* conf)
     return mfrc522_drv_status_ok;
 }
 
-mfrc522_drv_status mfrc522_drv_tim_set(mfrc522_drv_tim_conf* tim_conf, u16 period)
+mfrc522_drv_status
+mfrc522_drv_tim_set(mfrc522_drv_tim_conf* tim_conf, u16 period)
 {
     ERROR_IF_EQ(tim_conf, NULL, mfrc522_drv_status_nullptr);
     if (UNLIKELY(0 == period || period > MFRC522_DRV_TIM_MAX_PERIOD)) {
@@ -225,7 +236,8 @@ mfrc522_drv_status mfrc522_drv_tim_set(mfrc522_drv_tim_conf* tim_conf, u16 perio
     return mfrc522_drv_status_ok;
 }
 
-mfrc522_drv_status mfrc522_drv_tim_start(const mfrc522_drv_conf* conf, const mfrc522_drv_tim_conf* tim_conf)
+mfrc522_drv_status
+mfrc522_drv_tim_start(const mfrc522_drv_conf* conf, const mfrc522_drv_tim_conf* tim_conf)
 {
     ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
     ERROR_IF_EQ(tim_conf, NULL, mfrc522_drv_status_nullptr);
@@ -263,7 +275,8 @@ mfrc522_drv_status mfrc522_drv_tim_start(const mfrc522_drv_conf* conf, const mfr
     return mfrc522_drv_status_ok;
 }
 
-mfrc522_drv_status mfrc522_drv_tim_stop(const mfrc522_drv_conf* conf)
+mfrc522_drv_status
+mfrc522_drv_tim_stop(const mfrc522_drv_conf* conf)
 {
     ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
 
@@ -274,7 +287,8 @@ mfrc522_drv_status mfrc522_drv_tim_stop(const mfrc522_drv_conf* conf)
     return mfrc522_drv_status_ok;
 }
 
-mfrc522_drv_status mfrc522_drv_irq_init(const mfrc522_drv_conf* conf, const mfrc522_drv_irq_conf* irq_conf)
+mfrc522_drv_status
+mfrc522_drv_irq_init(const mfrc522_drv_conf* conf, const mfrc522_drv_irq_conf* irq_conf)
 {
     ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
     ERROR_IF_EQ(irq_conf, NULL, mfrc522_drv_status_nullptr);
@@ -293,7 +307,8 @@ mfrc522_drv_status mfrc522_drv_irq_init(const mfrc522_drv_conf* conf, const mfrc
     return mfrc522_drv_status_ok;
 }
 
-mfrc522_drv_status mfrc522_drv_irq_clr(const mfrc522_drv_conf* conf, mfrc522_reg_irq irq)
+mfrc522_drv_status
+mfrc522_drv_irq_clr(const mfrc522_drv_conf* conf, mfrc522_reg_irq irq)
 {
     ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
 
@@ -321,7 +336,8 @@ mfrc522_drv_status mfrc522_drv_irq_clr(const mfrc522_drv_conf* conf, mfrc522_reg
     return mfrc522_drv_status_ok;
 }
 
-mfrc522_drv_status mfrc522_drv_irq_en(const mfrc522_drv_conf* conf, mfrc522_reg_irq irq, bool enable)
+mfrc522_drv_status
+mfrc522_drv_irq_en(const mfrc522_drv_conf* conf, mfrc522_reg_irq irq, bool enable)
 {
     ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
     ERROR_IF_EQ(irq, mfrc522_reg_irq_all, mfrc522_drv_status_nok);
@@ -340,7 +356,8 @@ mfrc522_drv_status mfrc522_drv_irq_en(const mfrc522_drv_conf* conf, mfrc522_reg_
     return mfrc522_drv_status_ok;
 }
 
-mfrc522_drv_status mfrc522_irq_states(const mfrc522_drv_conf* conf, u16* out)
+mfrc522_drv_status
+mfrc522_irq_states(const mfrc522_drv_conf* conf, u16* out)
 {
     ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
     ERROR_IF_EQ(out, NULL, mfrc522_drv_status_nullptr);
@@ -357,7 +374,8 @@ mfrc522_drv_status mfrc522_irq_states(const mfrc522_drv_conf* conf, u16* out)
     return mfrc522_drv_status_ok;
 }
 
-bool mfrc522_drv_irq_pending(u16 irq_states, mfrc522_reg_irq irq)
+bool
+mfrc522_drv_irq_pending(u16 irq_states, mfrc522_reg_irq irq)
 {
     /* If 'mfrc522_reg_irq_all' was passed return an error and exit */
     ERROR_IF_EQ(irq, mfrc522_reg_irq_all, false);
@@ -369,7 +387,8 @@ bool mfrc522_drv_irq_pending(u16 irq_states, mfrc522_reg_irq irq)
     return (irq_states & (1 << irq)) ? true : false;
 }
 
-mfrc522_drv_status mfrc522_drv_self_test(mfrc522_drv_conf* conf)
+mfrc522_drv_status
+mfrc522_drv_self_test(mfrc522_drv_conf* conf)
 {
     ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
 
@@ -425,7 +444,8 @@ mfrc522_drv_status mfrc522_drv_self_test(mfrc522_drv_conf* conf)
     return mfrc522_drv_status_ok;
 }
 
-mfrc522_drv_status mfrc522_drv_invoke_cmd(const mfrc522_drv_conf* conf, mfrc522_reg_cmd cmd)
+mfrc522_drv_status
+mfrc522_drv_invoke_cmd(const mfrc522_drv_conf* conf, mfrc522_reg_cmd cmd)
 {
     ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
 
@@ -456,7 +476,8 @@ mfrc522_drv_status mfrc522_drv_invoke_cmd(const mfrc522_drv_conf* conf, mfrc522_
     return mfrc522_drv_status_ok;
 }
 
-mfrc522_drv_status mfrc522_drv_crc_init(const mfrc522_drv_conf* conf, const mfrc522_drv_crc_conf* crc_conf)
+mfrc522_drv_status
+mfrc522_drv_crc_init(const mfrc522_drv_conf* conf, const mfrc522_drv_crc_conf* crc_conf)
 {
     ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
     ERROR_IF_EQ(crc_conf, NULL, mfrc522_drv_status_nullptr);
@@ -472,7 +493,8 @@ mfrc522_drv_status mfrc522_drv_crc_init(const mfrc522_drv_conf* conf, const mfrc
     return mfrc522_drv_status_ok;
 }
 
-mfrc522_drv_status mfrc522_drv_crc_compute(const mfrc522_drv_conf* conf, u16* out)
+mfrc522_drv_status
+mfrc522_drv_crc_compute(const mfrc522_drv_conf* conf, u16* out)
 {
     ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
     ERROR_IF_EQ(out, NULL, mfrc522_drv_status_nullptr);
@@ -508,7 +530,8 @@ mfrc522_drv_status mfrc522_drv_crc_compute(const mfrc522_drv_conf* conf, u16* ou
     return mfrc522_drv_status_ok;
 }
 
-mfrc522_drv_status mfrc522_drv_generate_rand(const mfrc522_drv_conf* conf, u8* out, size num_rand)
+mfrc522_drv_status
+mfrc522_drv_generate_rand(const mfrc522_drv_conf* conf, u8* out, size num_rand)
 {
     ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
     ERROR_IF_EQ(out, NULL, mfrc522_drv_status_nullptr);
@@ -545,14 +568,17 @@ mfrc522_drv_status mfrc522_drv_generate_rand(const mfrc522_drv_conf* conf, u8* o
     return mfrc522_drv_status_ok;
 }
 
-bool mfrc522_drv_check_error(u8 error_reg, mfrc522_reg_err err)
+bool
+mfrc522_drv_check_error(u8 error_reg, mfrc522_reg_err err)
 {
     if (mfrc522_reg_err_any == err) {
         return (0 != error_reg);
     }
     return (error_reg & (1 << err)) ? true : false;
 }
-mfrc522_drv_status mfrc522_drv_ext_itf_init(const mfrc522_drv_conf* conf, const mfrc522_drv_ext_itf_conf* itf_conf)
+
+mfrc522_drv_status
+mfrc522_drv_ext_itf_init(const mfrc522_drv_conf* conf, const mfrc522_drv_ext_itf_conf* itf_conf)
 {
     ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
     ERROR_IF_EQ(itf_conf, NULL, mfrc522_drv_status_nullptr);
@@ -575,7 +601,8 @@ mfrc522_drv_status mfrc522_drv_ext_itf_init(const mfrc522_drv_conf* conf, const 
     return mfrc522_drv_status_ok;
 }
 
-mfrc522_drv_status mfrc522_drv_transceive(const mfrc522_drv_conf* conf, mfrc522_drv_transceive_conf* tr_conf)
+mfrc522_drv_status
+mfrc522_drv_transceive(const mfrc522_drv_conf* conf, mfrc522_drv_transceive_conf* tr_conf)
 {
     ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
     ERROR_IF_EQ(tr_conf, NULL, mfrc522_drv_status_nullptr);
@@ -660,7 +687,8 @@ mfrc522_drv_status mfrc522_drv_transceive(const mfrc522_drv_conf* conf, mfrc522_
     return mfrc522_drv_status_ok;
 }
 
-mfrc522_drv_status mfrc522_drv_reqa(const mfrc522_drv_conf* conf, u16* atqa)
+mfrc522_drv_status
+mfrc522_drv_reqa(const mfrc522_drv_conf* conf, u16* atqa)
 {
     ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
     ERROR_IF_EQ(atqa, NULL, mfrc522_drv_status_nullptr);
@@ -699,7 +727,8 @@ mfrc522_drv_status mfrc522_drv_reqa(const mfrc522_drv_conf* conf, u16* atqa)
     return status;
 }
 
-mfrc522_drv_status mfrc522_drv_anticollision(const mfrc522_drv_conf* conf, u8* serial)
+mfrc522_drv_status
+mfrc522_drv_anticollision(const mfrc522_drv_conf* conf, u8* serial)
 {
     ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
     ERROR_IF_EQ(serial, NULL, mfrc522_drv_status_nullptr);
@@ -737,7 +766,8 @@ mfrc522_drv_status mfrc522_drv_anticollision(const mfrc522_drv_conf* conf, u8* s
     return status;
 }
 
-mfrc522_drv_status mfrc522_drv_select(const mfrc522_drv_conf* conf, const u8* serial, u8* sak)
+mfrc522_drv_status
+mfrc522_drv_select(const mfrc522_drv_conf* conf, const u8* serial, u8* sak)
 {
     ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
     ERROR_IF_EQ(serial, NULL, mfrc522_drv_status_nullptr);
@@ -783,7 +813,8 @@ mfrc522_drv_status mfrc522_drv_select(const mfrc522_drv_conf* conf, const u8* se
     return mfrc522_drv_status_ok;
 }
 
-mfrc522_drv_status mfrc522_drv_authenticate(const mfrc522_drv_conf* conf, const mfrc522_drv_auth_conf* auth_conf)
+mfrc522_drv_status
+mfrc522_drv_authenticate(const mfrc522_drv_conf* conf, const mfrc522_drv_auth_conf* auth_conf)
 {
     ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
     ERROR_IF_EQ(auth_conf, NULL, mfrc522_drv_status_nullptr);
@@ -813,7 +844,8 @@ mfrc522_drv_status mfrc522_drv_authenticate(const mfrc522_drv_conf* conf, const 
     return (!crypto) ? mfrc522_drv_status_crypto_err : mfrc522_drv_status_ok;
 }
 
-mfrc522_drv_status mfrc522_drv_halt(const mfrc522_drv_conf* conf)
+mfrc522_drv_status
+mfrc522_drv_halt(const mfrc522_drv_conf* conf)
 {
     ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
 

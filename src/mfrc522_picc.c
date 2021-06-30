@@ -177,7 +177,8 @@ static const mfrc522_picc_block_acc block_acc_lut[] =
  * |   9  |                           User data                           |
  * +------+---------------------------------------------------------------+
  */
-void mfrc522_picc_encode_accb(const mfrc522_picc_accb* accb, u8* encoded, u8 user_data)
+void
+mfrc522_picc_encode_accb(const mfrc522_picc_accb* accb, u8* encoded, u8 user_data)
 {
     if (UNLIKELY((NULL == accb) | (NULL == encoded))) {
         return;
@@ -193,7 +194,8 @@ void mfrc522_picc_encode_accb(const mfrc522_picc_accb* accb, u8* encoded, u8 use
     encoded[3] = user_data;
 }
 
-bool mfrc522_picc_get_trailer_accb(const mfrc522_picc_trailer_acc* acc_cond, mfrc522_picc_accb* out)
+bool
+mfrc522_picc_get_trailer_accb(const mfrc522_picc_trailer_acc* acc_cond, mfrc522_picc_accb* out)
 {
     if (UNLIKELY((NULL == acc_cond) || (NULL == out))) {
         return false;
@@ -208,7 +210,8 @@ bool mfrc522_picc_get_trailer_accb(const mfrc522_picc_trailer_acc* acc_cond, mfr
     return false;
 }
 
-bool mfrc522_picc_get_block_accb(const mfrc522_picc_block_acc* acc_cond, mfrc522_picc_accb* out)
+bool
+mfrc522_picc_get_block_accb(const mfrc522_picc_block_acc* acc_cond, mfrc522_picc_accb* out)
 {
     if (UNLIKELY((NULL == acc_cond) || (NULL == out))) {
         return false;

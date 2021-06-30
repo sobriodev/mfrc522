@@ -10,7 +10,8 @@
 
 #include "mfrc522_ll.h"
 
-mfrc522_ll_status mfrc522_ll_send(u8 addr, size bytes, const u8* payload)
+mfrc522_ll_status
+mfrc522_ll_send(u8 addr, size bytes, const u8* payload)
 {
     (void)addr;
     (void)bytes;
@@ -18,14 +19,16 @@ mfrc522_ll_status mfrc522_ll_send(u8 addr, size bytes, const u8* payload)
     return mfrc522_ll_status_ok;
 }
 
-mfrc522_ll_status mfrc522_ll_recv(u8 addr, u8* payload)
+mfrc522_ll_status
+mfrc522_ll_recv(u8 addr, u8* payload)
 {
     (void)addr;
     *payload = 0x00;
     return mfrc522_ll_status_ok;
 }
 
-void mfrc522_ll_delay(u32 period)
+void
+mfrc522_ll_delay(u32 period)
 {
     (void)period;
 }
