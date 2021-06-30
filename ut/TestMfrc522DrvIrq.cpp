@@ -169,19 +169,19 @@ TEST(TestMfrc522DrvIrq, mfrc522_drv_irq_en__EnableIrqInDivReg__Success)
     ASSERT_EQ(mfrc522_drv_status_ok, status);
 }
 
-TEST(TestMfrc522DrvIrq, mfrc522_irq_states__NullCases)
+TEST(TestMfrc522DrvIrq, mfrc522_drv_irq_states__NullCases)
 {
     auto device = initDevice();
     u16 out;
 
-    auto status = mfrc522_irq_states(&device, nullptr);
+    auto status = mfrc522_drv_irq_states(&device, nullptr);
     ASSERT_EQ(mfrc522_drv_status_nullptr, status);
 
-    status = mfrc522_irq_states(nullptr, &out);
+    status = mfrc522_drv_irq_states(nullptr, &out);
     ASSERT_EQ(mfrc522_drv_status_nullptr, status);
 }
 
-TEST(TestMfrc522DrvIrq, mfrc522_irq_states__TypicalCase__Success)
+TEST(TestMfrc522DrvIrq, mfrc522_drv_irq_states__TypicalCase__Success)
 {
     auto device = initDevice();
     u16 states = 0x00;
@@ -193,7 +193,7 @@ TEST(TestMfrc522DrvIrq, mfrc522_irq_states__TypicalCase__Success)
     MOCK_CALL(mfrc522_ll_recv, mfrc522_reg_div_irq, _)
             .WillOnce(DoAll(SetArgPointee<1>(0xAB), Return(mfrc522_ll_status_ok)));
 
-    auto status = mfrc522_irq_states(&device, &states);
+    auto status = mfrc522_drv_irq_states(&device, &states);
     ASSERT_EQ(mfrc522_drv_status_ok, status);
     ASSERT_EQ(0xABCD, states);
 }

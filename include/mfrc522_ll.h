@@ -101,7 +101,7 @@ typedef void (*mfrc522_ll_delay)(u32 period);
 /* ----------------------- Public functions ------------------- */
 /* ------------------------------------------------------------ */
 
-#ifdef MFRC522_LL_DEF
+#if MFRC522_LL_DEF
 /**
  * Low-level function to send data to a device. From high-level point of view the library does not assume which digital
  * interface is used. Beneath the function any bus can be used, e.g. SPI, I2C or UART. Please refer to device datasheet

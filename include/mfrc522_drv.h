@@ -565,13 +565,13 @@ mfrc522_drv_irq_en(const mfrc522_drv_conf* conf, mfrc522_reg_irq irq, bool enabl
  * @return Status of the operation. On success mfrc522_drv_status_ok is returned.
  */
 mfrc522_drv_status
-mfrc522_irq_states(const mfrc522_drv_conf* conf, u16* out);
+mfrc522_drv_irq_states(const mfrc522_drv_conf* conf, u16* out);
 
 /**
  * Check if a certain IRQ is pending.
  *
  * For performance reasons this function does not read interrupt states from the registers.
- * To get the IRQ states, call 'mfrc522_irq_states()'.
+ * To get the IRQ states, call 'mfrc522_drv_irq_states()'.
  *
  * @param irq_states States of all IRQs
  * @param irq IRQ number.

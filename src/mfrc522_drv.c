@@ -357,7 +357,7 @@ mfrc522_drv_irq_en(const mfrc522_drv_conf* conf, mfrc522_reg_irq irq, bool enabl
 }
 
 mfrc522_drv_status
-mfrc522_irq_states(const mfrc522_drv_conf* conf, u16* out)
+mfrc522_drv_irq_states(const mfrc522_drv_conf* conf, u16* out)
 {
     ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
     ERROR_IF_EQ(out, NULL, mfrc522_drv_status_nullptr);
@@ -551,13 +551,13 @@ mfrc522_drv_generate_rand(const mfrc522_drv_conf* conf, u8* out, size num_rand)
     size rand_bytes_idx[MFRC522_DRV_RAND_BYTES] = {MFRC522_CONF_RAND_BYTE_IDX};
     u8 rand_bytes[MFRC522_DRV_RAND_BYTES];
     u8 buff;
-    size currentIdx = 0;
+    size current_idx = 0;
     for (size i = 0; i < MFRC522_DRV_RAND_TOTAL; ++i) {
         status = mfrc522_drv_fifo_read(conf, &buff);
         ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
         for (size j = 0; j < MFRC522_DRV_RAND_BYTES; ++j) {
             if (i == rand_bytes_idx[j]) {
-                rand_bytes[currentIdx++] = buff;
+                rand_bytes[current_idx++] = buff;
             }
         }
     }
@@ -636,7 +636,7 @@ mfrc522_drv_transceive(const mfrc522_drv_conf* conf, mfrc522_drv_transceive_conf
     size retry_total_num = get_real_retry_count(MFRC522_DRV_DEF_RETRY_CNT);
     size retries;
     for (retries = 0; retries < retry_total_num; ++retries) {
-        status = mfrc522_irq_states(conf, &irq_states);
+        status = mfrc522_drv_irq_states(conf, &irq_states);
         ERROR_IF_NEQ(status, mfrc522_drv_status_ok);
 
         exit_irq = mfrc522_drv_irq_pending(irq_states, get_awaited_irq_num(tr_conf->command));

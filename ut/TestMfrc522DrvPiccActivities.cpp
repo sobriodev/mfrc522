@@ -73,7 +73,7 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_transceive__NoIrqAfterAllRetries__Timeout
     /* Set expectations */
     MOCK(mfrc522_ll_send);
     MOCK(mfrc522_ll_recv);
-    MOCK(mfrc522_irq_states);
+    MOCK(mfrc522_drv_irq_states);
     MOCK(mfrc522_drv_invoke_cmd);
     MOCK(mfrc522_drv_irq_clr);
     IGNORE_REDUNDANT_LL_RECV_CALLS();
@@ -87,7 +87,7 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_transceive__NoIrqAfterAllRetries__Timeout
     MOCK_CALL(mfrc522_drv_invoke_cmd, &device, mfrc522_reg_cmd_transceive).WillOnce(Return(mfrc522_drv_status_ok));
     MOCK_CALL(mfrc522_ll_send, mfrc522_reg_bit_framing, 1, _).WillOnce(Return(mfrc522_ll_status_ok));
     /* Simulate that no IRQ is set (states = 0x0000) */
-    MOCK_CALL(mfrc522_irq_states, &device, NotNull()).Times(AtLeast(1))
+    MOCK_CALL(mfrc522_drv_irq_states, &device, NotNull()).Times(AtLeast(1))
             .WillRepeatedly(DoAll(SetArgPointee<1>(0x0000), Return(mfrc522_drv_status_ok)));
     /* Stop transmission of data and enter Idle state back */
     MOCK_CALL(mfrc522_ll_send, mfrc522_reg_bit_framing, 1, NotNull()).WillOnce(Return(mfrc522_ll_status_ok));
@@ -116,7 +116,7 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_transceive__ErrorBitIsSet__ErrorReturned)
     /* Set expectations */
     MOCK(mfrc522_ll_send);
     MOCK(mfrc522_ll_recv);
-    MOCK(mfrc522_irq_states);
+    MOCK(mfrc522_drv_irq_states);
     MOCK(mfrc522_drv_invoke_cmd);
     MOCK(mfrc522_drv_irq_clr);
     IGNORE_REDUNDANT_LL_RECV_CALLS();
@@ -130,7 +130,7 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_transceive__ErrorBitIsSet__ErrorReturned)
     MOCK_CALL(mfrc522_drv_invoke_cmd, &device, mfrc522_reg_cmd_transceive).WillOnce(Return(mfrc522_drv_status_ok));
     MOCK_CALL(mfrc522_ll_send, mfrc522_reg_bit_framing, 1, _).WillOnce(Return(mfrc522_ll_status_ok));
     /* Simulate that error IRQ is set (low byte = 0x02) */
-    MOCK_CALL(mfrc522_irq_states, &device, NotNull()).Times(AtLeast(1))
+    MOCK_CALL(mfrc522_drv_irq_states, &device, NotNull()).Times(AtLeast(1))
             .WillRepeatedly(DoAll(SetArgPointee<1>(0x0002), Return(mfrc522_drv_status_ok)));
     /* Stop transmission of data and enter Idle state back */
     MOCK_CALL(mfrc522_ll_send, mfrc522_reg_bit_framing, 1, NotNull()).WillOnce(Return(mfrc522_ll_status_ok));
@@ -159,7 +159,7 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_transceive__InvalidNumberOfRxValidBits__E
     /* Set expectations */
     MOCK(mfrc522_ll_send);
     MOCK(mfrc522_ll_recv);
-    MOCK(mfrc522_irq_states);
+    MOCK(mfrc522_drv_irq_states);
     MOCK(mfrc522_drv_invoke_cmd);
     MOCK(mfrc522_drv_irq_clr);
     IGNORE_REDUNDANT_LL_RECV_CALLS();
@@ -172,7 +172,7 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_transceive__InvalidNumberOfRxValidBits__E
     /* Start transceive command and transmission of data */
     MOCK_CALL(mfrc522_drv_invoke_cmd, &device, mfrc522_reg_cmd_transceive).WillOnce(Return(mfrc522_drv_status_ok));
     MOCK_CALL(mfrc522_ll_send, mfrc522_reg_bit_framing, 1, _).WillOnce(Return(mfrc522_ll_status_ok));
-    MOCK_CALL(mfrc522_irq_states, &device, NotNull()).Times(AtLeast(1))
+    MOCK_CALL(mfrc522_drv_irq_states, &device, NotNull()).Times(AtLeast(1))
             .WillRepeatedly(DoAll(SetArgPointee<1>(1 << 5), Return(mfrc522_drv_status_ok)));
     /* Stop transmission of data and enter Idle state back */
     MOCK_CALL(mfrc522_ll_send, mfrc522_reg_bit_framing, 1, NotNull()).WillOnce(Return(mfrc522_ll_status_ok));
@@ -204,7 +204,7 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_transceive__NoDataOnRxSide__Error)
     /* Set expectations */
     MOCK(mfrc522_ll_send);
     MOCK(mfrc522_ll_recv);
-    MOCK(mfrc522_irq_states);
+    MOCK(mfrc522_drv_irq_states);
     MOCK(mfrc522_drv_invoke_cmd);
     MOCK(mfrc522_drv_irq_clr);
     IGNORE_REDUNDANT_LL_RECV_CALLS();
@@ -217,7 +217,7 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_transceive__NoDataOnRxSide__Error)
     /* Start transceive command and transmission of data */
     MOCK_CALL(mfrc522_drv_invoke_cmd, &device, mfrc522_reg_cmd_transceive).WillOnce(Return(mfrc522_drv_status_ok));
     MOCK_CALL(mfrc522_ll_send, mfrc522_reg_bit_framing, 1, _).WillOnce(Return(mfrc522_ll_status_ok));
-    MOCK_CALL(mfrc522_irq_states, &device, NotNull()).Times(AtLeast(1))
+    MOCK_CALL(mfrc522_drv_irq_states, &device, NotNull()).Times(AtLeast(1))
             .WillRepeatedly(DoAll(SetArgPointee<1>(1 << 5), Return(mfrc522_drv_status_ok)));
     /* Stop transmission of data and enter Idle state back */
     MOCK_CALL(mfrc522_ll_send, mfrc522_reg_bit_framing, 1, NotNull()).WillOnce(Return(mfrc522_ll_status_ok));
@@ -251,7 +251,7 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_transceive__TypicalCase__Success)
     /* Set expectations */
     MOCK(mfrc522_ll_send);
     MOCK(mfrc522_ll_recv);
-    MOCK(mfrc522_irq_states);
+    MOCK(mfrc522_drv_irq_states);
     MOCK(mfrc522_drv_invoke_cmd);
     MOCK(mfrc522_drv_irq_clr);
     IGNORE_REDUNDANT_LL_RECV_CALLS();
@@ -264,7 +264,7 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_transceive__TypicalCase__Success)
     /* Start transceive command and transmission of data */
     MOCK_CALL(mfrc522_drv_invoke_cmd, &device, mfrc522_reg_cmd_transceive).WillOnce(Return(mfrc522_drv_status_ok));
     MOCK_CALL(mfrc522_ll_send, mfrc522_reg_bit_framing, 1, _).WillOnce(Return(mfrc522_ll_status_ok));
-    MOCK_CALL(mfrc522_irq_states, &device, NotNull()).Times(AtLeast(1))
+    MOCK_CALL(mfrc522_drv_irq_states, &device, NotNull()).Times(AtLeast(1))
             .WillRepeatedly(DoAll(SetArgPointee<1>(1 << 5), Return(mfrc522_drv_status_ok)));
     /* Stop transmission of data and enter Idle state back */
     MOCK_CALL(mfrc522_ll_send, mfrc522_reg_bit_framing, 1, NotNull()).WillOnce(Return(mfrc522_ll_status_ok));
