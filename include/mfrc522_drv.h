@@ -286,8 +286,8 @@ mfrc522_drv_init(mfrc522_drv_conf* conf);
 static inline mfrc522_drv_status
 mfrc522_drv_write(const mfrc522_drv_conf* conf, mfrc522_reg addr, size sz, const u8* payload)
 {
-    ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
-    ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
+    NOT_NULL(conf, mfrc522_drv_status_nullptr);
+    NOT_NULL(payload, mfrc522_drv_status_nullptr);
 #if MFRC522_LL_PTR
     return (mfrc522_ll_status_ok == conf->ll_send(addr, sz, payload)) ? mfrc522_drv_status_ok
                                                                       : mfrc522_drv_status_ll_err;
@@ -348,8 +348,8 @@ mfrc522_drv_write_masked(const mfrc522_drv_conf* conf, mfrc522_reg addr, u8 val,
 static inline mfrc522_drv_status
 mfrc522_drv_read(const mfrc522_drv_conf* conf, mfrc522_reg addr, u8* payload)
 {
-    ERROR_IF_EQ(conf, NULL, mfrc522_drv_status_nullptr);
-    ERROR_IF_EQ(payload, NULL, mfrc522_drv_status_nullptr);
+    NOT_NULL(conf, mfrc522_drv_status_nullptr);
+    NOT_NULL(payload, mfrc522_drv_status_nullptr);
 #if MFRC522_LL_PTR
     return (mfrc522_ll_status_ok == conf->ll_recv(addr, payload)) ? mfrc522_drv_status_ok : mfrc522_drv_status_ll_err;
 #elif MFRC522_LL_DEF

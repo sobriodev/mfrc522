@@ -30,6 +30,15 @@ extern "C" {
 #define ERROR_IF_NEQ(ACT, EXP) do { if (UNLIKELY((EXP) != (ACT))) return (ACT); } while (0)
 
 /**
+ * Return an error pointer is NULL
+ */
+#if MFRC522_NULL_GUARD
+#define NOT_NULL(PTR, STAT) ERROR_IF_EQ((PTR), NULL, (STAT))
+#else
+#define NOT_NULL(PTR, STAT) {}
+#endif
+
+/**
  * Calculate size of an array
  */
 #define SIZE_ARRAY(ARR) (sizeof((ARR)) / sizeof((ARR)[0]))
