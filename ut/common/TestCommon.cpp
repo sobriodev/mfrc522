@@ -18,7 +18,7 @@ mfrc522_drv_conf initDevice()
     conf.atqa_verify_fn = piccAcceptAny;
 
     STUB(mfrc522_drv_init);
-    STUB_CALL(mfrc522_drv_init, _)
+    STUB_CALL(mfrc522_drv_init, NotNull())
             .WillByDefault(DoAll(SetArgPointee<0>(conf), Return(mfrc522_drv_status_ok)));
 
     mfrc522_drv_conf ret;

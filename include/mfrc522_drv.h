@@ -134,6 +134,7 @@ typedef enum mfrc522_drv_status_
 typedef struct mfrc522_drv_conf_
 {
 #if MFRC522_LL_PTR
+    mfrc522_ll_init ll_init; /**< Low-level init function pointer */
     mfrc522_ll_send ll_send; /**< Low-level send function pointer */
     mfrc522_ll_recv ll_recv; /**< Low-level receive function pointer */
 #if MFRC522_LL_DELAY

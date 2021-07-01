@@ -1,6 +1,7 @@
 #include "Mockable.h"
 
 /* Required by C Mock library */
+DEFINE_MOCKABLE(mfrc522_ll_status, mfrc522_ll_init, ());
 DEFINE_MOCKABLE(mfrc522_ll_status, mfrc522_ll_send, (u8, size, const u8*));
 DEFINE_MOCKABLE(mfrc522_ll_status, mfrc522_ll_recv, (u8, u8*));
 DEFINE_MOCKABLE(void, mfrc522_ll_delay, (u32));

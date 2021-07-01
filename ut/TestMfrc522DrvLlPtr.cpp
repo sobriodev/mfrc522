@@ -6,6 +6,11 @@
 /* ------------------------------------------------------------ */
 
 /* Dummy implementation of low-level functions */
+static mfrc522_ll_status dummyInit()
+{
+    return mfrc522_ll_status_ok;
+}
+
 static mfrc522_ll_status dummySend(u8 addr, size bytes, const u8* payload) // NOLINT(readability-non-const-parameter)
 {
     static_cast<void>(addr);
@@ -32,20 +37,27 @@ static void dummyDelay(u32 period)
 
 TEST(TestMfrc522DrvLlPtr, mfrc522_drv_init__NullCases)
 {
-    /* Stage 1: Pass NULL as low-level send */
+    /* Stage 1: Pass NULL as low-level init */
     mfrc522_drv_conf conf;
+    conf.ll_init = nullptr;
+    conf.ll_recv = dummyRecv;
+    conf.ll_send = dummySend;
+    conf.ll_delay = dummyDelay;
+    ASSERT_EQ(mfrc522_drv_status_nullptr, mfrc522_drv_init(&conf));
+
+    /* Stage 2: Pass NULL as low-level send */
     conf.ll_recv = dummyRecv;
     conf.ll_send = nullptr;
     conf.ll_delay = dummyDelay;
     ASSERT_EQ(mfrc522_drv_status_nullptr, mfrc522_drv_init(&conf));
 
-    /* Stage 2: Pass NULL as low-level receive */
+    /* Stage 3: Pass NULL as low-level receive */
     conf.ll_recv = nullptr;
     conf.ll_send = dummySend;
     conf.ll_delay = dummyDelay;
     ASSERT_EQ(mfrc522_drv_status_nullptr, mfrc522_drv_init(&conf));
 
-    /* Stage 2: Pass NULL as low-level delay */
+    /* Stage 4: Pass NULL as low-level delay */
     conf.ll_recv = dummyRecv;
     conf.ll_send = dummySend;
     conf.ll_delay = nullptr;
@@ -56,6 +68,7 @@ TEST(TestMfrc522DrvLlPtr, mfrc522_drv_write__Success)
 {
     /* Dummy configuration */
     mfrc522_drv_conf conf;
+    conf.ll_init = dummyInit;
     conf.ll_recv = dummyRecv;
     conf.ll_send = dummySend;
     conf.ll_delay = dummyDelay;
@@ -69,6 +82,7 @@ TEST(TestMfrc522DrvLlPtr, mfrc522_drv_read__Success)
 {
     /* Dummy configuration */
     mfrc522_drv_conf conf;
+    conf.ll_init = dummyInit;
     conf.ll_recv = dummyRecv;
     conf.ll_send = dummySend;
     conf.ll_delay = dummyDelay;

@@ -24,6 +24,7 @@ CMOCK_MOCK_FUNCTION(FUNC##__MOCK, RET, FUNC, ARGS) static_assert(true, "Semicolo
 #define STUB(FUNC) NiceMock<FUNC##__MOCK> FUNC##__mocked
 #define MOCK_CALL(FUNC, ...) EXPECT_CALL(FUNC##__mocked, FUNC(__VA_ARGS__))
 #define STUB_CALL(FUNC, ...) ON_CALL(FUNC##__mocked, FUNC(__VA_ARGS__))
+#define MOCK_CALL_NO_ARGS(FUNC) EXPECT_CALL(FUNC##__mocked, FUNC())
 #define IGNORE_REDUNDANT_LL_RECV_CALLS() \
 MOCK_CALL(mfrc522_ll_recv, _, _).Times(AnyNumber()) \
     .WillRepeatedly(DoAll(SetArgPointee<1>(0x00), Return(mfrc522_ll_status_ok)))
@@ -36,6 +37,7 @@ MOCK_CALL(mfrc522_ll_send, _, _, _).Times(AnyNumber()) \
 /* ------------------------------------------------------------ */
 
 /* Put mock declarations here */
+DECLARE_MOCKABLE(mfrc522_ll_status, mfrc522_ll_init, ());
 DECLARE_MOCKABLE(mfrc522_ll_status, mfrc522_ll_send, (u8, size, const u8*));
 DECLARE_MOCKABLE(mfrc522_ll_status, mfrc522_ll_recv, (u8, u8*));
 DECLARE_MOCKABLE(void, mfrc522_ll_delay, (u32));

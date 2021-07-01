@@ -47,6 +47,17 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_init__NullCases)
     EXPECT_EQ(mfrc522_drv_status_nullptr, status);
 }
 
+TEST(TestMfrc522DrvCommon, mfrc522_drv_init__LowLevelInitError__Failure)
+{
+    /* Set expectations */
+    MOCK(mfrc522_ll_init);
+    MOCK_CALL_NO_ARGS(mfrc522_ll_init).WillOnce(Return(mfrc522_ll_status_init_err));
+
+    mfrc522_drv_conf conf;
+    auto status = mfrc522_drv_init(&conf);
+    ASSERT_EQ(mfrc522_drv_status_ll_err, status);
+}
+
 TEST(TestMfrc522DrvCommon, mfrc522_drv_init__LlReceiveError__LlErrorIsGenerated)
 {
     u8 payload = 0xAB; /* Assume that low-level call failed, thus trash value was returned */

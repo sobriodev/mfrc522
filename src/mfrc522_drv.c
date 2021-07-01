@@ -105,12 +105,24 @@ mfrc522_drv_init(mfrc522_drv_conf* conf)
 
     /* In case 'pointer' low-level calls are used check for NULL also */
 #if MFRC522_LL_PTR
+    NOT_NULL(conf->ll_init, mfrc522_drv_status_nullptr);
     NOT_NULL(conf->ll_send, mfrc522_drv_status_nullptr);
     NOT_NULL(conf->ll_recv, mfrc522_drv_status_nullptr);
 #if MFRC522_LL_DELAY
     NOT_NULL(conf->ll_delay, mfrc522_drv_status_nullptr);
 #endif
 #endif
+
+    /* Initialize low-level interface to begin with */
+    mfrc522_ll_status init_status;
+#if MFRC522_LL_PTR
+    init_status = conf->ll_init();
+#else
+    init_status = mfrc522_ll_init();
+#endif
+    if (UNLIKELY(mfrc522_ll_status_ok != init_status)) {
+        return mfrc522_drv_status_ll_err;
+    }
 
     /* Try to get chip version from a device */
     if (UNLIKELY(mfrc522_drv_status_ok != mfrc522_drv_read(conf, mfrc522_reg_version, &conf->chip_version))) {

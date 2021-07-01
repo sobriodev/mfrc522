@@ -53,12 +53,26 @@ typedef enum mfrc522_ll_status_
     /**<
      * An error while receiving data
      */
-    mfrc522_ll_status_recv_err = MAKE_STATUS(0x02, status_severity_fatal)
+    mfrc522_ll_status_recv_err = MAKE_STATUS(0x02, status_severity_fatal),
+    /**
+     * An error while configuring low-level interface
+     */
+     mfrc522_ll_status_init_err = MAKE_STATUS(0x03, status_severity_fatal)
 } mfrc522_ll_status;
 
 #if MFRC522_LL_PTR
 /**
- * Low-level send function type. From high-level point of view the library does not assume which digital interface is
+ * Function to initialize low-level interface (bus).
+ * Depending on actual needs the function may call start-up routines or do nothing.
+ *
+ * @return An instance of mfrc522_ll_status. On success mfrc522_ll_status_ok shall be returned.
+ */
+typedef mfrc522_ll_status (*mfrc522_ll_init)(void);
+
+/**
+ * Low-level send function type.
+ *
+ * From high-level point of view the library does not assume which digital interface is
  * used. Beneath the function any bus can be used, e.g. SPI, I2C or UART. Please refer to device datasheet to check
  * supported digital interface(s).
  *
@@ -72,7 +86,9 @@ typedef enum mfrc522_ll_status_
 typedef mfrc522_ll_status (*mfrc522_ll_send)(u8 addr, size bytes, const u8* payload);
 
 /**
- * Low-level receive function type. From high-level point of view the library does not assume which digital interface is
+ * Low-level receive function type.
+ *
+ * From high-level point of view the library does not assume which digital interface is
  * used. Beneath the function any bus can be used, e.g. SPI, I2C or UART. Please refer to device datasheet to check
  * supported digital interface(s).
  *
@@ -86,7 +102,9 @@ typedef mfrc522_ll_status (*mfrc522_ll_recv)(u8 addr, u8* payload);
 
 #if MFRC522_LL_DELAY
 /**
- * Low-level delay function type. When enabled, API calls can use it in certain situations as a 'sleep call' while
+ * Low-level delay function type.
+ *
+ * When enabled, API calls can use it in certain situations as a 'sleep call' while
  * waiting for an event, thus reducing bus congestion. When disabled, the library pools a device until condition is met,
  * resulting in increased bus workload.
  *
@@ -103,7 +121,18 @@ typedef void (*mfrc522_ll_delay)(u32 period);
 
 #if MFRC522_LL_DEF
 /**
- * Low-level function to send data to a device. From high-level point of view the library does not assume which digital
+ * Function to initialize low-level interface (bus).
+ * Depending on actual needs the function may call start-up routines or do nothing.
+ *
+ * @return An instance of mfrc522_ll_status. On success mfrc522_ll_status_ok shall be returned.
+ */
+mfrc522_ll_status
+mfrc522_ll_init(void);
+
+/**
+ * Low-level function to send data to a device.
+ *
+ * From high-level point of view the library does not assume which digital
  * interface is used. Beneath the function any bus can be used, e.g. SPI, I2C or UART. Please refer to device datasheet
  * to check supported digital interface(s).
  *
@@ -118,7 +147,9 @@ mfrc522_ll_status
 mfrc522_ll_send(u8 addr, size bytes, const u8* payload);
 
 /**
- * Low-level function to receive data from a device. From high-level point of view the library does not assume which
+ * Low-level function to receive data from a device.
+ *
+ * From high-level point of view the library does not assume which
  * digital interface is used. Beneath the function any bus can be used, e.g. SPI, I2C or UART. Please refer to device
  * datasheet to check supported digital interface(s).
  *
