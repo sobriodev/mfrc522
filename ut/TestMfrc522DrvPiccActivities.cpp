@@ -354,6 +354,8 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_reqa__TypicalCase__Success)
     MOCK_CALL(mfrc522_ll_send, mfrc522_reg_bit_framing, 1, Pointee(0x07)).WillOnce(Return(mfrc522_ll_status_ok));
     MOCK_CALL(mfrc522_drv_transceive, &device, TransceiveStructInputMatcher(&transceiveConf))
             .WillOnce(DoAll(TransceiveAction(&transceiveConf), Return(mfrc522_drv_status_ok)));
+    /* TX last bits should be restored */
+    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_bit_framing, 1, Pointee(0x00)).WillOnce(Return(mfrc522_ll_status_ok));
 
     auto status = mfrc522_drv_reqa(&device, &atqa);
     ASSERT_EQ(mfrc522_drv_status_ok, status);
@@ -382,6 +384,8 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_reqa__BlacklistedAtqaReturned__Error)
     MOCK_CALL(mfrc522_ll_send, mfrc522_reg_bit_framing, 1, Pointee(0x07)).WillOnce(Return(mfrc522_ll_status_ok));
     MOCK_CALL(mfrc522_drv_transceive, &device, TransceiveStructInputMatcher(&transceiveConf))
             .WillOnce(DoAll(TransceiveAction(&transceiveConf), Return(mfrc522_drv_status_ok)));
+    /* TX last bits should be restored */
+    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_bit_framing, 1, Pointee(0x00)).WillOnce(Return(mfrc522_ll_status_ok));
 
     auto status = mfrc522_drv_reqa(&device, &atqa);
     ASSERT_EQ(mfrc522_drv_status_picc_vrf_err, status);
@@ -407,8 +411,6 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_anticollision__ErrorDuringTransceiveComma
     /* Set expectations */
     MOCK(mfrc522_ll_send);
     MOCK(mfrc522_drv_transceive);
-    /* TX last bits = 0x00 (whole byte valid) */
-    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_bit_framing, 1, Pointee(0x00)).WillOnce(Return(mfrc522_ll_status_ok));
     /* Simulate an error during transmission/reception of the data */
     MOCK_CALL(mfrc522_drv_transceive, &device, NotNull()).WillOnce(Return(mfrc522_drv_status_transceive_rx_mism));
 
@@ -435,8 +437,6 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_anticollision__InvalidChecksum__Error)
     transceiveConf.rx_data = &rxData[0];
     transceiveConf.rx_data_sz = 5;
     transceiveConf.command = mfrc522_reg_cmd_transceive;
-    /* TX last bits = 0x00 (whole byte valid) */
-    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_bit_framing, 1, Pointee(0x00)).WillOnce(Return(mfrc522_ll_status_ok));
     MOCK_CALL(mfrc522_drv_transceive, &device, TransceiveStructInputMatcher(&transceiveConf))
             .WillOnce(DoAll(TransceiveAction(&transceiveConf), Return(mfrc522_drv_status_ok)));
 
@@ -466,8 +466,6 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_anticollision__ValidNUIDAndChecksumReturn
     transceiveConf.rx_data = &rxData[0];
     transceiveConf.rx_data_sz = 5;
     transceiveConf.command = mfrc522_reg_cmd_transceive;
-    /* TX last bits = 0x00 (whole byte valid) */
-    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_bit_framing, 1, Pointee(0x00)).WillOnce(Return(mfrc522_ll_status_ok));
     MOCK_CALL(mfrc522_drv_transceive, &device, TransceiveStructInputMatcher(&transceiveConf))
             .WillOnce(DoAll(TransceiveAction(&transceiveConf), Return(mfrc522_drv_status_ok)));
 
