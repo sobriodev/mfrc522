@@ -34,11 +34,11 @@ TEST(TestMfrc522DrvIrq, mfrc522_drv_irq_init__Success)
     MOCK(mfrc522_ll_send);
     InSequence seq;
     /* Expect that all IRQs are cleared */
-    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_com_irq, 1, _).WillOnce(Return(mfrc522_ll_status_ok));
-    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_div_irq, 1, _).WillOnce(Return(mfrc522_ll_status_ok));
+    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_com_irq, 1, NotNull()).WillOnce(Return(mfrc522_ll_status_ok));
+    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_div_irq, 1, NotNull()).WillOnce(Return(mfrc522_ll_status_ok));
     /* Expect calls that configure IRQ registers */
-    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_com_irq_en, 1, _).WillOnce(Return(mfrc522_ll_status_ok));
-    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_div_irq_en, 1, _).WillOnce(Return(mfrc522_ll_status_ok));
+    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_com_irq_en, 1, NotNull()).WillOnce(Return(mfrc522_ll_status_ok));
+    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_div_irq_en, 1, NotNull()).WillOnce(Return(mfrc522_ll_status_ok));
 
     auto status = mfrc522_drv_irq_init(&conf, &irqConf);
     ASSERT_EQ(mfrc522_drv_status_ok, status);
@@ -123,10 +123,10 @@ TEST(TestMfrc522DrvIrq, mfrc522_drv_irq_en__EnableIrqInComReg__Success)
     MOCK(mfrc522_ll_recv);
     MOCK(mfrc522_ll_send);
     InSequence s;
-    MOCK_CALL(mfrc522_ll_recv, mfrc522_reg_com_irq_en, _)
+    MOCK_CALL(mfrc522_ll_recv, mfrc522_reg_com_irq_en, NotNull())
         .WillOnce(DoAll(SetArgPointee<1>(actualIrqs), Return(mfrc522_ll_status_ok)));
     MOCK_CALL(mfrc522_ll_send, mfrc522_reg_com_irq_en, 1,
-                        Pointee((u8)(actualIrqs | (1 << mfrc522_reg_irq_idle))))
+              Pointee((u8)(actualIrqs | (1 << mfrc522_reg_irq_idle))))
         .WillOnce(Return(mfrc522_ll_status_ok));
 
     auto status = mfrc522_drv_irq_en(&conf, mfrc522_reg_irq_idle, true);
@@ -143,7 +143,7 @@ TEST(TestMfrc522DrvIrq, mfrc522_drv_irq_en__DisableIrqInComReg__Success)
     MOCK(mfrc522_ll_recv);
     MOCK(mfrc522_ll_send);
     InSequence s;
-    MOCK_CALL(mfrc522_ll_recv, mfrc522_reg_com_irq_en, _)
+    MOCK_CALL(mfrc522_ll_recv, mfrc522_reg_com_irq_en, NotNull())
         .WillOnce(DoAll(SetArgPointee<1>(actualIrqs), Return(mfrc522_ll_status_ok)));
     MOCK_CALL(mfrc522_ll_send, mfrc522_reg_com_irq_en, 1, Pointee(0x00))
         .WillOnce(Return(mfrc522_ll_status_ok));
@@ -159,7 +159,7 @@ TEST(TestMfrc522DrvIrq, mfrc522_drv_irq_en__EnableIrqInDivReg__Success)
     MOCK(mfrc522_ll_recv);
     MOCK(mfrc522_ll_send);
     InSequence s;
-    MOCK_CALL(mfrc522_ll_recv, mfrc522_reg_div_irq_en, _)
+    MOCK_CALL(mfrc522_ll_recv, mfrc522_reg_div_irq_en, NotNull())
         .WillOnce(DoAll(SetArgPointee<1>(0x00), Return(mfrc522_ll_status_ok)));
     MOCK_CALL(mfrc522_ll_send, mfrc522_reg_div_irq_en, 1,
                         Pointee(1 << (mfrc522_reg_irq_crc & ~MFRC522_REG_IRQ_DIV)))
@@ -188,9 +188,9 @@ TEST(TestMfrc522DrvIrq, mfrc522_drv_irq_states__TypicalCase__Success)
 
     /* Set expectations */
     MOCK(mfrc522_ll_recv);
-    MOCK_CALL(mfrc522_ll_recv, mfrc522_reg_com_irq, _)
+    MOCK_CALL(mfrc522_ll_recv, mfrc522_reg_com_irq, NotNull())
         .WillOnce(DoAll(SetArgPointee<1>(0xCD), Return(mfrc522_ll_status_ok)));
-    MOCK_CALL(mfrc522_ll_recv, mfrc522_reg_div_irq, _)
+    MOCK_CALL(mfrc522_ll_recv, mfrc522_reg_div_irq, NotNull())
             .WillOnce(DoAll(SetArgPointee<1>(0xAB), Return(mfrc522_ll_status_ok)));
 
     auto status = mfrc522_drv_irq_states(&device, &states);

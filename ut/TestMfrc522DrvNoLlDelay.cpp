@@ -18,7 +18,7 @@ TEST(TestMfrc522DrvNoLlDelay, mfrc522_drv_read_until__LowLevelDelayDisabled__Ret
     /* Populate fake responses */
     MOCK(mfrc522_ll_recv);
     const auto retryCnt = 10;
-    MOCK_CALL(mfrc522_ll_recv, mfrc522_reg_fifo_data, _).Times((retryCnt * MFRC522_CONF_RETRY_CNT_MUL) + 1)
+    MOCK_CALL(mfrc522_ll_recv, mfrc522_reg_fifo_data, NotNull()).Times((retryCnt * MFRC522_CONF_RETRY_CNT_MUL) + 1)
         .WillRepeatedly(DoAll(SetArgPointee<1>(0x00), Return(mfrc522_ll_status_ok)));
 
     mfrc522_drv_read_until_conf ruConf;

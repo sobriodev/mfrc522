@@ -85,7 +85,7 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_transceive__NoIrqAfterAllRetries__Timeout
     MOCK_CALL(mfrc522_ll_send, mfrc522_reg_fifo_data, 1, Pointee(tx)).WillOnce(Return(mfrc522_ll_status_ok));
     /* Start transceive command and transmission of data */
     MOCK_CALL(mfrc522_drv_invoke_cmd, &device, mfrc522_reg_cmd_transceive).WillOnce(Return(mfrc522_drv_status_ok));
-    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_bit_framing, 1, _).WillOnce(Return(mfrc522_ll_status_ok));
+    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_bit_framing, 1, NotNull()).WillOnce(Return(mfrc522_ll_status_ok));
     /* Simulate that no IRQ is set (states = 0x0000) */
     MOCK_CALL(mfrc522_drv_irq_states, &device, NotNull()).Times(AtLeast(1))
             .WillRepeatedly(DoAll(SetArgPointee<1>(0x0000), Return(mfrc522_drv_status_ok)));
@@ -128,7 +128,7 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_transceive__ErrorBitIsSet__ErrorReturned)
     MOCK_CALL(mfrc522_ll_send, mfrc522_reg_fifo_data, 1, Pointee(tx)).WillOnce(Return(mfrc522_ll_status_ok));
     /* Start transceive command and transmission of data */
     MOCK_CALL(mfrc522_drv_invoke_cmd, &device, mfrc522_reg_cmd_transceive).WillOnce(Return(mfrc522_drv_status_ok));
-    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_bit_framing, 1, _).WillOnce(Return(mfrc522_ll_status_ok));
+    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_bit_framing, 1, NotNull()).WillOnce(Return(mfrc522_ll_status_ok));
     /* Simulate that error IRQ is set (low byte = 0x02) */
     MOCK_CALL(mfrc522_drv_irq_states, &device, NotNull()).Times(AtLeast(1))
             .WillRepeatedly(DoAll(SetArgPointee<1>(0x0002), Return(mfrc522_drv_status_ok)));
@@ -171,7 +171,7 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_transceive__InvalidNumberOfRxValidBits__E
     MOCK_CALL(mfrc522_ll_send, mfrc522_reg_fifo_data, 1, Pointee(tx)).WillOnce(Return(mfrc522_ll_status_ok));
     /* Start transceive command and transmission of data */
     MOCK_CALL(mfrc522_drv_invoke_cmd, &device, mfrc522_reg_cmd_transceive).WillOnce(Return(mfrc522_drv_status_ok));
-    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_bit_framing, 1, _).WillOnce(Return(mfrc522_ll_status_ok));
+    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_bit_framing, 1, NotNull()).WillOnce(Return(mfrc522_ll_status_ok));
     MOCK_CALL(mfrc522_drv_irq_states, &device, NotNull()).Times(AtLeast(1))
             .WillRepeatedly(DoAll(SetArgPointee<1>(1 << 5), Return(mfrc522_drv_status_ok)));
     /* Stop transmission of data and enter Idle state back */
@@ -216,7 +216,7 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_transceive__NoDataOnRxSide__Error)
     MOCK_CALL(mfrc522_ll_send, mfrc522_reg_fifo_data, 1, Pointee(tx)).WillOnce(Return(mfrc522_ll_status_ok));
     /* Start transceive command and transmission of data */
     MOCK_CALL(mfrc522_drv_invoke_cmd, &device, mfrc522_reg_cmd_transceive).WillOnce(Return(mfrc522_drv_status_ok));
-    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_bit_framing, 1, _).WillOnce(Return(mfrc522_ll_status_ok));
+    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_bit_framing, 1, NotNull()).WillOnce(Return(mfrc522_ll_status_ok));
     MOCK_CALL(mfrc522_drv_irq_states, &device, NotNull()).Times(AtLeast(1))
             .WillRepeatedly(DoAll(SetArgPointee<1>(1 << 5), Return(mfrc522_drv_status_ok)));
     /* Stop transmission of data and enter Idle state back */
@@ -263,7 +263,7 @@ TEST(TestMfrc522DrvCommon, mfrc522_drv_transceive__TypicalCase__Success)
     MOCK_CALL(mfrc522_ll_send, mfrc522_reg_fifo_data, 1, Pointee(tx)).WillOnce(Return(mfrc522_ll_status_ok));
     /* Start transceive command and transmission of data */
     MOCK_CALL(mfrc522_drv_invoke_cmd, &device, mfrc522_reg_cmd_transceive).WillOnce(Return(mfrc522_drv_status_ok));
-    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_bit_framing, 1, _).WillOnce(Return(mfrc522_ll_status_ok));
+    MOCK_CALL(mfrc522_ll_send, mfrc522_reg_bit_framing, 1, NotNull()).WillOnce(Return(mfrc522_ll_status_ok));
     MOCK_CALL(mfrc522_drv_irq_states, &device, NotNull()).Times(AtLeast(1))
             .WillRepeatedly(DoAll(SetArgPointee<1>(1 << 5), Return(mfrc522_drv_status_ok)));
     /* Stop transmission of data and enter Idle state back */
